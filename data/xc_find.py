@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 
-import argparse
-import json
 import logging
 import re
-import urllib.parse
 import sys
-
-import requests
 
 from ioc import ioc
 from xenocanto import xenocanto
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     ioc_list = ioc.IOCList()
 
     queries = sys.stdin
@@ -24,8 +21,8 @@ def main():
         if not query:
             continue
 
-        json = xenocanto.find_cached_recordings(query)
-        if not json['recordings']:
+        recordings = xenocanto.find_recordings_cached(query)
+        if not recordings:
             species = ioc_list.find_by_name(query)
             if species:
                 alt_names = set(name for name in species.alt_names if name != query)
@@ -33,8 +30,8 @@ def main():
                 for alt_name in alt_names:
                     if alt_name == query:
                         continue
-                    json = xenocanto.find_cached_recordings(alt_name)
-                    if json['recordings']:
+                    recordings = xenocanto.find_recordings_cached(alt_name)
+                    if recordings:
                         found_names.add(alt_name)
                 if found_names:
                     logging.warning('No results for query "%s", but results exist for %s',
