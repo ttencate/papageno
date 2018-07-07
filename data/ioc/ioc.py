@@ -1,4 +1,5 @@
 import csv
+import difflib
 import logging
 import os.path
 import re
@@ -74,6 +75,11 @@ if __name__ == '__main__':
         if not name:
             continue
         species = ioc.find_by_name(name)
+        suggested_names = None
+        if not species:
+            logging.warning('Could not find "%s", did you mean one of:\n%s',
+                    name,
+                    ', '.join(difflib.get_close_matches(name, ioc.by_name.keys())))
         char = ' '
         if not species:
             char = 'X'
