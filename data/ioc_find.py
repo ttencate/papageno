@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import difflib
+import logging
 import re
 import sys
 
@@ -8,6 +9,8 @@ from ioc import ioc
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     ioc_list = ioc.IOCList()
     for line in sys.stdin:
         name = re.sub(r'#.*', '', line).strip()
