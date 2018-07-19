@@ -179,7 +179,7 @@ def parse_metadata(content):
 
 def fetch_metadata_cached(recording):
     cache_dir_name = get_cache_dir('metadata')
-    cache_file_name = os.path.join(cache_dir_name, '%s.json' % recording['id'])
+    cache_file_name = os.path.join(cache_dir_name, '%02d' % (int(recording['id']) % 100), '%s.json' % recording['id'])
     try:
         with open(cache_file_name, 'rb') as cache_file:
             return json.load(cache_file)
