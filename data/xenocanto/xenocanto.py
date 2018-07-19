@@ -99,7 +99,14 @@ def download_recording_cached(recording):
 def fetch_metadata(recording):
     url = recording['url']
     response = get_response(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    try:
+        return parse_metadata(response.content)
+    except Exception as ex:
+        raise RuntimeError('Failed to parse page at URL %s' % url) from ex
+
+
+def parse_metadata(content):
+    soup = BeautifulSoup(content, 'html.parser')
 
     def get_table(title):
         for sibling in soup.find('h2', string=re.compile(title)).next_siblings:
