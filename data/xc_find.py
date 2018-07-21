@@ -24,6 +24,9 @@ def main():
         else:
             logging.warning('No recordings found for "%s"', query)
 
+        for recording in recordings:
+            print(recording['id'])
+
 
 if __name__ == '__main__':
     main()
