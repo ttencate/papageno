@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>xeno-canto browser</title>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Species</th>
+        <th>Quality</th>
+        <th>Length (s)</th>
+        <th>Sonogram</th>
+      </tr>
+      {% for recording in recordings %}
+        <tr>
+          <th><a href="{{ recording.url }}">{{ recording.id }}</a></th>
+          <th>{{ recording.species }}</th>
+          <th>{{ recording.quality }}</th>
+          <th>{{ recording.length_s }}</th>
+          <th><img src="{{ recording.sonogram_url }}"></th>
+        </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
