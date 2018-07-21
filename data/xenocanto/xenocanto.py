@@ -96,8 +96,8 @@ def download_recording_cached(recording):
         return cache_file_name
 
 
-def fetch_metadata(recording):
-    url = recording['url']
+def fetch_metadata(recording_id):
+    url = 'https://www.xeno-canto.org/%s' % recording_id
     response = get_response(url)
     try:
         return parse_metadata(response.content)
@@ -177,17 +177,17 @@ def parse_metadata(content):
     }
 
 
-def fetch_metadata_cached(recording):
+def fetch_metadata_cached(recording_id):
     cache_dir_name = get_cache_dir('metadata')
-    cache_file_name = os.path.join(cache_dir_name, '%02d' % (int(recording['id']) % 100), '%s.json' % recording['id'])
+    cache_file_name = os.path.join(cache_dir_name, '%02d' % (int(recording_id) % 100), '%s.json' % recording_id)
     try:
         with open(cache_file_name, 'rb') as cache_file:
             return json.load(cache_file)
     except FileNotFoundError:
         pass
 
-    metadata = fetch_metadata(recording)
+    metadata = fetch_metadata(recording_id)
     with open(cache_file_name, 'wt') as cache_file:
         json.dump(metadata, cache_file, indent=2)
-    logging.info('Wrote metadata for XC%s to %s', recording['id'], cache_file_name)
+    logging.info('Wrote metadata for XC%s to %s', recording_id, cache_file_name)
     return metadata

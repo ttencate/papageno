@@ -65,7 +65,7 @@ def main():
         metadatas = []
         for recording in recordings:
             try:
-                metadata = xenocanto.fetch_metadata_cached(recording)
+                metadata = xenocanto.fetch_metadata_cached(recording['id'])
             except RuntimeError as ex:
                 logging.warning(ex)
                 continue

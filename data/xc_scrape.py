@@ -35,7 +35,7 @@ def main():
 
         for recording in recordings:
             try:
-                metadata = xenocanto.fetch_metadata_cached(recording)
+                metadata = xenocanto.fetch_metadata_cached(recording['id'])
             except Exception as ex:
                 logging.error('Error downloading recording %s' % recording['id'], exc_info=True)
                 continue
