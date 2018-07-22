@@ -28,3 +28,4 @@ class Command(BaseCommand):
                 cursor.execute(
                         'INSERT OR REPLACE INTO xenocanto_recording VALUES (%s)' % ','.join(['%s'] * len(fields)),
                         [metadata[f] for f in fields])
+        connection.commit()

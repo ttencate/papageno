@@ -39,3 +39,6 @@ class Recording(models.Model):
 
     def species(self):
         return ' '.join(filter(None, (self.gen, self.sp, self.ssp)))
+
+    def types(self):
+        return [t.strip() for t in self.type.split(',')]
