@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 {% load query_url %}
+{% load translated_name %}
 {% load static %}
 
 <html>
@@ -36,7 +37,8 @@
               <a href="{{ recording.url }}">{{ recording.id }}</a>
             </td>
             <td class="text-nowrap">
-              <a class="btn btn-sm btn-light" title="Show only this species" href="{% query_url request.get_full_path species=recording.species page=1 %}">{{ recording.species }}</a>
+              <div><a class="btn btn-sm btn-light" title="Show only this species" href="{% query_url request.get_full_path species=recording.species page=1 %}">{{ recording.species }}</a></div>
+              <div><i>{{ recording|translated_name:"Dutch" }}</i></div>
             </td>
             <td>
               {% for type in recording.types %}
