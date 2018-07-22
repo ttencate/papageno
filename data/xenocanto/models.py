@@ -42,3 +42,49 @@ class Recording(models.Model):
 
     def types(self):
         return [t.strip() for t in self.type.split(',')]
+
+    def translated_name(self, language):
+        try:
+            species_alt_name = SpeciesAltName.objects.get(alt_name__iexact=self.species())
+        except SpeciesAltName.DoesNotExist:
+            return None
+        species = species_alt_name.species
+        try:
+            return species.speciesnametranslation_set.get(language__exact=language).translated_name
+        except SpeciesNameTranslation.DoesNotExist:
+            return None
+
+
+class Species(models.Model):
+    '''
+    Represents a single bird species.
+    '''
+
+    id = models.AutoField(primary_key=True)
+    ioc_name = models.TextField(unique=True)
+
+
+class SpeciesAltName(models.Model):
+    '''
+    Represents an alternative (or primary) name given to a species. In general,
+    the same name might refer to multiple species, although this is rare.
+    '''
+
+    alt_name = models.TextField()
+    species = models.ForeignKey('Species', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('alt_name', 'species'),)
+
+
+class SpeciesNameTranslation(models.Model):
+    '''
+    Represents the translation of a species name into a particular language.
+    '''
+
+    species = models.ForeignKey('Species', on_delete=models.CASCADE)
+    language = models.TextField()
+    translated_name = models.TextField()
+
+    class Meta:
+        unique_together = (('species', 'language'),)
