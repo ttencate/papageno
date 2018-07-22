@@ -1,27 +1,70 @@
 <!DOCTYPE html>
 
+{% load query_url %}
+{% load static %}
+
 <html>
   <head>
+    <link rel="stylesheet" href="{% static "bootstrap-4.1.0-dist/css/bootstrap.min.css" %}">
+    <link rel="stylesheet" href="{% static "style.css" %}">
     <title>xeno-canto browser</title>
   </head>
   <body>
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Species</th>
-        <th>Quality</th>
-        <th>Length (s)</th>
-        <th>Sonogram</th>
-      </tr>
-      {% for recording in recordings %}
+    <form>
+      <table class="table">
         <tr>
-          <th><a href="{{ recording.url }}">{{ recording.id }}</a></th>
-          <th>{{ recording.species }}</th>
-          <th>{{ recording.quality }}</th>
-          <th>{{ recording.length_s }}</th>
-          <th><img src="{{ recording.sonogram_url }}"></th>
+          <th class="text-nowrap">ID</th>
+          <th class="text-nowrap">Species</th>
+          <th class="text-nowrap">Type</th>
+          <th class="text-nowrap">Quality</th>
+          <th class="text-nowrap">Length</th>
+          <th class="text-nowrap">Playback</th>
+          <th class="text-nowrap">Sonogram</th>
         </tr>
+        <tr>
+          <td></td>
+          <td><input class="form-control" type="text" name="species" value="{{ query.species }}"></td>
+          <td><input class="form-control" type="text" name="type" value="{{ query.type }}"></td>
+          <td><input class="form-control" type="text" name="q" value="{{ query.q }}"></td>
+          <td><input class="form-control text-right" type="number" name="min_length" value="{{ query.min_length }}"><input class="form-control text-right" type="number" name="max_length" value="{{ query.max_length }}"></td>
+          <td><input class="btn btn-primary" type="submit" value="Update"></td>
+          <td></td>
+        </tr>
+        {% for recording in recordings %}
+          <tr>
+            <td class="text-right">
+              <a href="{{ recording.url }}">{{ recording.id }}</a>
+            </td>
+            <td class="text-nowrap">
+              <a class="btn btn-sm btn-light" title="Show only this species" href="{% query_url request.get_full_path species=recording.species page=1 %}">{{ recording.species }}</a>
+            </td>
+            <td>
+              {% for type in recording.types %}
+                <div>
+                  <a class="btn btn-sm btn-light" title="Show only this type" href="{% query_url request.get_full_path type=type page=1 %}">{{ type }}</a>
+                </div>
+              {% endfor %}
+            </td>
+            <td>
+              <a class="btn btn-sm btn-light" title="Show only this quality" href="{% query_url request.get_full_path q=recording.q page=1 %}">{{ recording.q }}</a>
+            </td>
+            <td class="text-right">
+              {{ recording.length_s }}&nbsp;s
+            </td>
+            <td>
+              <audio controls preload="none" src="{{ recording.file }}">
+            </td>
+            <td>
+              <div class="sonogram-wrapper">
+                <img class="sonogram" src="{{ recording.sonogram_url }}">
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+      {% for i in recordings.paginator.page_range %}
+        <a class="btn btn-sm {% if i == recordings.number %}btn-primary{% else %}btn-light{% endif %}" href="{% query_url request.get_full_path page=i %}">{{ i }}</a> 
       {% endfor %}
-    </table>
+    </form>
   </body>
 </html>
