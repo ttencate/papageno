@@ -4,13 +4,29 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.template import loader
 
-from .models import Recording
+from .models import Recording, Species
 
 
-def index(request):
+def species_list(request):
+    page = request.GET.get('page', 1)
+
+    all_species = Species.objects.all()
+
+    paginator = Paginator(all_species, 100)
+
+    template = loader.get_template('xenocanto/species_list.html')
+    context = {
+        'all_species': paginator.get_page(page),
+    }
+    return HttpResponse(template.render(context, request))
+
+
+def species(request, ioc_name):
+    species = Species.objects.get(ioc_name__iexact=ioc_name)
+    species_alt_names = set(a.alt_name for a in species.speciesaltname_set.all())
+
     query = {
             'page': request.GET.get('page', 1),
-            'species': request.GET.get('species', ''),
             'type': request.GET.get('type', ''),
             'q': request.GET.get('q', ''),
             'min_length': request.GET.get('min_length', ''),
@@ -18,14 +34,14 @@ def index(request):
     }
 
     recordings = Recording.objects.order_by('gen', 'sp', 'ssp', 'q', 'length_s')
-    if query['species']:
-        parts = query['species'].split()
-        if len(parts) >= 1:
-            recordings = recordings.filter(gen__iexact=parts[0])
-        if len(parts) >= 2:
-            recordings = recordings.filter(sp__iexact=parts[1])
-        if len(parts) >= 3:
-            recordings = recordings.filter(ssp__iexact=parts[2])
+    # TODO use species_alt_names to construct a bunch of Q objects instead
+    parts = ioc_name.split()
+    if len(parts) >= 1:
+        recordings = recordings.filter(gen__iexact=parts[0])
+    if len(parts) >= 2:
+        recordings = recordings.filter(sp__iexact=parts[1])
+    if len(parts) >= 3:
+        recordings = recordings.filter(ssp__iexact=parts[2])
     if query['type']:
         recordings = recordings.filter(type__iregex=r'(^|,)\s*%s\s*(,|$)' % re.escape(query['type']))
     if query['q']:
@@ -37,8 +53,9 @@ def index(request):
 
     paginator = Paginator(recordings, 10)
 
-    template = loader.get_template('xenocanto/index.html')
+    template = loader.get_template('xenocanto/species.html')
     context = {
+            'species': species,
             'query': query,
             'recordings': paginator.get_page(query['page']),
     }

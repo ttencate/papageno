@@ -48,11 +48,7 @@ class Recording(models.Model):
             species_alt_name = SpeciesAltName.objects.get(alt_name__iexact=self.species())
         except SpeciesAltName.DoesNotExist:
             return None
-        species = species_alt_name.species
-        try:
-            return species.speciesnametranslation_set.get(language__exact=language).translated_name
-        except SpeciesNameTranslation.DoesNotExist:
-            return None
+        return species_alt_name.species.translated_name(language)
 
 
 class Species(models.Model):
@@ -62,6 +58,12 @@ class Species(models.Model):
 
     id = models.AutoField(primary_key=True)
     ioc_name = models.TextField(unique=True)
+
+    def translated_name(self, language):
+        try:
+            return self.speciesnametranslation_set.get(language__exact=language).translated_name
+        except SpeciesNameTranslation.DoesNotExist:
+            return None
 
 
 class SpeciesAltName(models.Model):
