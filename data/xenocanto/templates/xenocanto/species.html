@@ -1,44 +1,50 @@
 <!DOCTYPE html>
 
+{% load static %}
+
 {% load query_url %}
 {% load translated_name %}
-{% load static %}
 
 <html>
   <head>
     <link rel="stylesheet" href="{% static "bootstrap-4.1.0-dist/css/bootstrap.min.css" %}">
     <link rel="stylesheet" href="{% static "style.css" %}">
-    <title>xeno-canto browser</title>
+    <title>{{ species | translated_name:"Dutch" }} ({{ species.ioc_name }})</title>
   </head>
   <body>
     <form>
+
+      <h1>{{ species | translated_name:"Dutch" | default:"?" }} (<i>{{ species.ioc_name }}</i>)</h1>
+
+      {% if recordings.paginator.count > 1 %}
+        {% for i in recordings.paginator.page_range %}
+          <a class="btn btn-sm {% if i == recordings.number %}btn-primary{% else %}btn-light{% endif %}" href="{% query_url request.get_full_path page=i %}">{{ i }}</a> 
+        {% endfor %}
+      {% endif %}
+
       <table class="table">
         <tr>
           <th class="text-nowrap">ID</th>
-          <th class="text-nowrap">Species</th>
           <th class="text-nowrap">Type</th>
           <th class="text-nowrap">Quality</th>
           <th class="text-nowrap">Length</th>
           <th class="text-nowrap">Playback</th>
           <th class="text-nowrap">Sonogram</th>
         </tr>
+
         <tr>
           <td></td>
-          <td><input class="form-control" type="text" name="species" value="{{ query.species }}"></td>
           <td><input class="form-control" type="text" name="type" value="{{ query.type }}"></td>
           <td><input class="form-control" type="text" name="q" value="{{ query.q }}"></td>
           <td><input class="form-control text-right" type="number" name="min_length" value="{{ query.min_length }}"><input class="form-control text-right" type="number" name="max_length" value="{{ query.max_length }}"></td>
           <td><input class="btn btn-primary" type="submit" value="Update"></td>
           <td></td>
         </tr>
+
         {% for recording in recordings %}
           <tr>
             <td class="text-right">
               <a href="{{ recording.url }}">{{ recording.id }}</a>
-            </td>
-            <td class="text-nowrap">
-              <div><a class="btn btn-sm btn-light" title="Show only this species" href="{% query_url request.get_full_path species=recording.species page=1 %}">{{ recording.species }}</a></div>
-              <div><i>{{ recording|translated_name:"Dutch" }}</i></div>
             </td>
             <td>
               {% for type in recording.types %}
@@ -64,9 +70,7 @@
           </tr>
         {% endfor %}
       </table>
-      {% for i in recordings.paginator.page_range %}
-        <a class="btn btn-sm {% if i == recordings.number %}btn-primary{% else %}btn-light{% endif %}" href="{% query_url request.get_full_path page=i %}">{{ i }}</a> 
-      {% endfor %}
+
     </form>
   </body>
 </html>
