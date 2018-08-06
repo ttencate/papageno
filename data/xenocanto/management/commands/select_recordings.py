@@ -21,15 +21,31 @@ class Command(LoggingCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--recordings_per_species', type=int, default=10)
+        parser.add_argument('--reanalyze', action='store_true')
+        parser.add_argument('--play', action='store_true')
 
-    def handle(self, *args, recordings_per_species=None, **options):
+    def handle(self, *args, recordings_per_species=None, reanalyze=None, play=None, **options):
         for xc_species in strip_comments_and_blank_lines(sys.stdin):
-            recordings = order_recordings(preselect_recordings(xc_species))[:recordings_per_species]
+            logging.info('Downloading and analyzing audio recordings for %s', xc_species)
+            candidates = preselect_recordings(xc_species)
+            for recording in candidates:
+                audio_file = recording.get_or_download_audio_file()
+                if reanalyze:
+                    audio_file.analyze()
+                else:
+                    audio_file.get_or_compute_analysis()
+
+            recordings = order_recordings(candidates)[:recordings_per_species]
+
             if len(recordings) < recordings_per_species:
                 logging.warning('Found only %d/%d suitable recordings for species %s',
                                 len(recordings),
                                 options.recordings_per_species,
                                 xc_species)
                 continue
+
             for recording in recordings:
                 print(recording.id)
+                if play:
+                    logging.info('Playing %s...' % recording)
+                    recording.audio_file.play()

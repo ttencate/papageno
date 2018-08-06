@@ -99,6 +99,27 @@ class Recording(models.Model):
             self.audio_file = audio_file # pylint: disable=no-member,access-member-before-definition,attribute-defined-outside-init
         return audio_file
 
+    def get_analysis_or_none(self):
+        try:
+            audio_file = self.audio_file # pylint: disable=no-member,access-member-before-definition,attribute-defined-outside-init
+        except AudioFile.DoesNotExist:
+            return None
+        try:
+            return audio_file.analysis
+        except AudioFileAnalysis.DoesNotExist:
+            return None
+
+    def __str__(self):
+        analysis = self.get_analysis_or_none()
+        return '%s (%s, %s, %s, %.1ds, quality %s, clarity %s)' % (
+            self.url,
+            self.species(),
+            self.translated_name('Dutch').lower() or self.translated_name('English').lower() or '?',
+            ', '.join(self.types()),
+            self.length_s,
+            self.q,
+            ('%.1f' % analysis.clarity) if analysis else 'unknown')
+
 
 class Species(models.Model):
     '''
@@ -203,6 +224,7 @@ class AudioFile(models.Model):
         Creates or updates the AudioFileAnalysis for this AudioFile and returns
         it.
         '''
+        logging.info('Analyzing audio for recording %s', self.recording_id)
         try:
             analysis = self.analysis # pylint: disable=no-member
         except AudioFileAnalysis.DoesNotExist:
@@ -213,6 +235,15 @@ class AudioFile(models.Model):
         analysis.clarity = audio.compute_clarity(segment)
         analysis.save()
         return analysis
+
+    def get_or_compute_analysis(self):
+        '''
+        Returns the analysis, creating it if needed.
+        '''
+        try:
+            return self.analysis
+        except AudioFileAnalysis.DoesNotExist:
+            return self.analyze()
 
     def play(self):
         audio.play(self.load_preprocessed_audio())

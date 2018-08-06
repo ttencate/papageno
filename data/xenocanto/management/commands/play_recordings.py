@@ -25,10 +25,5 @@ class Command(LoggingCommand):
                 analysis = audio_file.analysis
             except AudioFileAnalysis.NotFound:
                 analysis = None
-            self.stdout.write('Playing recording %s (%s, %s, %.1ds, clarity %s)...' % (
-                recording.url,
-                recording.species(),
-                ', '.join(recording.types()),
-                recording.length_s,
-                ('%.1f' % analysis.clarity) if analysis else 'unknown'))
+            logging.info('Playing %s...' % recording)
             audio_file.play()
