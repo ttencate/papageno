@@ -10,7 +10,7 @@ from .models import Recording, Species
 def species_list(request):
     page = request.GET.get('page', 1)
 
-    all_species = Species.objects.all()
+    all_species = Species.objects.order_by('ioc_name')
 
     paginator = Paginator(all_species, 100)
 
@@ -23,7 +23,7 @@ def species_list(request):
 
 def species(request, ioc_name):
     species = Species.objects.get(ioc_name__iexact=ioc_name)
-    species_alt_names = set(a.alt_name for a in species.speciesaltname_set.all())
+    species_alt_names = set(a.alt_name for a in species.alt_names.all())
 
     query = {
             'page': request.GET.get('page', 1),

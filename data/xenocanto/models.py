@@ -1,4 +1,8 @@
+import logging
+
 from django.db import models
+
+import xenocanto.cache
 
 
 class Recording(models.Model):
@@ -50,6 +54,14 @@ class Recording(models.Model):
             return None
         return species_alt_name.species.translated_name(language)
 
+    def get_or_download_audio_file(self):
+        try:
+            audio_file = self.audio_file
+        except AudioFile.DoesNotExist:
+            audio_file = AudioFile.objects.download_and_save(self.id, self.file)
+            self.refresh_from_db()
+        return audio_file
+
 
 class Species(models.Model):
     '''
@@ -61,7 +73,7 @@ class Species(models.Model):
 
     def translated_name(self, language):
         try:
-            return self.speciesnametranslation_set.get(language__exact=language).translated_name
+            return self.name_translations.get(language__exact=language).translated_name
         except SpeciesNameTranslation.DoesNotExist:
             return None
 
@@ -73,7 +85,7 @@ class SpeciesAltName(models.Model):
     '''
 
     alt_name = models.TextField()
-    species = models.ForeignKey('Species', on_delete=models.CASCADE)
+    species = models.ForeignKey('Species', related_name='alt_names', on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (('alt_name', 'species'),)
@@ -84,9 +96,42 @@ class SpeciesNameTranslation(models.Model):
     Represents the translation of a species name into a particular language.
     '''
 
-    species = models.ForeignKey('Species', on_delete=models.CASCADE)
+    species = models.ForeignKey('Species', related_name='name_translations', on_delete=models.CASCADE)
     language = models.TextField()
     translated_name = models.TextField()
 
     class Meta:
         unique_together = (('species', 'language'),)
+
+
+class AudioFileManager(models.Manager):
+    '''
+    Adds some helpers onto AudioFile.objects.
+    '''
+
+    FILE_NAME_EXTENSIONS = {
+        'audio/mpeg': 'mp3',
+    }
+
+    def download_and_save(self, recording_id, url):
+        content_type, content = xenocanto.cache.download_file(url)
+        extension = AudioFileManager.FILE_NAME_EXTENSIONS[content_type]
+        cache_file_name = xenocanto.cache.get_cache_file_name(
+                'audio', recording_id, '%s.%s' % (recording_id, extension))
+        with xenocanto.cache.open_cache_file(cache_file_name, 'wb') as cache_file:
+            cache_file.write(content)
+        logging.info('Downloaded %s (%d kB)', cache_file_name, round(len(content) / 1024))
+        audio_file = AudioFile(recording_id=recording_id, file_name=cache_file_name)
+        audio_file.save()
+        return audio_file
+
+
+class AudioFile(models.Model):
+    '''
+    Represents an audio file on disk, belonging to a certain recording.
+    '''
+
+    objects = AudioFileManager()
+
+    recording = models.OneToOneField('Recording', related_name='audio_file', on_delete=models.CASCADE)
+    file_name = models.TextField()

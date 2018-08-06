@@ -70,24 +70,27 @@ def find_recordings_cached(query):
     return recordings
 
 
-def download_recording(recording):
-    response = get_response(recording['file'])
+def download_recording(recording_file):
+    response = get_response(recording_file)
     return response.headers['content-type'], response.content
 
 
-def download_recording_cached(recording):
+def download_recording_cached(recording_id, recording_file):
     cache_dir_name = get_cache_dir('audio')
-    cache_file_names = glob.glob(os.path.join(cache_dir_name, '%s.*' % recording['id']))
+    cache_file_names = glob.glob(os.path.join(cache_dir_name, '%02d' % (int(recording_id) % 100), '%s.*' % recording_id))
     if len(cache_file_names) > 1:
-        raise RuntimeError('Amgiguous cache for XC%s: %s' % (recording['id'], ', '.join(cache_file_names)))
+        raise RuntimeError('Amgiguous cache for XC%s: %s' % (recording_id, ', '.join(cache_file_names)))
     elif len(cache_file_names) == 1:
+        logging.info('Returning %s from cache (%d kB)',
+                cache_file_name,
+                round(len(data) / 1024))
         return cache_file_names[0]
     else:
-        content_type, data = download_recording(recording)
+        content_type, data = download_recording(recording_file)
         extension = {
                 'audio/mpeg': 'mp3',
         }[content_type]
-        cache_file_name = os.path.join(cache_dir_name, '%s.%s' % (recording['id'], extension))
+        cache_file_name = os.path.join(cache_dir_name, '%s.%s' % (recording_id, extension))
         logging.info('Downloaded %s (%d kB)',
                 cache_file_name,
                 round(len(data) / 1024))
