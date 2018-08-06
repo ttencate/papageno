@@ -2,6 +2,9 @@
 Implements automatic selection of suitable recordings for the bird app.
 '''
 
+import math
+
+from xenocanto.cache import DownloadError
 from xenocanto.models import Recording, AudioFile, AudioFileAnalysis
 
 
@@ -42,11 +45,25 @@ def preselect_recordings(xc_species):
 def suitability(recording):
     '''
     Returns a floating-point suitability score for the given recording (higher
-    is better). Requires an audio file analysis to be available.
+    is better). Requires an audio analysis to exist already.
     '''
+    analysis = recording.get_or_download_audio_file().get_or_compute_analysis()
+
     suitability = 100.0
+
     # Clarity is not strictly between 0 and 100, but 100 works well here.
-    suitability *= recording.audio_file.analysis.clarity / 100.0
+    suitability *= analysis.clarity / 100.0
+
+    # Use the recordist's judgement as well.
+    suitability *= {
+        'A': 1.0,
+        'B': 0.7,
+        'C': 0.3,
+        'D': 0.1,
+        'E': 0.05,
+        None: 0.0,
+    }[recording.q]
+
     return suitability
 
 
