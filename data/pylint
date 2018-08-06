@@ -1,0 +1,4 @@
+#!/bin/bash
+
+[[ -z VIRTUAL_ENV ]] && source venv/bin/activate
+pylint *.py console xenocanto
