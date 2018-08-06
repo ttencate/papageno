@@ -11,11 +11,28 @@ from xenocanto import audio
 import xenocanto.cache
 
 
+class RecordingManager(models.Manager):
+    '''
+    Manager for Recording objects.
+    '''
+
+    def for_species(self, species_name):
+        parts = species_name.split()
+        if len(parts) < 2 or len(parts) > 4:
+            raise ValueError('Species name "%s" does not consist of 2-3 words' % species_name)
+        gen = parts[0]
+        sp = parts[1]
+        ssp = parts[2] if len(parts) >= 3 else None
+        return self.filter(gen=gen, sp=sp, ssp=ssp)
+
+
 class Recording(models.Model):
     '''
     Represents a single Xeno-Canto recording, identified by a unique number (XC
     number).
     '''
+
+    objects = RecordingManager()
 
     id = models.TextField(primary_key=True)
     gen = models.TextField(null=True, blank=True)
@@ -55,9 +72,10 @@ class Recording(models.Model):
 
     def types(self):
         '''
-        Returns all types of this recording as a list of strings (e.g. ['call', 'song']).
+        Returns the set of all types of this recording as a list of strings
+        (e.g. ['call', 'song']).
         '''
-        return [t.strip() for t in self.type.split(',')]
+        return set(t.strip().lower() for t in self.type.split(','))
 
     def translated_name(self, language):
         '''
@@ -195,6 +213,9 @@ class AudioFile(models.Model):
         analysis.clarity = audio.compute_clarity(segment)
         analysis.save()
         return analysis
+
+    def play(self):
+        audio.play(self.load_preprocessed_audio())
 
 
 class AudioFileAnalysis(models.Model):
