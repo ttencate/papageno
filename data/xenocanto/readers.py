@@ -17,4 +17,4 @@ def strip_comments_and_blank_lines(file_obj):
         line = _COMMENT_RE.sub('', line).strip()
         if not line:
             continue
-        return line
+        yield line
