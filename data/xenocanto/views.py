@@ -1,3 +1,7 @@
+'''
+View functions for the xenocanto app.
+'''
+
 import re
 
 from django.core.paginator import Paginator
@@ -8,6 +12,10 @@ from .models import Recording, Species
 
 
 def species_list(request):
+    '''
+    Shows a paginated list of all species in the database.
+    '''
+
     page = request.GET.get('page', 1)
 
     all_species = Species.objects.order_by('ioc_name')
@@ -22,15 +30,19 @@ def species_list(request):
 
 
 def species(request, ioc_name):
-    species = Species.objects.get(ioc_name__iexact=ioc_name)
+    '''
+    Shows a paginated list of all recordings for a given species.
+    '''
+
+    species = Species.objects.get(ioc_name__iexact=ioc_name) # pylint: disable=redefined-outer-name
     species_alt_names = set(a.alt_name for a in species.alt_names.all())
 
     query = {
-            'page': request.GET.get('page', 1),
-            'type': request.GET.get('type', ''),
-            'q': request.GET.get('q', ''),
-            'min_length': request.GET.get('min_length', ''),
-            'max_length': request.GET.get('max_length', ''),
+        'page': request.GET.get('page', 1),
+        'type': request.GET.get('type', ''),
+        'q': request.GET.get('q', ''),
+        'min_length': request.GET.get('min_length', ''),
+        'max_length': request.GET.get('max_length', ''),
     }
 
     recordings = Recording.objects.order_by('gen', 'sp', 'ssp', 'q', 'length_s')
@@ -55,8 +67,8 @@ def species(request, ioc_name):
 
     template = loader.get_template('xenocanto/species.html')
     context = {
-            'species': species,
-            'query': query,
-            'recordings': paginator.get_page(query['page']),
+        'species': species,
+        'query': query,
+        'recordings': paginator.get_page(query['page']),
     }
     return HttpResponse(template.render(context, request))

@@ -1,3 +1,11 @@
+'''
+Tests for the xenocanto app.
+'''
+
 from django.test import TestCase
 
-# Create your tests here.
+class Empty(TestCase):
+    '''
+    Placeholder.
+    '''
+    pass

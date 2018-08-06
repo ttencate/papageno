@@ -1,32 +1,23 @@
 #!/usr/bin/env python3
 
-import hashlib
+'''
+Scrapes and caches Xenocanto metadata. Reads queries from stdin. Prints JSON
+metadata to stdout.
+'''
+
 import json
 import logging
-import os.path
-import re
 import sys
 
 from xenocanto import xenocanto
+from xenocanto.cache import DownloadError
+from xenocanto.readers import strip_comments_and_blank_lines
 
 
-def md5(string):
-    m = hashlib.md5()
-    m.update(bytes(string, 'utf8'))
-    return m.digest()
-
-
-def main():
+def _main():
     logging.basicConfig(level=logging.INFO)
 
-    queries = sys.stdin
-
-    first = True
-    for line in queries:
-        query = re.sub(r'#.*', '', line).strip()
-        if not query:
-            continue
-
+    for query in strip_comments_and_blank_lines(sys.stdin):
         recordings = list(xenocanto.find_recordings_cached(query))
         if not recordings:
             logging.warning('No results for query "%s"', query)
@@ -36,12 +27,11 @@ def main():
         for recording in recordings:
             try:
                 metadata = xenocanto.fetch_metadata_cached(recording['id'])
-            except Exception as ex:
-                logging.error('Error downloading recording %s' % recording['id'], exc_info=True)
+            except DownloadError:
+                logging.error('Error downloading recording %s', recording['id'], exc_info=True)
                 continue
-            # print(json.dumps(metadata, indent=2))
+            print(json.dumps(metadata, indent=2))
 
 
 if __name__ == '__main__':
-    main()
-
+    _main()

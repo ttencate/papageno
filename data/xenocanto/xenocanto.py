@@ -1,4 +1,7 @@
-import collections
+'''
+A set of functions to talk to the Xenocanto site.
+'''
+
 import glob
 import json
 import logging
@@ -8,32 +11,23 @@ import re
 import urllib.parse
 
 from bs4 import BeautifulSoup
-import requests
+
+from xenocanto.cache import get_response
 
 
-def get_cache_dir(subdir):
+# TODO replace by xenocanto.cache functions
+def _get_cache_dir(subdir):
     cache_dir_name = os.path.join(os.path.dirname(__file__), 'cache', subdir)
     os.makedirs(cache_dir_name, exist_ok=True)
     return cache_dir_name
 
 
-def make_url(query_dict):
-    SCHEME = 'https'
-    HOSTNAME = 'www.xeno-canto.org'
-    PATH = '/api/2/recordings'
+def _search_url(query_dict):
+    scheme = 'https'
+    hostname = 'www.xeno-canto.org'
+    path = '/api/2/recordings'
     query = urllib.parse.urlencode(query_dict)
-    return urllib.parse.urlunparse((SCHEME, HOSTNAME, PATH, None, query, None))
-
-
-def get_response(url):
-    if url.startswith('//'):
-        url = 'https:' + url
-    response = requests.get(url)
-    try:
-        response.raise_for_status()
-    except Exception as ex:
-        raise RuntimeError('Error downloading %s' % url) from ex
-    return response
+    return urllib.parse.urlunparse((scheme, hostname, path, None, query, None))
 
 
 def find_recordings(query):
@@ -45,17 +39,21 @@ def find_recordings(query):
     '''
     page = 1
     while True:
-        url = make_url({'query': query, 'page': str(page)})
-        json = get_response(url).json()
-        for recording in json['recordings']:
+        url = _search_url({'query': query, 'page': str(page)})
+        response = get_response(url).json()
+        for recording in response['recordings']:
             yield recording
-        if json['page'] >= json['numPages']:
+        if response['page'] >= response['numPages']:
             break
         page += 1
 
 
 def find_recordings_cached(query):
-    cache_dir_name = get_cache_dir('queries')
+    '''
+    Gets search results for the given query as a list of JSON objects. Uses
+    cached results if possible.
+    '''
+    cache_dir_name = _get_cache_dir('queries')
     cache_file_name = os.path.join(cache_dir_name, '%s.json' % query)
     try:
         with open(cache_file_name, 'rb') as cache_file:
@@ -70,51 +68,56 @@ def find_recordings_cached(query):
     return recordings
 
 
-def download_recording(recording_file):
+def _download_recording(recording_file):
     response = get_response(recording_file)
     return response.headers['content-type'], response.content
 
 
 def download_recording_cached(recording_id, recording_file):
-    cache_dir_name = get_cache_dir('audio')
-    cache_file_names = glob.glob(os.path.join(cache_dir_name, '%02d' % (int(recording_id) % 100), '%s.*' % recording_id))
+    '''
+    Downloads the given recording if needed, and returns the file name on disk.
+    '''
+    cache_dir_name = _get_cache_dir('audio')
+    cache_file_names = glob.glob(os.path.join(cache_dir_name,
+                                              '%02d' % (int(recording_id) % 100),
+                                              '%s.*' % recording_id))
     if len(cache_file_names) > 1:
         raise RuntimeError('Amgiguous cache for XC%s: %s' % (recording_id, ', '.join(cache_file_names)))
     elif len(cache_file_names) == 1:
-        logging.info('Returning %s from cache (%d kB)',
-                cache_file_name,
-                round(len(data) / 1024))
+        logging.info('Returning %s from cache', cache_file_names[0])
         return cache_file_names[0]
     else:
-        content_type, data = download_recording(recording_file)
+        content_type, data = _download_recording(recording_file)
         extension = {
-                'audio/mpeg': 'mp3',
+            'audio/mpeg': 'mp3',
         }[content_type]
         cache_file_name = os.path.join(cache_dir_name, '%s.%s' % (recording_id, extension))
-        logging.info('Downloaded %s (%d kB)',
-                cache_file_name,
-                round(len(data) / 1024))
+        logging.info('Downloaded %s (%d kB)', cache_file_name, round(len(data) / 1024))
         with open(cache_file_name, 'wb') as cache_file:
             cache_file.write(data)
         return cache_file_name
 
 
 def fetch_metadata(recording_id):
+    '''
+    Fetches, parses and returns metadata about a given recording.
+    '''
     url = 'https://www.xeno-canto.org/%s' % recording_id
     response = get_response(url)
     try:
-        return parse_metadata(response.content)
+        return _parse_metadata(url, response.content)
     except Exception as ex:
         raise RuntimeError('Failed to parse page at URL %s' % url) from ex
 
 
-def parse_metadata(content):
+def _parse_metadata(url, content): # pylint: disable=too-many-locals
     soup = BeautifulSoup(content, 'html.parser')
 
     def get_table(title):
         for sibling in soup.find('h2', string=re.compile(title)).next_siblings:
             if hasattr(sibling, 'name') and sibling.name == 'table':
                 return sibling
+        return None
     def get_table_cell(table, key, regexp=None, convert=None):
         result = table.find('td', string=re.compile(key)).next_sibling.get_text(strip=True)
         if result == 'Not specified':
@@ -145,44 +148,50 @@ def parse_metadata(content):
     sonogram_link = soup.find('a', string=re.compile(r'Download full-length sonogram'))
 
     return {
-            # Attributes from the API (https://www.xeno-canto.org/article/153)
-            'id': re.match(r'XC(\d+)', name.contents[0]).group(1),
-            'gen': species[0],
-            'sp': species[1],
-            'ssp': species[2] if len(species) >= 3 else None,
-            'en': name.find('a').string.strip(),
-            'rec': get_table_cell(recording_data, 'Recordist'),
-            'cnt': get_table_cell(recording_data, 'Country'),
-            'loc': get_table_cell(recording_data, 'Location'),
-            'lat': get_table_cell(recording_data, 'Latitude', convert=float),
-            'lng': get_table_cell(recording_data, 'Longitude', convert=float),
-            'type': get_table_cell(sound_characteristics, 'Type'),
-            'file': absolute_url(soup.find('a', string=re.compile(r'Download audio file'))['href']),
-            'lic': absolute_url(soup.find(string=re.compile('^\s*Creative Commons')).parent['href']),
-            'url': url,
-            'q': quality.string if quality else None,
-            'time': get_table_cell(recording_data, 'Time', regexp=time_re),
-            'date': get_table_cell(recording_data, 'Date', regexp=date_re),
+        # Attributes from the API (https://www.xeno-canto.org/article/153)
+        'id': re.match(r'XC(\d+)', name.contents[0]).group(1),
+        'gen': species[0],
+        'sp': species[1],
+        'ssp': species[2] if len(species) >= 3 else None,
+        'en': name.find('a').string.strip(),
+        'rec': get_table_cell(recording_data, 'Recordist'),
+        'cnt': get_table_cell(recording_data, 'Country'),
+        'loc': get_table_cell(recording_data, 'Location'),
+        'lat': get_table_cell(recording_data, 'Latitude', convert=float),
+        'lng': get_table_cell(recording_data, 'Longitude', convert=float),
+        'type': get_table_cell(sound_characteristics, 'Type'),
+        'file': absolute_url(soup.find('a', string=re.compile(r'Download audio file'))['href']),
+        'lic': absolute_url(soup.find(string=re.compile(r'^\s*Creative Commons')).parent['href']),
+        'url': url,
+        'q': quality.string if quality else None,
+        'time': get_table_cell(recording_data, 'Time', regexp=time_re),
+        'date': get_table_cell(recording_data, 'Date', regexp=date_re),
 
-            # Attributes not present in the API.
-            'sonogram_url': absolute_url(sonogram_link['href']) if sonogram_link else None,
-            'elevation_m': get_table_cell(recording_data, 'Elevation', regexp=int_re, convert=int),
-            'length_s': get_table_cell(audio_file_properties, 'Length', regexp=float_re, convert=float),
-            'sampling_rate_hz': get_table_cell(audio_file_properties, 'Sampling rate', regexp=int_re, convert=int),
-            'bitrate_bps': get_table_cell(audio_file_properties, 'Bitrate of mp3', regexp=int_re, convert=int),
-            'channels': get_table_cell(audio_file_properties, 'Channels', regexp=int_re, convert=int),
-            'volume': get_table_cell(sound_characteristics, 'Volume'),
-            'speed': get_table_cell(sound_characteristics, 'Speed'),
-            'pitch': get_table_cell(sound_characteristics, 'Pitch'),
-            'sound_length': get_table_cell(sound_characteristics, 'Length'),
-            'number_of_notes': get_table_cell(sound_characteristics, 'Number of notes'),
-            'variable': get_table_cell(sound_characteristics, 'Variable'),
+        # Attributes not present in the API.
+        'sonogram_url': absolute_url(sonogram_link['href']) if sonogram_link else None,
+        'elevation_m': get_table_cell(recording_data, 'Elevation', regexp=int_re, convert=int),
+        'length_s': get_table_cell(audio_file_properties, 'Length', regexp=float_re, convert=float),
+        'sampling_rate_hz': get_table_cell(audio_file_properties, 'Sampling rate', regexp=int_re, convert=int),
+        'bitrate_bps': get_table_cell(audio_file_properties, 'Bitrate of mp3', regexp=int_re, convert=int),
+        'channels': get_table_cell(audio_file_properties, 'Channels', regexp=int_re, convert=int),
+        'volume': get_table_cell(sound_characteristics, 'Volume'),
+        'speed': get_table_cell(sound_characteristics, 'Speed'),
+        'pitch': get_table_cell(sound_characteristics, 'Pitch'),
+        'sound_length': get_table_cell(sound_characteristics, 'Length'),
+        'number_of_notes': get_table_cell(sound_characteristics, 'Number of notes'),
+        'variable': get_table_cell(sound_characteristics, 'Variable'),
     }
 
 
 def fetch_metadata_cached(recording_id):
-    cache_dir_name = get_cache_dir('metadata')
-    cache_file_name = os.path.join(cache_dir_name, '%02d' % (int(recording_id) % 100), '%s.json' % recording_id)
+    '''
+    Returns a JSON object with metadata about the given recording. Downloads it
+    only if it's not in the cache.
+    '''
+    cache_dir_name = _get_cache_dir('metadata')
+    cache_file_name = os.path.join(cache_dir_name,
+                                   '%02d' % (int(recording_id) % 100),
+                                   '%s.json' % recording_id)
     try:
         with open(cache_file_name, 'rb') as cache_file:
             return json.load(cache_file)
