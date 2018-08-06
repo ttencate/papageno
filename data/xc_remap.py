@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
 
+'''
+Maps IOC species names to alternative names that result in hits on Xenocanto.
+Reads names from stdin, prints matched names on stdout.
+'''
+
 import logging
-import re
 import sys
 
 from ioc import ioc
 from xenocanto import xenocanto
+from xenocanto.readers import strip_comments_and_blank_lines
 
 
-def main():
+def _main():
     logging.basicConfig(level=logging.INFO)
 
     ioc_list = ioc.IOCList()
 
-    queries = sys.stdin
-
-    first = True
-    for line in queries:
-        query = re.sub(r'#.*', '', line).strip()
-        if not query:
-            continue
-
+    for query in strip_comments_and_blank_lines(sys.stdin):
         recordings = xenocanto.find_recordings_cached(query)
         if recordings:
             print(query)
@@ -37,12 +35,12 @@ def main():
                         found_names.add(alt_name)
                 if not found_names:
                     logging.error('No results for query "%s", nor for synonyms %s',
-                            query,
-                            ', '.join("%s" % name for name in alt_names))
+                                  query,
+                                  ', '.join("%s" % name for name in alt_names))
                 else:
                     logging.info('No results for query "%s", but results exist for %s',
-                            query,
-                            ', '.join("%s" % name for name in found_names))
+                                 query,
+                                 ', '.join("%s" % name for name in found_names))
                     for name in sorted(found_names):
                         print(name)
             else:
@@ -51,5 +49,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-
+    _main()

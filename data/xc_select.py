@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 
+'''
+Selects the top best recordings for each species. Reads species names from
+stdin. Prints JSON for each recording to stdout.
+'''
+
 import json
 import logging
-import re
 import sys
 
 from xenocanto import xenocanto
+from xenocanto.readers import strip_comments_and_blank_lines
 
 
-def quality(metadata):
-    q = 100.0
+def _quality(metadata):
+    quality = 100.0
 
     allowed_licenses = ['by-nc-nd', 'by-nc-sa', 'by-sa'] # All of them for now.
     if not any('/%s/' % license in metadata['lic'] for license in allowed_licenses):
         return -1
 
-    q *= {
+    quality *= {
         'A': 1.0,
         'B': 0.7,
         'C': 0.3,
@@ -23,10 +28,10 @@ def quality(metadata):
         'E': 0.0,
     }.get(metadata['q'], 0.0)
 
-    q *= 1.0 / len(metadata['type'].split(','))
+    quality *= 1.0 / len(metadata['type'].split(','))
 
     if not 'call' in metadata['type'] and not 'song' in metadata['type']:
-        q *= 0.3
+        quality *= 0.3
 
     length = metadata['length_s']
     min_length = 3
@@ -34,30 +39,23 @@ def quality(metadata):
     max_optimal_length = 13
     max_length = 20
     if length < min_length:
-        q *= 0.0
+        quality *= 0.0
     elif length < min_optimal_length:
-        q *= (length - min_length) / (min_optimal_length - min_length)
+        quality *= (length - min_length) / (min_optimal_length - min_length)
     elif length < max_optimal_length:
-        q *= 1.0
+        quality *= 1.0
     elif length < max_length:
-        q *= (max_length - length) / (max_length  - max_optimal_length)
+        quality *= (max_length - length) / (max_length  - max_optimal_length)
     else:
-        q *= 0.0
+        quality *= 0.0
 
-    return q
+    return quality
 
 
-def main():
+def _main():
     logging.basicConfig(level=logging.INFO)
 
-    queries = sys.stdin
-
-    first = True
-    for line in queries:
-        query = re.sub(r'#.*', '', line).strip()
-        if not query:
-            continue
-
+    for query in strip_comments_and_blank_lines(sys.stdin):
         print(query)
         print()
 
@@ -71,17 +69,18 @@ def main():
                 continue
             metadatas.append(metadata)
 
-        metadatas.sort(key=quality, reverse=True)
+        metadatas.sort(key=_quality, reverse=True)
         picks = metadatas[:10]
-        if quality(picks[-1]) <= 10.0:
-            logging.warning('Quality for %s goes down to %f', quality(picks[-1]))
-        logging.info('Quality for %s goes down to %f', query, quality(picks[-1]))
+        worst_quality = _quality(picks[-1])
+        if worst_quality <= 10.0:
+            logging.warning('Quality for %s goes down to %f', query, worst_quality)
+        logging.info('Quality for %s goes down to %f', query, worst_quality)
 
         for pick in picks:
             print(json.dumps(pick, indent=2))
-            print(xenocanto.download_recording_cached(pick))
+            print(xenocanto.download_recording_cached(pick['id'], pick['file']))
 
         print()
 
 if __name__ == '__main__':
-    main()
+    _main()

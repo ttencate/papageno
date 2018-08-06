@@ -1,4 +1,5 @@
 import csv
+import difflib
 import logging
 import os.path
 
@@ -105,3 +106,6 @@ class IOCList:
 
     def find_by_name(self, name):
         return self.by_name.get(name, None)
+
+    def find_close_matches(self, name):
+        return difflib.get_close_matches(name, self.by_name.keys())

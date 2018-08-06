@@ -1,38 +1,34 @@
 #!/usr/bin/env python3
 
-import difflib
+'''
+Finds species names in the IOC list, and maps them to their canonical IOC
+names. Reads names from stdin, one per line. Prints original and canonical
+names, and translations.
+'''
+
 import logging
-import re
 import sys
 
 from ioc import ioc
+from xenocanto.readers import strip_comments_and_blank_lines
 
 
-def main():
+def _main():
     logging.basicConfig(level=logging.INFO)
 
     ioc_list = ioc.IOCList()
-    for line in sys.stdin:
-        name = re.sub(r'#.*', '', line).strip()
-        if not name:
-            continue
+    for name in strip_comments_and_blank_lines(sys.stdin):
         species = ioc_list.find_by_name(name)
-        suggested_names = None
         if not species:
             logging.warning('Could not find "%s", did you mean one of:\n%s',
-                    name,
-                    ', '.join(difflib.get_close_matches(name, ioc.by_name.keys())))
-        char = ' '
-        if not species:
-            char = 'X'
-        elif name != species.ioc_name:
-            char = 'C'
+                            name, ', '.join(ioc_list.find_close_matches(name)))
+
         print('{found}{changed} {name} -> {species}'.format(
             found=' ' if species else 'X',
             changed=' ' if not species or name == species.ioc_name else 'C',
             name=name,
-            species=species))
+            species=species or '?'))
 
 
 if __name__ == '__main__':
-    main()
+    _main()

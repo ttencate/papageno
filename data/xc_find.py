@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+'''
+Executes search queries on Xenocanto. Reads queries from stdin, prints
+recording IDs on stdout.
+'''
+
 import logging
 import re
 import sys
@@ -7,12 +12,11 @@ import sys
 from xenocanto import xenocanto
 
 
-def main():
+def _main():
     logging.basicConfig(level=logging.INFO)
 
     queries = sys.stdin
 
-    first = True
     for line in queries:
         query = re.sub(r'#.*', '', line).strip()
         if not query:
@@ -29,4 +33,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    _main()

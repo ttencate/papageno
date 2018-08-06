@@ -1,9 +1,13 @@
+'''
+Template tag for URL query string manipulation.
+'''
+
 import urllib.parse
 
 from django import template
 
 
-register = template.Library()
+register = template.Library() # pylint: disable=invalid-name
 
 
 @register.simple_tag
@@ -15,13 +19,13 @@ def query_url(url, **kwargs):
 
     scheme, netloc, path, params, query, fragment = urllib.parse.urlparse(url)
 
-    qs = urllib.parse.parse_qs(query)
+    query_dict = urllib.parse.parse_qs(query)
     for key, value in kwargs.items():
         if value is None:
-            if key in qs:
-                del qs[key]
+            if key in query_dict:
+                del query_dict[key]
         else:
-            qs[key] = [value]
-    query = urllib.parse.urlencode(qs, doseq=True)
+            query_dict[key] = [value]
+    query = urllib.parse.urlencode(query_dict, doseq=True)
 
     return urllib.parse.urlunparse((scheme, netloc, path, params, query, fragment))
