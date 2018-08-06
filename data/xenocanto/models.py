@@ -3,9 +3,11 @@ Models for the xenocanto app.
 '''
 
 import logging
+import os.path
 
 from django.db import models
 
+from xenocanto import audio
 import xenocanto.cache
 
 
@@ -164,3 +166,42 @@ class AudioFile(models.Model):
 
     recording = models.OneToOneField('Recording', related_name='audio_file', on_delete=models.CASCADE)
     file_name = models.TextField()
+
+    def get_extension(self):
+        '''
+        Returns the extension of the file name, e.g. 'mp3'.
+        '''
+        return os.path.splitext(self.file_name)[1][1:]
+
+    def load_preprocessed_audio(self):
+        '''
+        Loads and returns the audio from this file, preprocessed to a common
+        standard.
+        '''
+        return audio.preprocess_audio(audio.load_audio(self.file_name))
+
+    def analyze(self):
+        '''
+        Creates or updates the AudioFileAnalysis for this AudioFile and returns
+        it.
+        '''
+        try:
+            analysis = self.analysis # pylint: disable=no-member
+        except AudioFileAnalysis.DoesNotExist:
+            analysis = AudioFileAnalysis(audio_file=self)
+
+        segment = self.load_preprocessed_audio()
+
+        analysis.clarity = audio.compute_clarity(segment)
+        analysis.save()
+        return analysis
+
+
+class AudioFileAnalysis(models.Model):
+    '''
+    Stores statistics about a given audio file.
+    '''
+
+    audio_file = models.OneToOneField('AudioFile', related_name='analysis', on_delete=models.CASCADE)
+
+    clarity = models.FloatField(null=True, blank=True)
