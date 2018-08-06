@@ -5,12 +5,13 @@ from django.db import connection
 from django.core.management.base import BaseCommand, CommandError
 
 from xenocanto import xenocanto
+from xenocanto.management.base import LoggingCommand
 from xenocanto.models import Recording
 from xenocanto.readers import strip_comments_and_blank_lines
 from xenocanto.selection import preselect_recordings
 
 
-class Command(BaseCommand):
+class Command(LoggingCommand):
 
     help = '''
         Prefilters the list of recordings down to the suitable ones based only
@@ -24,6 +25,6 @@ class Command(BaseCommand):
             if not recordings:
                 logging.warning('No candidate recordings found for species %s', xc_species)
                 continue
-            logging.info('Found %s candidate recordings for species %s', xc_species)
+            logging.info('Found %s candidate recordings for species %s', len(recordings), xc_species)
             for recording in recordings:
                 print(recording.id)

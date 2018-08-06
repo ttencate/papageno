@@ -5,12 +5,13 @@ from django.db import connection
 from django.core.management.base import BaseCommand, CommandError
 
 from xenocanto import xenocanto
+from xenocanto.management.base import LoggingCommand
 from xenocanto.models import Recording
 from xenocanto.readers import strip_comments_and_blank_lines
 from xenocanto.selection import preselect_recordings, order_recordings
 
 
-class Command(BaseCommand):
+class Command(LoggingCommand):
 
     help = '''
         Filters the list of recordings down to the top 10 suitable ones based
