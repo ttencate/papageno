@@ -5,10 +5,11 @@ from django.db import transaction
 from django.core.management.base import BaseCommand, CommandError
 
 from ioc import ioc
+from xenocanto.management.base import LoggingCommand
 from xenocanto.models import Species, SpeciesAltName, SpeciesNameTranslation
 
 
-class Command(BaseCommand):
+class Command(LoggingCommand):
 
     help = 'Imports IOC spreadsheets into the database'
 

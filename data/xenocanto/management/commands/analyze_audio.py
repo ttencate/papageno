@@ -7,11 +7,12 @@ from django.core.management.base import BaseCommand, CommandError
 from xenocanto import xenocanto
 from xenocanto.audio import load_audio, preprocess_audio, compute_clarity
 from xenocanto.cache import DownloadError
+from xenocanto.management.base import LoggingCommand
 from xenocanto.models import Recording, AudioFileAnalysis
 from xenocanto.readers import strip_comments_and_blank_lines
 
 
-class Command(BaseCommand):
+class Command(LoggingCommand):
 
     help = '''
         Analyzes audio files and stores the results in the database. Reads a list of IDs from stdin.

@@ -5,10 +5,11 @@ from django.db import connection
 from django.core.management.base import BaseCommand, CommandError
 
 from xenocanto import xenocanto
+from xenocanto.management.base import LoggingCommand
 from xenocanto.models import Recording
 
 
-class Command(BaseCommand):
+class Command(LoggingCommand):
 
     help = 'Imports JSON-based cache into the database (pipe in a list of IDs)'
 
