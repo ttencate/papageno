@@ -100,7 +100,7 @@ class XenoCantoScraperTest {
                         pitch = "level",
                         soundLength = "3-6(s)",
                         numberOfNotes = "1-3",
-                        variable = "Not specified"
+                        variable = null
                 )
         )
     }
@@ -141,12 +141,12 @@ class XenoCantoScraperTest {
                         channels = 2,
 
                         type = "song",
-                        volume = "Not specified",
-                        speed = "Not specified",
-                        pitch = "Not specified",
-                        soundLength = "Not specified",
-                        numberOfNotes = "Not specified",
-                        variable = "Not specified"
+                        volume = null,
+                        speed = null,
+                        pitch = null,
+                        soundLength = null,
+                        numberOfNotes = null,
+                        variable = null
                 )
         )
     }
@@ -187,12 +187,12 @@ class XenoCantoScraperTest {
                         channels = 2,
 
                         type = "song",
-                        volume = "Not specified",
-                        speed = "Not specified",
-                        pitch = "Not specified",
-                        soundLength = "Not specified",
-                        numberOfNotes = "Not specified",
-                        variable = "Not specified"
+                        volume = null,
+                        speed = null,
+                        pitch = null,
+                        soundLength = null,
+                        numberOfNotes = null,
+                        variable = null
                 )
         )
     }
