@@ -78,7 +78,7 @@ fun Element.getTable(name: String): Element? =
         selectFirst("h2:contains($name) ~ table")
 
 fun Element.getCell(name: String): String? =
-        selectFirst("td:contains($name)")?.nextElementSibling()?.text()?.trim()
+        selectFirst("td:contains($name)")?.nextElementSibling()?.text()?.trim()?.let { if (it == "Not specified") { null } else { it } }
 
 fun Element.selectText(cssQuery: String): String? =
         selectFirst(cssQuery)?.text()?.trim()
