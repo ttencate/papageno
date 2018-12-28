@@ -3,25 +3,46 @@
 package com.frozenfractal.papageno.tools
 
 import com.frozenfractal.papageno.common.XenoCantoRecording
+import io.requery.sql.KotlinConfiguration
+import io.requery.sql.KotlinEntityDataStore
+import io.requery.sql.SchemaModifier
+import io.requery.sql.TableCreationMode
+import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.sqlite.SQLiteConfig
+import org.sqlite.SQLiteDataSource
 import java.net.URL
 
-const val MIN_ID = 1
-const val MAX_ID = 500000
+private val logger = KotlinLogging.logger {}
 
-val WHITESPACE_RE = Regex("""\s+""")
-val DATE_RE = Regex("""(\d{4}-\d{2}-\d{2})""")
-val TIME_RE = Regex("""(\d{1,2}:\d{2})""")
-val INT_RE = Regex("""(\d+)""")
-val FLOAT_RE = Regex("""(\d*\.\d+|\d+\.\d*|\d+)""")
+private const val MIN_ID = 1
+private const val MAX_ID = 500000
+
+private val WHITESPACE_RE = Regex("""\s+""")
+private val DATE_RE = Regex("""(\d{4}-\d{2}-\d{2})""")
+private val TIME_RE = Regex("""(\d{1,2}:\d{2})""")
+private val INT_RE = Regex("""(\d+)""")
+private val FLOAT_RE = Regex("""(\d*\.\d+|\d+\.\d*|\d+)""")
 
 fun main(args: Array<String>) {
     val cache = WebCache("xc_pages")
+
+    val sqliteConfig = SQLiteConfig()
+    val dataSource = SQLiteDataSource(sqliteConfig)
+    dataSource.url = "jdbc:sqlite:db.sqlite3"
+    val model = com.frozenfractal.papageno.common.Models.DEFAULT
+    val kotlinConfig = KotlinConfiguration(dataSource = dataSource, model = model)
+    val db = KotlinEntityDataStore<Any>(kotlinConfig)
+    SchemaModifier(dataSource, model).createTables(TableCreationMode.CREATE_NOT_EXISTS)
+
     for (id in MIN_ID..MAX_ID) {
         val url = "https://www.xeno-canto.org/$id"
         val html = cache.get(url, id.toString(), 6)
-        parseRecording(id, url, html)
+        val recording = parseRecording(id, url, html)
+
+        logger.info { "Upserting recording $id" }
+        db.upsert(recording)
     }
 }
 

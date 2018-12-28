@@ -1,8 +1,14 @@
 package com.frozenfractal.papageno.common
 
+import io.requery.Entity
+import io.requery.Key
+
+@Entity(extendable = false, immutable = true, stateless = true)
 data class XenoCantoRecording(
+        @get:Key
         val id: Int,
         val url: String,
+
         val genus: String?,
         val species: String?,
         val subspecies: String?,

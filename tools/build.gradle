@@ -1,4 +1,8 @@
+// Important: when running these tools from IntelliJ, enable "Delegate IDE build/run actions to Gradle"
+// under Gradle tool window > Gradle Settings > Gradle > Runner.
+
 plugins {
+    id 'java'
     id 'kotlin'
     id 'org.jetbrains.kotlin.jvm'
 }
@@ -9,6 +13,7 @@ dependencies {
     compile 'io.github.microutils:kotlin-logging:1.6.22'
     compile 'org.slf4j:slf4j-simple:1.7.25'
     compile 'org.jsoup:jsoup:1.11.3'
+    compile 'org.xerial:sqlite-jdbc:3.25.2'
 
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.3.2'
 	testCompile 'org.junit.jupiter:junit-jupiter-params:5.3.2'
