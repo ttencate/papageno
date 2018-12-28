@@ -3,6 +3,7 @@
 package com.frozenfractal.papageno.tools
 
 import com.frozenfractal.papageno.common.XenoCantoRecording
+import io.requery.kotlin.eq
 import io.requery.sql.KotlinConfiguration
 import io.requery.sql.KotlinEntityDataStore
 import io.requery.sql.SchemaModifier
@@ -14,8 +15,7 @@ import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import java.net.URL
 
-private val logger = KotlinLogging.logger {}
-
+private const val SKIP_EXISTING = true
 private const val MIN_ID = 1
 private const val MAX_ID = 500000
 
@@ -37,6 +37,10 @@ fun main(args: Array<String>) {
     SchemaModifier(dataSource, model).createTables(TableCreationMode.CREATE_NOT_EXISTS)
 
     for (id in MIN_ID..MAX_ID) {
+        if (SKIP_EXISTING && db.count(XenoCantoRecording::class).where(XenoCantoRecording::id eq id).get().value() > 0) {
+            logger.info { "Skipping existing recording $id" }
+            continue
+        }
         val url = "https://www.xeno-canto.org/$id"
         val html = cache.get(url, id.toString(), 6)
         val recording = parseRecording(id, url, html)
@@ -109,3 +113,5 @@ fun String.extract(regex: Regex): String? =
 
 fun String.toAbsoluteUrl(baseUrl: String): String =
         URL(URL(baseUrl), this).toString()
+
+private val logger = KotlinLogging.logger {}
