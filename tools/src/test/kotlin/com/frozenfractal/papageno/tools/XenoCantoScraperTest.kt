@@ -23,6 +23,7 @@ class XenoCantoScraperTest {
                 XenoCantoRecording(
                         id = id,
                         url = url,
+
                         genus = "Anodorhynchus",
                         species = "hyacinthinus",
                         subspecies = null,
@@ -69,6 +70,7 @@ class XenoCantoScraperTest {
                 XenoCantoRecording(
                         id = id,
                         url = url,
+
                         genus = null,
                         species = null,
                         subspecies = null,
@@ -115,6 +117,7 @@ class XenoCantoScraperTest {
                 XenoCantoRecording(
                         id = id,
                         url = url,
+
                         genus = "Leiothrix",
                         species = "lutea",
                         subspecies = null,
@@ -161,6 +164,7 @@ class XenoCantoScraperTest {
                 XenoCantoRecording(
                         id = id,
                         url = url,
+
                         genus = null,
                         species = null,
                         subspecies = null,

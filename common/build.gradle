@@ -1,10 +1,20 @@
 plugins {
+    id 'java'
     id 'kotlin'
+    id 'kotlin-kapt'
     id 'org.jetbrains.kotlin.jvm'
+    id 'idea'
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile 'io.requery:requery:1.5.1'
+    compile 'io.requery:requery-kotlin:1.5.1'
+    compile 'io.requery:requery-android:1.5.1' // For Android
+
+    kapt 'io.requery:requery-processor:1.5.1' // For desktop
+    annotationProcessor 'io.requery:requery-processor:1.5.1' // For Android
+
+    runtimeClasspath files('build/classes/kotlin/main')
 }
 
 compileKotlin {
@@ -16,5 +26,17 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+}
+
+// This is to mark the kapt-generated code (containing the Models class from Requery)
+// as a generated code directory so it doesn't give errors in IntelliJ.
+// https://stackoverflow.com/a/44740130/14637
+sourceSets {
+    main.java.srcDir file('build/generated/source/kapt/main')
+}
+idea {
+    module {
+        generatedSourceDirs += file('build/generated/source/kapt/main')
     }
 }
