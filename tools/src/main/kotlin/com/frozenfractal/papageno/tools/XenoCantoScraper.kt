@@ -28,13 +28,7 @@ private val FLOAT_RE = Regex("""(\d*\.\d+|\d+\.\d*|\d+)""")
 fun main(args: Array<String>) {
     val cache = WebCache("xc_pages")
 
-    val sqliteConfig = SQLiteConfig()
-    val dataSource = SQLiteDataSource(sqliteConfig)
-    dataSource.url = "jdbc:sqlite:db.sqlite3"
-    val model = com.frozenfractal.papageno.common.Models.DEFAULT
-    val kotlinConfig = KotlinConfiguration(dataSource = dataSource, model = model)
-    val db = KotlinEntityDataStore<Any>(kotlinConfig)
-    SchemaModifier(dataSource, model).createTables(TableCreationMode.CREATE_NOT_EXISTS)
+    val db = openDatabase(true)
 
     for (id in MIN_ID..MAX_ID) {
         if (SKIP_EXISTING && db.count(XenoCantoRecording::class).where(XenoCantoRecording::id eq id).get().value() > 0) {
