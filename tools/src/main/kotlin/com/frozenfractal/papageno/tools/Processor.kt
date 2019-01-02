@@ -21,17 +21,20 @@ fun main(args: Array<String>) {
             .toList()
     logger.info("${recordings.size} usable recordings found")
 
-    logger.info("Constructing k-d trees...")
+    logger.info("Grouping recordings by species...")
     val recordingsBySpeciesName = recordings
-            .filter(XenoCantoRecording::hasLocation)
             .groupBy(XenoCantoRecording::speciesName)
+            .filter { it.value.size >= 20 }
+    logger.info("${recordingsBySpeciesName.size} species found with sufficient number of recordings")
+
+    logger.info("Constructing k-d trees...")
     val params = KdTreeParams(minRecordingsPerNode = 10, maxLevel = 8)
     var totalSize = 0
     for (entry in recordingsBySpeciesName) {
-        val tree = KdTree.fromRecordings(entry.value, params)
+        val tree = KdTree.fromRecordings(entry.value.filter(XenoCantoRecording::hasLocation), params)
         totalSize += tree.serialize().size
     }
-    logger.info("Total tree size: $totalSize")
+    logger.info("Total k-d tree size: $totalSize")
 }
 
 private val logger = KotlinLogging.logger {}
