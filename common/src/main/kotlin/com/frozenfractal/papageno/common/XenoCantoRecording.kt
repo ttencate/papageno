@@ -2,6 +2,7 @@ package com.frozenfractal.papageno.common
 
 import io.requery.Entity
 import io.requery.Key
+import io.requery.Transient
 
 @Entity(extendable = false, immutable = true, stateless = true)
 data class XenoCantoRecording(
@@ -41,4 +42,18 @@ data class XenoCantoRecording(
         val soundLength: String?,
         val numberOfNotes: String?,
         val variable: String?
-)
+) {
+    @get:Transient
+    val speciesName: String?
+        get() = if (genus == null || species == null) {
+            null
+        } else if (subspecies == null) {
+            "$genus $species"
+        } else {
+            "$genus $species $subspecies"
+        }
+
+    @get:Transient
+    val hasLocation: Boolean
+        get() = latitude != null && longitude != null
+}
