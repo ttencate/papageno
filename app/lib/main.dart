@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'package:audioplayers/audioplayers.dart';
+import 'package:audioplayers/audio_cache.dart';
 
 void main() => runApp(MyApp());
 
@@ -43,16 +43,16 @@ class SpeciesDb {
 
   SpeciesDb() {
     for (final species in [
-      Species(1, {Language.english: "great tit"}),
-      Species(2, {Language.english: "common chaffinch"}),
-      Species(3, {Language.english: "common blackbird"}),
-      Species(4, {Language.english: "common chiffchaff"}),
-      Species(5, {Language.english: "European robin"}),
-      Species(6, {Language.english: "willow warbler"}),
-      Species(7, {Language.english: "Eurasian blue tit"}),
-      Species(8, {Language.english: "Eurasian blackcap"}),
-      Species(9, {Language.english: "red crossbill"}),
-      Species(10, {Language.english: "song thrush"}),
+      Species(1, {Language.english: 'great tit'}),
+      Species(2, {Language.english: 'common chaffinch'}),
+      Species(3, {Language.english: 'common blackbird'}),
+      Species(4, {Language.english: 'common chiffchaff'}),
+      Species(5, {Language.english: 'European robin'}),
+      Species(6, {Language.english: 'willow warbler'}),
+      Species(7, {Language.english: 'Eurasian blue tit'}),
+      Species(8, {Language.english: 'Eurasian blackcap'}),
+      Species(9, {Language.english: 'red crossbill'}),
+      Species(10, {Language.english: 'song thrush'}),
     ]) {
       _addSpecies(species);
     }
@@ -70,9 +70,9 @@ class SpeciesDb {
 
 class Recording {
   final Species species;
-  final double durationSeconds;
+  final String fileName;
 
-  Recording(this.species, this.durationSeconds);
+  Recording(this.species, this.fileName);
 }
 
 class Question {
@@ -80,6 +80,7 @@ class Question {
   final List<Species> choices;
 
   Question(this.recording, this.choices) {
+    assert(recording != null);
     assert(choices.isNotEmpty);
     assert(choices.contains(answer));
   }
@@ -95,7 +96,7 @@ class QuestionFactory {
   Question createQuestion() {
     var ids = _speciesDb.ids;
     assert(ids.length >= _answerCount);
-    List<Species> choices = [];
+    var choices = <Species>[];
     for (var i = 0; i < _answerCount; i++) {
       var index = _random.nextInt(ids.length);
       choices.add(_speciesDb.species(ids[index]));
@@ -103,7 +104,7 @@ class QuestionFactory {
       ids.removeLast();
     }
     var answer = choices[_random.nextInt(choices.length)];
-    return Question(Recording(answer, 5.0), choices);
+    return Question(Recording(answer, 'recordings/cuckoo.mp3'), choices);
   }
 }
 
@@ -113,7 +114,7 @@ class QuestionWidget extends StatefulWidget {
   QuestionWidget(this._question);
 
   @override
-  _QuestionWidgetState createState() => _QuestionWidgetState(this._question);
+  _QuestionWidgetState createState() => _QuestionWidgetState(_question);
 }
 
 class _QuestionWidgetState extends State<QuestionWidget> {
@@ -131,31 +132,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             aspectRatio: 16.0/9.0,
             child: Placeholder(),
           ),
-          Ink(
-            color: Colors.blue.shade50, // TODO take from theme
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Slider(
-                    value: 0.0,
-                    min: 0.0,
-                    max: _question.recording.durationSeconds,
-                    onChanged: (double value) {
-                      // TODO
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.play_arrow),
-                  color: Colors.blue, // TODO take from theme
-                  iconSize: 48.0,
-                  onPressed: () {
-                    // TODO
-                  },
-                ),
-              ]
-            ),
-          ),
+          Player(_question.recording),
           ListView(
             padding: EdgeInsets.all(0),
             shrinkWrap: true,
@@ -177,8 +154,54 @@ class _QuestionWidgetState extends State<QuestionWidget> {
   }
 }
 
+class _PlayerState extends State<Player> {
+  final Recording _recording;
+
+  final _audioCache = AudioCache();
+
+  _PlayerState(this._recording);
+
+  @override
+  Widget build(BuildContext context) {
+    return Ink(
+      color: Colors.blue.shade50, // TODO take from theme
+      child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Slider(
+                value: 0.0,
+                min: 0.0,
+                max: 0.0, // TODO get from AudioPlayer (but it's async)
+                onChanged: (double value) {
+                  // TODO
+                },
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.play_arrow),
+              color: Colors.blue, // TODO take from theme
+              iconSize: 48.0,
+              onPressed: () {
+                _audioCache.play(_recording.fileName);
+              },
+            ),
+          ]
+      ),
+    );
+  }
+}
+
+class Player extends StatefulWidget {
+  final Recording _recording;
+
+  Player(this._recording);
+
+  @override
+  _PlayerState createState() => _PlayerState(_recording);
+}
+
 extension Capitalize on String {
   String capitalize() {
-    return "${this[0].toUpperCase()}${this.substring(1)}";
+    return '${this[0].toUpperCase()}${substring(1)}';
   }
 }
