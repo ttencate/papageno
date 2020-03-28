@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Text("Hello world") // QuestionWidget(questionFactory.createQuestion()),
+      home: QuestionWidget(questionFactory.createQuestion()),
     );
   }
 }
@@ -174,16 +174,6 @@ class _QuestionWidgetState extends State<QuestionWidget> {
         ],
       ),
     );
-  }
-
-  List<Widget> _intersperseLines(Iterable<Widget> children) {
-    List<Widget> result = [];
-    result.add(Divider());
-    for (final child in children) {
-      result.add(child);
-      result.add(Divider());
-    }
-    return result;
   }
 }
 
