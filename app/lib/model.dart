@@ -60,7 +60,7 @@ class Question {
   Question(this.recording, this.choices) :
         assert(recording != null),
         assert(choices.isNotEmpty),
-        assert(choices.contains(answer));
+        assert(choices.contains(recording.species));
 
   Species get answer => recording.species;
 }

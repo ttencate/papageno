@@ -20,19 +20,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class QuestionWidget extends StatefulWidget {
+class QuestionWidget extends StatelessWidget {
   final Question _question;
 
   QuestionWidget(this._question);
-
-  @override
-  _QuestionWidgetState createState() => _QuestionWidgetState(_question);
-}
-
-class _QuestionWidgetState extends State<QuestionWidget> {
-  final Question _question;
-
-  _QuestionWidgetState(this._question);
 
   @override
   Widget build(BuildContext context) {
