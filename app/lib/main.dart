@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:audioplayers/audio_cache.dart';
 
 import 'model.dart';
@@ -15,24 +18,23 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: QuestionWidget(questionFactory.createQuestion()),
+      home: QuestionScreen(questionFactory.createQuestion()),
     );
   }
 }
 
-class QuestionWidget extends StatelessWidget {
-  final Question _question;
+class _QuestionScreenState extends State<QuestionScreen> {
 
-  QuestionWidget(this._question);
+  Question get _question => widget._question;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // TODO horizontal layout
+      // TODO alternative layout for landscape orientation
       body: Column(
         children: <Widget>[
           AspectRatio(
-            aspectRatio: 16.0/9.0,
+            aspectRatio: 16.0 / 9.0,
             child: Placeholder(),
           ),
           Player(_question.recording),
@@ -57,12 +59,47 @@ class QuestionWidget extends StatelessWidget {
   }
 }
 
+class QuestionScreen extends StatefulWidget {
+  final Question _question;
+
+  QuestionScreen(this._question);
+
+  @override
+  _QuestionScreenState createState() => _QuestionScreenState();
+}
+
 class _PlayerState extends State<Player> {
-  final Recording _recording;
+  AudioPlayer _audioPlayer;
+  AudioCache _audioCache;
+  bool _loaded = false;
+  AudioPlayerState _state = AudioPlayerState.STOPPED;
+  Duration _duration = Duration();
+  Duration _position = Duration();
 
-  final _audioCache = AudioCache();
+  Recording get _recording => widget._recording;
 
-  _PlayerState(this._recording);
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.setReleaseMode(ReleaseMode.LOOP);
+    _audioPlayer.onPlayerStateChanged.listen((AudioPlayerState state) {
+      setState(() { _state = state; });
+    });
+    _audioPlayer.onDurationChanged.listen((Duration duration) {
+      setState(() { _duration = duration; });
+    });
+    _audioPlayer.onAudioPositionChanged.listen((Duration position) {
+      setState(() { _position = position; });
+    });
+
+    _audioCache = AudioCache(fixedPlayer: _audioPlayer);
+    _audioCache.play(_recording.fileName).then((_) {
+      setState(() {
+        _loaded = true;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,35 +109,51 @@ class _PlayerState extends State<Player> {
           children: <Widget>[
             Expanded(
               child: Slider(
-                value: 0.0,
                 min: 0.0,
-                max: 0.0, // TODO get from AudioPlayer (but it's async)
-                onChanged: (double value) {
-                  // TODO
-                },
+                max: _duration.inMilliseconds.toDouble(),
+                value: _position.inMilliseconds.toDouble(),
+                onChanged: _loaded ? _seek : null,
               ),
             ),
             IconButton(
-              icon: Icon(Icons.play_arrow),
+              icon: Icon(_state == AudioPlayerState.PLAYING ? Icons.pause : Icons.play_arrow),
               color: Colors.blue, // TODO take from theme
               iconSize: 48.0,
-              onPressed: () {
-                _audioCache.play(_recording.fileName);
-              },
+              onPressed: _loaded ? _togglePlaying : null,
             ),
           ]
       ),
     );
+  }
+
+  void _togglePlaying() {
+    if (_state != AudioPlayerState.PLAYING) {
+      _audioPlayer.resume();
+    } else {
+      _audioPlayer.pause();
+    }
+  }
+
+  void _seek(double position) {
+    _audioPlayer.seek(Duration(milliseconds: position.toInt()));
+  }
+
+  @override
+  void dispose() {
+    _audioCache.clearCache();
+    _audioPlayer.release();
+    super.dispose();
   }
 }
 
 class Player extends StatefulWidget {
   final Recording _recording;
 
-  Player(this._recording);
+  Player(this._recording) :
+    assert(_recording != null);
 
   @override
-  _PlayerState createState() => _PlayerState(_recording);
+  _PlayerState createState() => _PlayerState();
 }
 
 extension Capitalize on String {
