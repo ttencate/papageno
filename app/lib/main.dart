@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -7,62 +7,175 @@ import 'package:audioplayers/audio_cache.dart';
 
 import 'model.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var questionFactory = QuestionFactory();
     return MaterialApp(
       title: 'Papageno',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: QuestionScreen(questionFactory.createQuestion()),
+      home: QuizScreen(),
     );
   }
 }
 
-class _QuestionScreenState extends State<QuestionScreen> {
+class _QuizScreenState extends State<QuizScreen> {
 
-  Question get _question => widget._question;
+  final _questionFactory = QuestionFactory();
+  Question _currentQuestion;
+  int _currentQuestionIndex = 0;
+  final int _totalQuestionCount = 20;
+
+  @override
+  void initState() {
+    super.initState();
+    _showNextQuestion();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // TODO alternative layout for landscape orientation
-      body: Column(
-        children: <Widget>[
-          AspectRatio(
-            aspectRatio: 16.0 / 9.0,
-            child: Placeholder(),
-          ),
-          Player(_question.recording),
-          ListView(
-            padding: EdgeInsets.all(0),
-            shrinkWrap: true,
-            children: ListTile.divideTiles(
-              context: context,
-              tiles: _question.choices.map((species) {
-                return ListTile(
-                  title: Text(species.nameIn(Language.english).capitalize()),
-                  onTap: () {
-                    // TODO
-                  },
-                );
-              }),
-            ).toList(),
-          ),
-        ],
+      appBar: AppBar(
+        title: Text('Question ${_currentQuestionIndex} of ${_totalQuestionCount}'),
+        // TODO show some sort of progress bar
+      ),
+      body: QuestionScreen(
+        key: ObjectKey(_currentQuestion),
+        question: _currentQuestion,
+        onProceed: _showNextQuestion
       ),
     );
+  }
+
+  void _showNextQuestion() {
+    setState(() {
+      _currentQuestionIndex++;
+      _currentQuestion = _questionFactory.createQuestion();
+    });
+  }
+}
+
+class QuizScreen extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _QuizScreenState();
+}
+
+class _QuestionScreenState extends State<QuestionScreen> {
+
+  Question get _question => widget.question;
+  Species _choice;
+
+  @override
+  Widget build(BuildContext context) {
+    var instructions = '';
+    if (_choice != null) {
+      if (_question.isCorrect(_choice)) {
+        instructions = 'Right answer! Tap to continue';
+      } else {
+        instructions = 'Wrong answer… Tap to continue';
+      }
+    }
+    // TODO alternative layout for landscape orientation
+    var questionScreen = Column(
+      children: <Widget>[
+        Expanded(
+          child: Stack(
+            children: <Widget>[
+              Placeholder(),
+              Visibility(
+                visible: _choice == null,
+                child: Positioned.fill(
+                  child: Container(
+                    color: Colors.grey.shade200,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: EdgeInsets.all(2.0),
+                        child: Text(
+                          '?',
+                          style: TextStyle(color: Colors.grey.shade500),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Player(
+          key: GlobalObjectKey(_question.recording),
+          recording: _question.recording,
+        ),
+        for (var widget in ListTile.divideTiles(
+          context: context,
+          tiles: _question.choices.map(_buildChoice),
+        )) widget,
+        Divider(height: 0.0),
+        Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Center(
+            child: Opacity(
+              opacity: _choice == null ? 0.0 : 1.0,
+              child: Text(instructions, style: TextStyle(color: Colors.grey)),
+            )
+          ),
+        )
+      ],
+    );
+    if (_choice == null) {
+      return questionScreen;
+    } else {
+      return GestureDetector(
+        onTap: widget.onProceed,
+        child: questionScreen,
+      );
+    }
+  }
+
+  Widget _buildChoice(Species species) {
+    Color color;
+    Icon icon;
+    if (_choice != null) {
+      if (_question.isCorrect(species)) {
+        color = Colors.green.shade200;
+        icon = Icon(Icons.check_circle, color: Colors.green.shade800);
+      } else if (species == _choice) {
+        color = Colors.red.shade200;
+        icon = Icon(Icons.cancel, color: Colors.red.shade800);
+      }
+    }
+    return Container(
+      color: color,
+      child: ListTile(
+        title: Text(species.nameIn(Language.dutch).capitalize()),
+        trailing: icon,
+        onTap: _choice == null ? () { _choose(species); } : null,
+      ),
+    );
+  }
+
+  void _choose(Species species) {
+    assert(_choice == null);
+    setState(() {
+      _choice = species;
+    });
   }
 }
 
 class QuestionScreen extends StatefulWidget {
-  final Question _question;
+  final Question question;
+  final Function() onProceed;
 
-  QuestionScreen(this._question);
+  QuestionScreen({Key key, @required this.question, this.onProceed}) :
+      assert(question != null),
+      super(key: key);
 
   @override
   _QuestionScreenState createState() => _QuestionScreenState();
@@ -75,21 +188,24 @@ class _PlayerState extends State<Player> {
   AudioPlayerState _state = AudioPlayerState.STOPPED;
   Duration _duration = Duration();
   Duration _position = Duration();
+  StreamSubscription<AudioPlayerState> _playerStateSubscription;
+  StreamSubscription<Duration> _durationSubscription;
+  StreamSubscription<Duration> _audioPositionSubscription;
 
-  Recording get _recording => widget._recording;
+  Recording get _recording => widget.recording;
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
     _audioPlayer.setReleaseMode(ReleaseMode.LOOP);
-    _audioPlayer.onPlayerStateChanged.listen((AudioPlayerState state) {
+    _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((AudioPlayerState state) {
       setState(() { _state = state; });
     });
-    _audioPlayer.onDurationChanged.listen((Duration duration) {
+    _durationSubscription = _audioPlayer.onDurationChanged.listen((Duration duration) {
       setState(() { _duration = duration; });
     });
-    _audioPlayer.onAudioPositionChanged.listen((Duration position) {
+    _audioPositionSubscription = _audioPlayer.onAudioPositionChanged.listen((Duration position) {
       setState(() { _position = position; });
     });
 
@@ -99,6 +215,18 @@ class _PlayerState extends State<Player> {
         _loaded = true;
       });
     });
+  }
+
+  @override
+  void dispose() {
+    _audioCache.clearCache();
+
+    _playerStateSubscription.cancel();
+    _durationSubscription.cancel();
+    _audioPositionSubscription.cancel();
+    _audioPlayer.release();
+
+    super.dispose();
   }
 
   @override
@@ -137,20 +265,14 @@ class _PlayerState extends State<Player> {
   void _seek(double position) {
     _audioPlayer.seek(Duration(milliseconds: position.toInt()));
   }
-
-  @override
-  void dispose() {
-    _audioCache.clearCache();
-    _audioPlayer.release();
-    super.dispose();
-  }
 }
 
 class Player extends StatefulWidget {
-  final Recording _recording;
+  final Recording recording;
 
-  Player(this._recording) :
-    assert(_recording != null);
+  Player({Key key, @required this.recording}) :
+    assert(recording != null),
+    super(key: key);
 
   @override
   _PlayerState createState() => _PlayerState();

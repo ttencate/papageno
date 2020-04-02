@@ -3,7 +3,7 @@ import 'dart:math';
 enum Language {
   // scientific,
   english,
-  // dutch,
+  dutch,
 }
 
 class Species {
@@ -21,16 +21,16 @@ class SpeciesDb {
 
   SpeciesDb() {
     for (final species in [
-      Species(1, {Language.english: 'great tit'}),
-      Species(2, {Language.english: 'common chaffinch'}),
-      Species(3, {Language.english: 'common blackbird'}),
-      Species(4, {Language.english: 'common chiffchaff'}),
-      Species(5, {Language.english: 'European robin'}),
-      Species(6, {Language.english: 'willow warbler'}),
-      Species(7, {Language.english: 'Eurasian blue tit'}),
-      Species(8, {Language.english: 'Eurasian blackcap'}),
-      Species(9, {Language.english: 'red crossbill'}),
-      Species(10, {Language.english: 'song thrush'}),
+      Species(1, {Language.english: 'great tit', Language.dutch: 'koolmees'}),
+      Species(2, {Language.english: 'common chaffinch', Language.dutch: 'vink'}),
+      Species(3, {Language.english: 'common blackbird', Language.dutch: 'merel'}),
+      Species(4, {Language.english: 'common chiffchaff', Language.dutch: 'tjiftjaf'}),
+      Species(5, {Language.english: 'European robin', Language.dutch: 'roodborst'}),
+      Species(6, {Language.english: 'willow warbler', Language.dutch: 'fitis'}),
+      Species(7, {Language.english: 'Eurasian blue tit', Language.dutch: 'pimpelmees'}),
+      Species(8, {Language.english: 'Eurasian blackcap', Language.dutch: 'zwartkop'}),
+      Species(9, {Language.english: 'red crossbill', Language.dutch: 'witbandkruisbek'}),
+      Species(10, {Language.english: 'song thrush', Language.dutch: 'zanglijster'}),
     ]) {
       _addSpecies(species);
     }
@@ -63,6 +63,8 @@ class Question {
         assert(choices.contains(recording.species));
 
   Species get answer => recording.species;
+
+  bool isCorrect(Species species) => species == answer;
 }
 
 class QuestionFactory {
