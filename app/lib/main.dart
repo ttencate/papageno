@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:audioplayers/audio_cache.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'localization.dart';
 import 'model.dart';
+import 'strings.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,12 +16,23 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final inheritanceDelegate = InheritanceDelegate({
+      Locale('en'): Strings_en(),
+      Locale('nl'): Strings_nl(),
+    });
     return MaterialApp(
-      title: 'Papageno',
+      onGenerateTitle: (BuildContext context) => Strings.of(context).appTitle,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: QuizScreen(),
+      localizationsDelegates: [
+        inheritanceDelegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: inheritanceDelegate.supportedLocales,
     );
   }
 }
@@ -41,7 +54,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Question ${_currentQuestionIndex} of ${_totalQuestionCount}'),
+        title: Text(Strings.of(context).questionIndex(_currentQuestionIndex, _totalQuestionCount)),
         // TODO show some sort of progress bar
       ),
       body: QuestionScreen(
@@ -75,9 +88,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
     var instructions = '';
     if (_choice != null) {
       if (_question.isCorrect(_choice)) {
-        instructions = 'Right answer! Tap to continue';
+        instructions = Strings.of(context).rightAnswerInstructions;
       } else {
-        instructions = 'Wrong answer… Tap to continue';
+        instructions = Strings.of(context).wrongAnswerInstructions;
       }
     }
     // TODO alternative layout for landscape orientation

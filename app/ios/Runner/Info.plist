@@ -10,6 +10,12 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<!-- TODO: Not sure if these are correct. -->
+		<string>en</string>
+		<string>nl</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>app</string>
 	<key>CFBundlePackageType</key>
