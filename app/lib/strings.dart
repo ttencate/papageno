@@ -17,9 +17,9 @@ class Strings_en implements Strings {
   @override
   String questionIndex(int currentQuestionIndex, int totalQuestionCount) => 'Question $currentQuestionIndex of $totalQuestionCount';
   @override
-  String rightAnswerInstructions = 'Right answer! Tap to continue';
+  String rightAnswerInstructions = 'Tap to continue';
   @override
-  String wrongAnswerInstructions = 'Wrong answer… Tap to continue';
+  String wrongAnswerInstructions = 'Tap to continue';
 }
 
 class Strings_nl implements Strings {
@@ -28,7 +28,7 @@ class Strings_nl implements Strings {
   @override
   String questionIndex(int currentQuestionIndex, int totalQuestionCount) => 'Vraag $currentQuestionIndex van $totalQuestionCount';
   @override
-  String rightAnswerInstructions = 'Juist! Tik om verder te gaan';
+  String rightAnswerInstructions = 'Tik om verder te gaan';
   @override
-  String wrongAnswerInstructions = 'Verkeerd antwoord… Tik om verder te gaan';
+  String wrongAnswerInstructions = 'Tik om verder te gaan';
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:audioplayers/audio_cache.dart';
@@ -78,6 +79,122 @@ class QuizScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _QuizScreenState();
 }
 
+class CircleClipper extends CustomClipper<Rect> {
+  const CircleClipper({Listenable reclip, this.fraction = 1.0}) :
+      super(reclip: reclip);
+
+  final double fraction;
+
+  @override
+  Rect getApproximateClipRect(Size size) {
+    return getClip(size);
+  }
+
+  @override
+  Rect getClip(Size size) {
+    final diameter = fraction * sqrt(size.width * size.width + size.height * size.height);
+    return Rect.fromCenter(center: size.center(Offset.zero), width: diameter, height: diameter);
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Rect> oldClipper) {
+    return oldClipper.runtimeType == CircleClipper ? (oldClipper as CircleClipper).fraction != fraction : true;
+  }
+}
+
+class RevealingImage extends StatefulWidget {
+  RevealingImage({@required this.image, this.revealed = true}) :
+      assert(image != null);
+
+  final ImageProvider image;
+  final bool revealed;
+
+  @override
+  State<StatefulWidget> createState() => _RevealingImageState();
+}
+
+class _RevealingImageState extends State<RevealingImage> with SingleTickerProviderStateMixin {
+  AnimationController controller;
+  Animation<double> animation;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+    animation = Tween<double>(begin: 0.0, end: 1.0).animate(controller);
+    // TODO figure out why we need this -- CustomClipper.reclip is tied to this animation so it should be updating outside the build cycle, right?
+    animation.addListener(() { setState(() {}); });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.revealed) {
+      controller.forward();
+    } else {
+      controller.reverse();
+    }
+    return Stack(
+      children: <Widget>[
+        Positioned.fill(
+          child: Container(
+            color: Colors.grey.shade200,
+            child: FittedBox(
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+              child: Padding(
+                padding: EdgeInsets.all(2.0),
+                child: Text(
+                  '?',
+                  style: TextStyle(color: Colors.grey.shade500),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: ClipOval(
+            clipper: CircleClipper(
+              fraction: animation.value,
+              reclip: animation,
+            ),
+            // Supposed to be faster than antiAlias, and during animation the
+            // difference is invisible anyway.
+            clipBehavior: Clip.hardEdge,
+            child: Image(
+              image: widget.image,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+}
+
+class DelayedCurve extends Curve {
+  const DelayedCurve({this.delay, this.inner}) :
+      assert(delay >= 0),
+      assert(delay <= 1);
+
+  final double delay;
+  final Curve inner;
+
+  @override
+  double transform(double t) {
+    if (t <= delay) {
+      return 0.0;
+    } else {
+      return inner.transform((t - delay) / (1.0 - delay));
+    }
+  }
+}
+
 class _QuestionScreenState extends State<QuestionScreen> {
 
   Question get _question => widget.question;
@@ -97,35 +214,16 @@ class _QuestionScreenState extends State<QuestionScreen> {
     var questionScreen = Column(
       children: <Widget>[
         Expanded(
-          child: Stack(
-            children: <Widget>[
-              Placeholder(),
-              Visibility(
-                visible: _choice == null,
-                child: Positioned.fill(
-                  child: Container(
-                    color: Colors.grey.shade200,
-                    child: FittedBox(
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
-                      child: Padding(
-                        padding: EdgeInsets.all(2.0),
-                        child: Text(
-                          '?',
-                          style: TextStyle(color: Colors.grey.shade500),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          child: RevealingImage(
+            image: AssetImage('assets/photos/common_blackbird.jpg'),
+            revealed: _choice != null,
           ),
         ),
         Player(
           key: GlobalObjectKey(_question.recording),
           recording: _question.recording,
         ),
+        Divider(height: 0.0),
         for (var widget in ListTile.divideTiles(
           context: context,
           tiles: _question.choices.map(_buildChoice),
@@ -134,8 +232,12 @@ class _QuestionScreenState extends State<QuestionScreen> {
         Padding(
           padding: EdgeInsets.all(8.0),
           child: Center(
-            child: Opacity(
+            child: AnimatedOpacity(
+              key: GlobalObjectKey(_question),
               opacity: _choice == null ? 0.0 : 1.0,
+              duration: Duration(seconds: 3),
+              // TODO DelayedCurve is just a quick and dirty way to delay the start of the animation, but I'm sure there's a better way.
+              curve: DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
               child: Text(instructions, style: TextStyle(color: Colors.grey)),
             )
           ),
@@ -165,7 +267,15 @@ class _QuestionScreenState extends State<QuestionScreen> {
       }
     }
     return Container(
-      color: color,
+      decoration: BoxDecoration(
+        shape: BoxShape.rectangle,
+        color: color,
+//        gradient: RadialGradient(
+//          radius: 0.5,
+//          colors: [color, color, Colors.transparent],
+//          stops: [0.0, 1.0, 1.0],
+//        ),
+      ),
       child: ListTile(
         title: Text(species.nameIn(Language.dutch).capitalize()),
         trailing: icon,
@@ -244,26 +354,23 @@ class _PlayerState extends State<Player> {
 
   @override
   Widget build(BuildContext context) {
-    return Ink(
-      color: Colors.blue.shade50, // TODO take from theme
-      child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Slider(
-                min: 0.0,
-                max: _duration.inMilliseconds.toDouble(),
-                value: _position.inMilliseconds.toDouble(),
-                onChanged: _loaded ? _seek : null,
-              ),
-            ),
-            IconButton(
-              icon: Icon(_state == AudioPlayerState.PLAYING ? Icons.pause : Icons.play_arrow),
-              color: Colors.blue, // TODO take from theme
-              iconSize: 48.0,
-              onPressed: _loaded ? _togglePlaying : null,
-            ),
-          ]
-      ),
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Slider(
+            min: 0.0,
+            max: _duration.inMilliseconds.toDouble(),
+            value: _position.inMilliseconds.toDouble(),
+            onChanged: _loaded ? _seek : null,
+          ),
+        ),
+        IconButton(
+          icon: Icon(_state == AudioPlayerState.PLAYING ? Icons.pause : Icons.play_arrow),
+          color: Colors.blue, // TODO take from theme
+          iconSize: 48.0,
+          onPressed: _loaded ? _togglePlaying : null,
+        ),
+      ]
     );
   }
 

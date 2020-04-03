@@ -83,6 +83,6 @@ class QuestionFactory {
       ids.removeLast();
     }
     var answer = choices[_random.nextInt(choices.length)];
-    return Question(Recording(answer, 'recordings/cuckoo.mp3'), choices);
+    return Question(Recording(answer, 'recordings/common_blackbird.mp3'), choices);
   }
 }
