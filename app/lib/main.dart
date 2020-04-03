@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: QuizScreen(),
+      home: QuizScreen(QuestionFactory(), 20),
       localizationsDelegates: [
         inheritanceDelegate,
         GlobalMaterialLocalizations.delegate,
@@ -38,24 +38,33 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class QuizScreen extends StatefulWidget {
+
+  QuizScreen(this.questionFactory, this.totalQuestionCount, [this.currentQuestionIndex = 1]);
+
+  final questionFactory;
+  final int totalQuestionCount;
+  final int currentQuestionIndex;
+
+  @override
+  State<StatefulWidget> createState() => _QuizScreenState();
+}
+
 class _QuizScreenState extends State<QuizScreen> {
 
-  final _questionFactory = QuestionFactory();
   Question _currentQuestion;
-  int _currentQuestionIndex = 0;
-  final int _totalQuestionCount = 20;
 
   @override
   void initState() {
     super.initState();
-    _showNextQuestion();
+    _currentQuestion = widget.questionFactory.createQuestion();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Strings.of(context).questionIndex(_currentQuestionIndex, _totalQuestionCount)),
+        title: Text(Strings.of(context).questionIndex(widget.currentQuestionIndex, widget.totalQuestionCount)),
         // TODO show some sort of progress bar
       ),
       body: QuestionScreen(
@@ -67,16 +76,21 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _showNextQuestion() {
-    setState(() {
-      _currentQuestionIndex++;
-      _currentQuestion = _questionFactory.createQuestion();
-    });
+    final route = PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(widget.questionFactory, widget.totalQuestionCount, widget.currentQuestionIndex + 1),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var tween = Tween(begin: Offset(1.0, 0.0), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeInOut));
+        var offsetAnimation = animation.drive(tween);
+        return SlideTransition(
+          position: offsetAnimation,
+          textDirection: Directionality.of(context),
+          child: child,
+        );
+      },
+    );
+    Navigator.of(context).pushReplacement(route);
   }
-}
-
-class QuizScreen extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() => _QuizScreenState();
 }
 
 class CircleClipper extends CustomClipper<Rect> {
@@ -195,6 +209,18 @@ class DelayedCurve extends Curve {
   }
 }
 
+class QuestionScreen extends StatefulWidget {
+  final Question question;
+  final Function() onProceed;
+
+  QuestionScreen({Key key, @required this.question, this.onProceed}) :
+      assert(question != null),
+      super(key: key);
+
+  @override
+  _QuestionScreenState createState() => _QuestionScreenState();
+}
+
 class _QuestionScreenState extends State<QuestionScreen> {
 
   Question get _question => widget.question;
@@ -290,18 +316,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
       _choice = species;
     });
   }
-}
-
-class QuestionScreen extends StatefulWidget {
-  final Question question;
-  final Function() onProceed;
-
-  QuestionScreen({Key key, @required this.question, this.onProceed}) :
-      assert(question != null),
-      super(key: key);
-
-  @override
-  _QuestionScreenState createState() => _QuestionScreenState();
 }
 
 class _PlayerState extends State<Player> {
