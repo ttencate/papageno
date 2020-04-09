@@ -14,6 +14,7 @@ import multiprocessing.pool
 import os.path
 import sys
 
+import tenacity
 import urllib3
 
 
@@ -58,18 +59,23 @@ def _main():
         writer.writeheader()
         with multiprocessing.pool.ThreadPool(args.jobs) as pool:
             for page in pool.imap(query.fetch_page, range(1, num_pages + 1)):
-                for recording in page['recordings']:
-                    # Massage the recording to flatten string and list fields.
-                    for sono_size, sono_url in recording['sono'].items():
-                        recording['sono-' + sono_size] = sono_url
-                    recording.pop('sono')
-                    recording['also'] = ';'.join(recording['also'])
-                    writer.writerow(recording)
-                    recordings_written += 1
-                pages_fetched += 1
-                logging.info(f'Fetched {pages_fetched}/{num_pages} pages, '
-                             f'wrote {recordings_written}/{num_recordings} recordings '
-                             f'({pages_fetched / num_pages * 100:.1f}%)')
+                try:
+                    for recording in page['recordings']:
+                        # Massage the recording to flatten string and list fields.
+                        for sono_size, sono_url in recording['sono'].items():
+                            recording['sono-' + sono_size] = sono_url
+                        recording.pop('sono')
+                        recording['also'] = ';'.join(recording['also'])
+                        writer.writerow(recording)
+                        recordings_written += 1
+                    pages_fetched += 1
+                    logging.info(f'Fetched {pages_fetched}/{num_pages} pages, '
+                                 f'wrote {recordings_written}/{num_recordings} recordings '
+                                 f'({pages_fetched / num_pages * 100:.1f}%)')
+                except Exception:
+                    logging.error(f'Error parsing page:\n{json.dumps(page, indent="  ")}',
+                                  exc_info=True)
+                    raise
     logging.info('Done')
 
 
@@ -82,6 +88,7 @@ class XcQuery:
         self._http = urllib3.PoolManager(num_pools=1, maxsize=pool_size)
         self._query = '%20'.join(f'{k}:{v}' for k, v in parts.items())
 
+    @tenacity.retry(stop=tenacity.stop_after_attempt(5))
     def fetch_page(self, page_number):
         '''
         Fetches the given page (1-based) and returns the parsed JSON.
@@ -89,7 +96,14 @@ class XcQuery:
         url = f'https://www.xeno-canto.org/api/2/recordings?query={self._query}&page={page_number}'
         logging.info(f'Fetching {url}')
         response = self._http.request('GET', url)
-        return json.loads(response.data)
+        if response.status != 200:
+            raise RuntimeError(f'URL {url} returned status code {response.status} '
+                               f'and said:\n{response.data}')
+        parsed_response = json.loads(response.data)
+        # Sanity check so we can retry before returning if needed.
+        if 'recordings' not in parsed_response:
+            raise RuntimeError(f'URL {url} returned JSON without "recordings":\n{response.data}')
+        return parsed_response
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.6.1"
 urllib3 = "^1.25.8"
+tenacity = "^6.1.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4.4"
