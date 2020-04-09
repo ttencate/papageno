@@ -85,9 +85,13 @@ class XcQuery:
     '''
 
     def __init__(self, parts, pool_size):
-        self._http = urllib3.PoolManager(num_pools=1, maxsize=pool_size)
+        self._http = urllib3.PoolManager(num_pools=1,
+                                         maxsize=pool_size,
+                                         timeout=urllib3.util.Timeout(total=300))
         self._query = '%20'.join(f'{k}:{v}' for k, v in parts.items())
 
+    # Note that we even retry 400 errors (i.e. client side). These spuriously
+    # happen, perhaps due to a bug in the API.
     @tenacity.retry(stop=tenacity.stop_after_attempt(5))
     def fetch_page(self, page_number):
         '''
