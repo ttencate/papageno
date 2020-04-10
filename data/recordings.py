@@ -3,6 +3,7 @@ Classes representing metadata about audio recordings.
 '''
 
 import csv
+import logging
 import natsort
 import os.path
 
@@ -54,6 +55,21 @@ class Recording:
         '''
         return self._dict['recording_id']
 
+    @property
+    def scientific_name(self):
+        '''
+        Returns the scientific name of the recorded species, without the
+        subspecies (if any).
+        '''
+        return f'{self._dict["gen"]} {self._dict["sp"]}'
+
+    @property
+    def lat_lon(self):
+        try:
+            return (float(self._dict['lat']), float(self._dict['lng']))
+        except ValueError:
+            return None
+
     def as_dict(self):
         return self._dict
 
@@ -77,6 +93,7 @@ class RecordingsList:
         Adds recordings from a CSV file into this list. There must not be any
         id conflicts. Raises FileNotFoundError if not found.
         '''
+        logging.info(f'Loading recordings from {file_name}')
         with open(file_name, 'rt') as input_file:
             reader = csv.DictReader(input_file)
             for row in reader:
@@ -86,17 +103,22 @@ class RecordingsList:
     def __len__(self):
         return len(self._by_recording_id)
 
-    def add_recording(self, recording):
+    def __iter__(self):
+        return iter(self._by_recording_id.values())
+
+    def add_recording(self, recording, allow_replace=False):
         '''
         Adds a new recording to the list. Its id must not already be present.
         '''
-        assert recording.recording_id not in self._by_recording_id
+        if not allow_replace and recording.recording_id in self._by_recording_id:
+            raise ValueError(f'Recording with id {recording.recording_id} already present')
         self._by_recording_id[recording.recording_id] = recording
 
     def save(self, file_name):
         '''
         Saves the list to a CSV file.
         '''
+        logging.info(f'Saving {len(self)} recordings to {file_name}')
         with open(file_name, 'wt') as output_file:
             writer = csv.DictWriter(output_file, Recording.FIELD_NAMES)
             writer.writeheader()
