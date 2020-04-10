@@ -26,6 +26,14 @@ version = "0.4.3"
 
 [[package]]
 category = "main"
+description = "Disk Cache -- Disk and file backed persistent cache."
+name = "diskcache"
+optional = false
+python-versions = "*"
+version = "4.1.0"
+
+[[package]]
+category = "main"
 description = "An implementation of lxml.xmlfile for the standard library"
 name = "et-xmlfile"
 optional = false
@@ -161,7 +169,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [metadata]
-content-hash = "9d142f3a5c2f2e2e88e9b3fe06abb6658d8163dd8925027e2ed8c2a9532fbcdc"
+content-hash = "5ce25dd04c7d435d4202750965e3c1435675196819d874bb97873aa18c3cf280"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -172,6 +180,10 @@ astroid = [
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
     {file = "colorama-0.4.3.tar.gz", hash = "sha256:e96da0d330793e2cb9485e9ddfd918d456036c7149416295932478192f4436a1"},
+]
+diskcache = [
+    {file = "diskcache-4.1.0-py2.py3-none-any.whl", hash = "sha256:69b253a6ffe95bb4bafb483b97c24fca3c2c6c47b82e92b36486969a7e80d47d"},
+    {file = "diskcache-4.1.0.tar.gz", hash = "sha256:bcee5a59f9c264e2809e58d01be6569a3bbb1e36a1e0fb83f7ef9b2075f95ce0"},
 ]
 et-xmlfile = [
     {file = "et_xmlfile-1.0.1.tar.gz", hash = "sha256:614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b"},

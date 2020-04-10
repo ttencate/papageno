@@ -12,6 +12,7 @@ urllib3 = "^1.25.8"
 tenacity = "^6.1.0"
 openpyxl = "^3.0.3"
 natsort = "^7.0.1"
+diskcache = "^4.1.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4.4"

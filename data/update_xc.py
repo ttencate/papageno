@@ -10,9 +10,11 @@ import argparse
 import itertools
 import json
 import logging
+import os.path
 import multiprocessing.pool
 import sys
 
+import diskcache
 import tenacity
 import urllib3
 
@@ -24,7 +26,10 @@ class XcQuery:
     Wrapper around the XenoCanto API.
     '''
 
-    def __init__(self, parts, pool_size):
+    def __init__(self, parts, pool_size, clear_cache=False):
+        self._cache = diskcache.Index(os.path.join(os.path.dirname(__file__), 'cache', 'xc_api'))
+        if clear_cache:
+            self._cache.clear()
         self._http = urllib3.PoolManager(num_pools=1,
                                          maxsize=pool_size,
                                          timeout=urllib3.util.Timeout(total=300))
@@ -38,6 +43,9 @@ class XcQuery:
         Fetches the given page (1-based) and returns the parsed JSON.
         '''
         url = f'https://www.xeno-canto.org/api/2/recordings?query={self._query}&page={page_number}'
+        if url in self._cache:
+            logging.info(f'Returning {url} from cache')
+            return self._cache[url]
         logging.info(f'Fetching {url}')
         response = self._http.request('GET', url)
         if response.status != 200:
@@ -47,6 +55,7 @@ class XcQuery:
         # Sanity check so we can retry before returning if needed.
         if 'recordings' not in parsed_response:
             raise RuntimeError(f'URL {url} returned JSON without "recordings":\n{response.data}')
+        self._cache[url] = parsed_response
         return parsed_response
 
 
@@ -64,12 +73,17 @@ def _main():
         '--end_id', type=int, default=999999999,
         help='Last id to fetch (inclusive)')
     parser.add_argument(
+        '--clear_cache', action='store_true',
+        help='Wipe the response cache and start from scratch')
+    parser.add_argument(
         '--jobs', '-j', type=int, default=10,
         help='Number of parallel fetches to run; do not set too high or else '
         'the XenoCanto server might get upset!')
     args = parser.parse_args()
 
-    query = XcQuery({'nr': f'{args.start_id}-{args.end_id}'}, pool_size=args.jobs)
+    query = XcQuery({'nr': f'{args.start_id}-{args.end_id}'},
+                    pool_size=args.jobs,
+                    clear_cache=args.clear_cache)
     first_page = query.fetch_page(1)
     num_pages = first_page['numPages']
     num_recordings = int(first_page['numRecordings'])
@@ -83,7 +97,10 @@ def _main():
             try:
                 for recording_json in page['recordings']:
                     recording = Recording.from_xc_json(recording_json)
-                    recordings_list.add_recording(recording)
+                    # Allow replacements in case the API shifts pages around
+                    # (it seems to do that, probably when new recordings are
+                    # added during the run).
+                    recordings_list.add_recording(recording, allow_replace=True)
                 pages_fetched += 1
                 logging.info(f'Fetched {pages_fetched}/{num_pages} pages, '
                              f'parsed {len(recordings_list)}/{num_recordings} recordings '
@@ -92,7 +109,6 @@ def _main():
                 logging.error(f'Error parsing page:\n{json.dumps(page, indent="  ")}',
                               exc_info=True)
                 raise
-    logging.info(f'Writing output to {args.recordings_file}')
     recordings_list.save(args.recordings_file)
 
 

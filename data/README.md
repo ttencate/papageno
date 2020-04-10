@@ -7,7 +7,7 @@ as the resulting data files.
 Pipeline description
 --------------------
 
-### `list_species.py`
+### `update_species.py`
 
 This script parses the official [IOC World Bird
 List](https://www.worldbirdnames.org/ioc-lists/master-list-2/) spreadsheet
@@ -20,18 +20,25 @@ Note that what constitutes a "species" changes as scientific insight
 progresses, which is why the IOC releases new lists every once in a while. For
 our purposes, species = scientific name = species id.
 
-XenoCanto also uses the sheets from IOC as their source; see [the Articles
+xeno-canto also uses the sheets from IOC as their source; see [the Articles
 section](https://www.xeno-canto.org/articles) on the site for updates about
 which version they last updated to. For best results, we should use the same
 version.
 
 ### `update_xc.py`
 
-This script fetches recording metadata through the [XenoCanto
+This script fetches recording metadata through the [xeno-canto
 API](https://www.xeno-canto.org/explore/api) and writes it to `sources/xc.csv`.
-Takes about an hour to run, and has no resume function.
+It takes about an hour to run, but responses are cached, so if it fails for
+some reason it can just be restarted.
 
-### `group_by_region.py`
+Note that the xeno-canto API does pagination (returning 500 recordings at a
+time), but does not order the results in any meaningful way, or offer anything
+like page tokens. So if recordings are added while the script is running, the
+pages might shuffle around. The result is that we may miss some recordings, or
+get duplicates (which we filter out).
+
+### `update_regions.py`
 
 This ingests `xc.csv` and groups recordings by location into 1×1 degree
 "squares" of latitude and longitude. Of course, the farther you go from the
