@@ -25,10 +25,11 @@ class Region:
     along the latitude and longitude axes.
     '''
 
-    def __init__(self, region_id, lat_start, lat_end, lon_start, lon_end):
+    def __init__(self, region_id, lat_start, lat_end, lon_start, lon_end): # pylint: disable=too-many-arguments
         '''
         Creates a new empty Region.
         '''
+        self.region_id = region_id
         self.lat_start = lat_start
         self.lat_end = lat_end
         self.lon_start = lon_start
@@ -104,7 +105,8 @@ class RegionsList:
         lon_end = lon_start + self._lon_region_size
         region_id = f'{lat_start}:{lon_start}'
         if region_id not in self._by_region_id:
-            self._by_region_id[region_id] = Region(region_id, lat_start, lat_end, lon_start, lon_end)
+            self._by_region_id[region_id] = Region(
+                region_id, lat_start, lat_end, lon_start, lon_end)
         return self._by_region_id[region_id]
 
     def save(self, file_name):
@@ -136,8 +138,8 @@ def _main():
         '--recordings_file', default=RecordingsList.DEFAULT_FILE_NAME,
         help='File containing recordings metadata')
     parser.add_argument(
-        '--species_list_file',
-        default=SpeciesList.DEFAULT_FILE_NAME,
+        '--selected_species_list_file',
+        default=os.path.join(os.path.dirname(__file__), 'sources', 'selected_species.csv'),
         help='File containing species list')
     parser.add_argument(
         '--regions_file',
@@ -163,7 +165,8 @@ def _main():
             species = species_list.get_species(scientific_name)
         except KeyError:
             if scientific_name not in ['Mystery mystery', 'Sonus naturalis']:
-                logging.info(f'Species {scientific_name} of recording {recording.recording_id} not found in species list')
+                logging.info(f'Species {scientific_name} of recording {recording.recording_id} '
+                             f'not found in species list')
             continue
         region = regions_list.get_region(recording.lat_lon)
         region.add_recording(species.species_id)
