@@ -59,6 +59,14 @@ likely to hear most.
 This just converts `sources/regions.csv` to `sources/regions.gpkg` for faster
 rendering in QGIS. Requires `ogr2ogr` from the GDAL package to be installed.
 
+### `select_recordings.py`
+
+Filters the recordings from `sources/xc.csv` down to the ones that are suitable
+for our application: not too short, not too long, no background species, and of
+decent quality. Then only those species are selected for which we have enough
+good recordings. The output is written to `sources/selected_recordings.csv` and
+`sources/selected_species.csv`.
+
 Setting up
 ----------
 

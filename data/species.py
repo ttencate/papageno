@@ -6,6 +6,39 @@ import csv
 import logging
 import os.path
 
+LANGUAGE_CODES = [
+    'en',
+    'af',
+    'ca',
+    'zh_CN',
+    'zh_TW',
+    'ics',
+    'da',
+    'nl',
+    'et',
+    'fi',
+    'fr',
+    'de',
+    'hu',
+    'is',
+    'id',
+    'it',
+    'ja',
+    'lv',
+    'lt',
+    'se',
+    'no',
+    'pl',
+    'pt',
+    'ru',
+    'sk',
+    'sl',
+    'es',
+    'sv',
+    'th',
+    'uk',
+]
+
 
 class Species:
     '''
@@ -15,7 +48,7 @@ class Species:
     def __init__(self, scientific_name, species_id=None, common_names=None):
         self.species_id = species_id
         self.scientific_name = scientific_name
-        self.common_names = common_names or {}
+        self.common_names = common_names or {key: None for key in LANGUAGE_CODES}
 
 
 class SpeciesList:
@@ -33,7 +66,6 @@ class SpeciesList:
         self._by_species_id = {}
         self._by_scientific_name = {}
         self._next_species_id = 1
-        self.language_codes = []
 
     def load(self, file_name):
         '''
@@ -42,9 +74,6 @@ class SpeciesList:
         logging.info(f'Loading species from {file_name}')
         with open(file_name, 'rt') as input_file:
             reader = csv.DictReader(input_file)
-            for field in reader.fieldnames:
-                if field not in ['species_id', 'scientific_name']:
-                    self.add_language_code(field)
             for row in reader:
                 species_id = int(row.pop('species_id'))
                 scientific_name = row.pop('scientific_name')
@@ -52,19 +81,13 @@ class SpeciesList:
                                   species_id=species_id,
                                   common_names=row)
                 self.add_species(species)
+        logging.info(f'Loaded {len(self)} species')
 
     def __len__(self):
         return len(self._by_species_id)
 
-    def add_language_code(self, language_code):
-        '''
-        Adds the given language code to the common names of all species
-        recorded in this list.
-        '''
-        assert language_code not in self.language_codes
-        self.language_codes.append(language_code)
-        for species in self._by_species_id:
-            species.common_names[language_code] = None
+    def __iter__(self):
+        return iter(self._by_species_id.values())
 
     def get_species(self, scientific_name):
         '''
@@ -92,7 +115,7 @@ class SpeciesList:
         logging.info(f'Saving {len(self)} species to {file_name}')
         with open(file_name, 'wt') as output_file:
             writer = csv.DictWriter(output_file,
-                                    ['species_id', 'scientific_name'] + self.language_codes)
+                                    ['species_id', 'scientific_name'] + LANGUAGE_CODES)
             writer.writeheader()
             for species_id in sorted(self._by_species_id.keys()):
                 species = self._by_species_id[species_id]

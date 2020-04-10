@@ -4,8 +4,9 @@ Classes representing metadata about audio recordings.
 
 import csv
 import logging
-import natsort
 import os.path
+
+import natsort
 
 
 class Recording:
@@ -65,12 +66,46 @@ class Recording:
 
     @property
     def lat_lon(self):
+        '''
+        A (latitude, longitude) tuple in WGS84 coordinates.
+        '''
         try:
             return (float(self._dict['lat']), float(self._dict['lng']))
         except ValueError:
             return None
 
+    @property
+    def quality(self):
+        '''
+        Recording quality from 'A' to 'E'.
+        '''
+        return self._dict['q']
+
+    @property
+    def duration_seconds(self):
+        '''
+        The length of the recording in seconds.
+        '''
+        parts = self._dict['length'].split(':')
+        seconds = int(parts.pop())
+        if parts:
+            seconds += 60 * int(parts.pop())
+        if parts:
+            seconds += 60 * 60 * int(parts.pop())
+        assert not parts
+        return seconds
+
+    @property
+    def background_species(self):
+        '''
+        A list of scientific names of background species present in the recording.
+        '''
+        return list(filter(None, self._dict['also'].split(';')))
+
     def as_dict(self):
+        '''
+        Returns the internal dictionary backing this Recording. Do not modify.
+        '''
         return self._dict
 
 
@@ -99,6 +134,7 @@ class RecordingsList:
             for row in reader:
                 recording = Recording(row)
                 self.add_recording(recording)
+        logging.info(f'Loaded {len(self)} recordings')
 
     def __len__(self):
         return len(self._by_recording_id)

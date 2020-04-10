@@ -19,7 +19,7 @@ import openpyxl
 from species import Species, SpeciesList
 
 
-_LANGUAGE_CODES = {
+_LANGUAGE_MAPPING = {
     'English': 'en',
     'Afrikaans': 'af',
     'Catalan': 'ca',
@@ -62,7 +62,7 @@ class Multiling:
     _NUM_HEADER_ROWS = 3
 
     def __init__(self, file_name):
-        logging.info(f'Loading {args.ioc_multiling_file}')
+        logging.info(f'Loading {file_name}')
         workbook = openpyxl.load_workbook(file_name, read_only=True)
         self._worksheet = workbook['List']
         self.fields = []
@@ -119,14 +119,12 @@ def _main():
         logging.info(f'Could not find {args.species_list_file}, starting afresh')
 
     for field in multiling.fields:
-        language_code = _LANGUAGE_CODES.get(field)
+        language_code = _LANGUAGE_MAPPING.get(field)
         if not language_code:
             if not re.match(r'^(No\d.*|Order|Family|Scientific Name)$', field):
-                raise ValueError(f'Do not know what to do with column {field}')
+                raise ValueError(f'Do not know what to do with column {field}; '
+                                 f'maybe it needs to be added as a language?')
             continue
-        if language_code not in species_list.language_codes:
-            logging.info(f'Adding new language {field} ({language_code})')
-            species_list.add_language_code(language_code)
 
     for row in multiling.merged_rows():
         scientific_name = row['Scientific Name']
@@ -137,7 +135,7 @@ def _main():
             species_list.add_species(species)
             logging.info(f'Added new species {species.scientific_name} (id {species.species_id})')
         for field, value in row.items():
-            language_code = _LANGUAGE_CODES.get(field)
+            language_code = _LANGUAGE_MAPPING.get(field)
             if language_code:
                 species.common_names[language_code] = value
 
