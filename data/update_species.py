@@ -62,6 +62,7 @@ class Multiling:
     _NUM_HEADER_ROWS = 3
 
     def __init__(self, file_name):
+        logging.info(f'Loading {args.ioc_multiling_file}')
         workbook = openpyxl.load_workbook(file_name, read_only=True)
         self._worksheet = workbook['List']
         self.fields = []
@@ -103,11 +104,10 @@ def _main():
         help='Path to the multilingual Excel file downloaded from IOC')
     parser.add_argument(
         '--species_list_file',
-        default=os.path.join(os.path.dirname(__file__), 'sources', 'species.csv'),
+        default=SpeciesList.DEFAULT_FILE_NAME,
         help='File of species list to be created/updated')
     args = parser.parse_args()
 
-    logging.info(f'Loading {args.ioc_multiling_file}')
     multiling = Multiling(args.ioc_multiling_file)
     logging.info(f'Found column headings: {multiling.fields}')
 
@@ -141,7 +141,6 @@ def _main():
             if language_code:
                 species.common_names[language_code] = value
 
-    logging.info(f'Writing {len(species_list)} species to {args.species_list_file}')
     species_list.save(args.species_list_file)
 
 

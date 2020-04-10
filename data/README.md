@@ -41,15 +41,23 @@ get duplicates (which we filter out).
 ### `update_regions.py`
 
 This ingests `xc.csv` and groups recordings by location into 1×1 degree
-"squares" of latitude and longitude. Of course, the farther you go from the
-equator, the more narrow and pointy these become, but this is not really a
-problem for our purposes because most birds don't live on the poles anyway.
+"squares" of latitude and longitude, writing the output to
+`sources/regions.csv`.
+
+Of course, the farther you go from the equator, the more narrow and pointy
+these become, but this is not really a problem for our purposes because most
+birds don't live on the poles anyway.
 
 For each square, it creates a ranking of which species were recorded, from most
 to least. Basing this on the number of _recordings_, rather than some other
 source like the number of _occurrences_ or _sightings_ of a species, makes
 sense for this app; after all, what we most care about is which birds you're
 likely to hear most.
+
+### `regions_to_gpkg.sh`
+
+This just converts `sources/regions.csv` to `sources/regions.gpkg` for faster
+rendering in QGIS. Requires `ogr2ogr` from the GDAL package to be installed.
 
 Setting up
 ----------

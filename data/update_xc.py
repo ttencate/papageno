@@ -109,6 +109,7 @@ def _main():
                 logging.error(f'Error parsing page:\n{json.dumps(page, indent="  ")}',
                               exc_info=True)
                 raise
+
     recordings_list.save(args.recordings_file)
 
 

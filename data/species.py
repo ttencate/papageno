@@ -3,6 +3,7 @@ Classes that represent species and lists of species.
 '''
 
 import csv
+import logging
 import os.path
 
 
@@ -23,7 +24,7 @@ class SpeciesList:
     name, and file reading and writing operations.
     '''
 
-    DEFAULT_FILE_NAME = os.path.join(os.path.dirname(__file__), 'sources', 'xc.csv')
+    DEFAULT_FILE_NAME = os.path.join(os.path.dirname(__file__), 'sources', 'species.csv')
 
     def __init__(self):
         '''
@@ -38,6 +39,7 @@ class SpeciesList:
         '''
         Loads the list from a CSV file. Raises FileNotFoundError if not found.
         '''
+        logging.info(f'Loading species from {file_name}')
         with open(file_name, 'rt') as input_file:
             reader = csv.DictReader(input_file)
             for field in reader.fieldnames:
@@ -87,6 +89,7 @@ class SpeciesList:
         '''
         Saves the list to a CSV file, ordered by species_id.
         '''
+        logging.info(f'Saving {len(self)} species to {file_name}')
         with open(file_name, 'wt') as output_file:
             writer = csv.DictWriter(output_file,
                                     ['species_id', 'scientific_name'] + self.language_codes)
