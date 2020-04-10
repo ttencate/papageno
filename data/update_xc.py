@@ -7,76 +7,16 @@ Fetches metadata for all recordings from the XenoCanto website
 '''
 
 import argparse
-import csv
+import itertools
 import json
 import logging
 import multiprocessing.pool
-import os.path
 import sys
 
 import tenacity
 import urllib3
 
-
-_FIELD_NAMES = [
-    'id', 'gen', 'sp', 'ssp', 'en', 'rec', 'cnt', 'loc', 'lat', 'lng', 'alt', 'type', 'url', 'file',
-    'file-name', 'sono-small', 'sono-med', 'sono-large', 'sono-full', 'lic', 'q', 'length', 'time',
-    'date', 'uploaded', 'also', 'rmk', 'bird-seen', 'playback-used',
-]
-
-
-def _main():
-    logging.basicConfig(level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--xc_db_file', default=os.path.join(os.path.dirname(__file__), 'sources', 'xc.csv'),
-        help='CSV file in which to store the resulting data')
-    parser.add_argument(
-        '--overwrite_data', action='store_true',
-        help='Scrape and update even those ids that are already present in the database')
-    parser.add_argument(
-        '--start_id', type=int, default=1,
-        help='First id to try scraping')
-    parser.add_argument(
-        '--end_id', type=int, default=1000000,
-        help='Id before which to stop scraping')
-    parser.add_argument(
-        '--jobs', '-j', type=int, default=10,
-        help='Number of parallel fetches to run; do not set too high or else '
-        'the XenoCanto server might get upset!')
-    args = parser.parse_args()
-
-    query = XcQuery({'since': '1980-01-01'}, pool_size=args.jobs)
-    first_page = query.fetch_page(1)
-    num_pages = first_page['numPages']
-    num_recordings = int(first_page['numRecordings'])
-    logging.info(f'Found {num_pages} pages, {num_recordings} recordings')
-    pages_fetched = 0
-    recordings_written = 0
-    with open(args.xc_db_file, 'wt') as xc_db_file:
-        writer = csv.DictWriter(xc_db_file, fieldnames=_FIELD_NAMES)
-        writer.writeheader()
-        with multiprocessing.pool.ThreadPool(args.jobs) as pool:
-            for page in pool.imap(query.fetch_page, range(1, num_pages + 1)):
-                try:
-                    for recording in page['recordings']:
-                        # Massage the recording to flatten string and list fields.
-                        for sono_size, sono_url in recording['sono'].items():
-                            recording['sono-' + sono_size] = sono_url
-                        recording.pop('sono')
-                        recording['also'] = ';'.join(recording['also'])
-                        writer.writerow(recording)
-                        recordings_written += 1
-                    pages_fetched += 1
-                    logging.info(f'Fetched {pages_fetched}/{num_pages} pages, '
-                                 f'wrote {recordings_written}/{num_recordings} recordings '
-                                 f'({pages_fetched / num_pages * 100:.1f}%)')
-                except Exception:
-                    logging.error(f'Error parsing page:\n{json.dumps(page, indent="  ")}',
-                                  exc_info=True)
-                    raise
-    logging.info('Done')
+from recordings import Recording, RecordingsList
 
 
 class XcQuery:
@@ -108,6 +48,52 @@ class XcQuery:
         if 'recordings' not in parsed_response:
             raise RuntimeError(f'URL {url} returned JSON without "recordings":\n{response.data}')
         return parsed_response
+
+
+def _main():
+    logging.basicConfig(level=logging.INFO)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--recordings_file', default=RecordingsList.DEFAULT_FILE_NAME,
+        help='CSV file in which to store the resulting recordings')
+    parser.add_argument(
+        '--start_id', type=int, default=1,
+        help='First id to fetch')
+    parser.add_argument(
+        '--end_id', type=int, default=999999999,
+        help='Last id to fetch (inclusive)')
+    parser.add_argument(
+        '--jobs', '-j', type=int, default=10,
+        help='Number of parallel fetches to run; do not set too high or else '
+        'the XenoCanto server might get upset!')
+    args = parser.parse_args()
+
+    query = XcQuery({'nr': f'{args.start_id}-{args.end_id}'}, pool_size=args.jobs)
+    first_page = query.fetch_page(1)
+    num_pages = first_page['numPages']
+    num_recordings = int(first_page['numRecordings'])
+    logging.info(f'Found {num_pages} pages, {num_recordings} recordings')
+    pages_fetched = 0
+    recordings_list = RecordingsList()
+    with multiprocessing.pool.ThreadPool(args.jobs) as pool:
+        for page in itertools.chain(
+                [first_page],
+                pool.imap(query.fetch_page, range(2, num_pages + 1))):
+            try:
+                for recording_json in page['recordings']:
+                    recording = Recording.from_xc_json(recording_json)
+                    recordings_list.add_recording(recording)
+                pages_fetched += 1
+                logging.info(f'Fetched {pages_fetched}/{num_pages} pages, '
+                             f'parsed {len(recordings_list)}/{num_recordings} recordings '
+                             f'({pages_fetched / num_pages * 100:.1f}%)')
+            except Exception:
+                logging.error(f'Error parsing page:\n{json.dumps(page, indent="  ")}',
+                              exc_info=True)
+                raise
+    logging.info(f'Writing output to {args.recordings_file}')
+    recordings_list.save(args.recordings_file)
 
 
 if __name__ == '__main__':
