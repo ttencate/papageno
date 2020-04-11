@@ -2,9 +2,15 @@
 Classes that represent species and lists of species.
 '''
 
-import csv
 import logging
 import os.path
+
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.schema import Index
+
+from base import Base
+
 
 LANGUAGE_CODES = [
     'en',
@@ -40,85 +46,37 @@ LANGUAGE_CODES = [
 ]
 
 
-class Species:
+class Species(Base):
     '''
     Represents a single species.
     '''
+    __tablename__ = 'species'
 
-    def __init__(self, scientific_name, species_id=None, common_names=None):
-        self.species_id = species_id
-        self.scientific_name = scientific_name
-        self.common_names = common_names or {key: None for key in LANGUAGE_CODES}
+    species_id = Column(Integer, primary_key=True, index=True, nullable=False, autoincrement=True)
+    scientific_name = Column(String, unique=True, index=True, nullable=False)
 
 
-class SpeciesList:
+class CommonName(Base):
     '''
-    Contains an in-memory list of Species, with quick lookup by scientific
-    name, and file reading and writing operations.
+    Represents the common name of a particular species in a particular language.
     '''
+    __tablename__ = 'common_names'
 
-    DEFAULT_FILE_NAME = os.path.join(os.path.dirname(__file__), 'sources', 'species.csv')
+    species_id = Column(Integer, ForeignKey('species.species_id'), primary_key=True, index=True)
+    language_code = Column(Enum(*LANGUAGE_CODES), primary_key=True)
+    common_name = Column(String)
 
-    def __init__(self):
-        '''
-        Creates a new, empty list.
-        '''
-        self._by_species_id = {}
-        self._by_scientific_name = {}
-        self._next_species_id = 1
+    species = relationship('Species', back_populates='common_names')
 
-    def load(self, file_name):
-        '''
-        Loads the list from a CSV file. Raises FileNotFoundError if not found.
-        '''
-        logging.info(f'Loading species from {file_name}')
-        with open(file_name, 'rt') as input_file:
-            reader = csv.DictReader(input_file)
-            for row in reader:
-                species_id = int(row.pop('species_id'))
-                scientific_name = row.pop('scientific_name')
-                species = Species(scientific_name=scientific_name,
-                                  species_id=species_id,
-                                  common_names=row)
-                self.add_species(species)
-        logging.info(f'Loaded {len(self)} species')
 
-    def __len__(self):
-        return len(self._by_species_id)
+Species.common_names = relationship('CommonName', back_populates='species')
 
-    def __iter__(self):
-        return iter(self._by_species_id.values())
 
-    def get_species(self, scientific_name):
-        '''
-        Returns a species by scientific name. Raises KeyError if not found.
-        '''
-        return self._by_scientific_name[scientific_name]
+class SelectedSpecies(Base):
+    '''
+    A table of all species ids that were selected to be included in the app.
+    '''
+    __tablename__ = 'selected_species'
 
-    def add_species(self, species):
-        '''
-        Adds the given species. If its species_id is None, it will be assigned.
-        If it's not None, the caller is responsible for not causing conflicts.
-        '''
-        if species.species_id is None:
-            species.species_id = self._next_species_id
-            self._next_species_id += 1
-        elif species.species_id in self._by_species_id:
-            raise ValueError(f'Species list already contains species id {species.species_id}')
-        self._by_species_id[species.species_id] = species
-        self._by_scientific_name[species.scientific_name] = species
-
-    def save(self, file_name):
-        '''
-        Saves the list to a CSV file, ordered by species_id.
-        '''
-        logging.info(f'Saving {len(self)} species to {file_name}')
-        with open(file_name, 'wt') as output_file:
-            writer = csv.DictWriter(output_file,
-                                    ['species_id', 'scientific_name'] + LANGUAGE_CODES)
-            writer.writeheader()
-            for species_id in sorted(self._by_species_id.keys()):
-                species = self._by_species_id[species_id]
-                row = {'species_id': species.species_id, 'scientific_name': species.scientific_name}
-                row.update(species.common_names)
-                writer.writerow(row)
+    species_id = Column(String, ForeignKey('species.species_id'),
+                        primary_key=True, index=True, nullable=False)

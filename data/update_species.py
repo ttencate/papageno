@@ -15,8 +15,10 @@ import re
 import sys
 
 import openpyxl
+from sqlalchemy.orm import joinedload
 
-from species import Species, SpeciesList
+import db
+from species import Species, CommonName
 
 
 _LANGUAGE_MAPPING = {
@@ -102,21 +104,12 @@ def _main():
         '--ioc_multiling_file',
         default=os.path.join(os.path.dirname(__file__), 'sources', 'Multiling IOC 9.1b.xlsx'),
         help='Path to the multilingual Excel file downloaded from IOC')
-    parser.add_argument(
-        '--species_list_file',
-        default=SpeciesList.DEFAULT_FILE_NAME,
-        help='File of species list to be created/updated')
     args = parser.parse_args()
+
+    session = db.create_session()
 
     multiling = Multiling(args.ioc_multiling_file)
     logging.info(f'Found column headings: {multiling.fields}')
-
-    species_list = SpeciesList()
-    try:
-        species_list.load(args.species_list_file)
-        logging.info(f'Read {args.species_list_file} containing {len(species_list)} species')
-    except FileNotFoundError:
-        logging.info(f'Could not find {args.species_list_file}, starting afresh')
 
     for field in multiling.fields:
         language_code = _LANGUAGE_MAPPING.get(field)
@@ -128,18 +121,36 @@ def _main():
 
     for row in multiling.merged_rows():
         scientific_name = row['Scientific Name']
-        try:
-            species = species_list.get_species(scientific_name)
-        except KeyError:
-            species = Species(scientific_name=row['Scientific Name'], species_id=None)
-            species_list.add_species(species)
+
+        species = session.query(Species)\
+            .options(joinedload(Species.common_names))\
+            .filter(Species.scientific_name == scientific_name)\
+            .one_or_none()
+        if species:
+            logging.info(f'Already have species {species.scientific_name} (id {species.species_id})')
+        else:
+            species = Species(species_id=None, scientific_name=row['Scientific Name'])
+            session.add(species)
+            session.flush()
             logging.info(f'Added new species {species.scientific_name} (id {species.species_id})')
+
         for field, value in row.items():
             language_code = _LANGUAGE_MAPPING.get(field)
             if language_code:
-                species.common_names[language_code] = value
+                common_names = [
+                    common_name for common_name in species.common_names
+                    if common_name.language_code == language_code
+                ]
+                if common_names:
+                    common_name = common_names[0]
+                else:
+                    common_name = CommonName(species_id=species.species_id, language_code=language_code)
+                    session.add(common_name)
+                if common_name.common_name != value:
+                    common_name.common_name = value
 
-    species_list.save(args.species_list_file)
+    logging.info('Committing transaction')
+    session.commit()
 
 
 if __name__ == '__main__':
