@@ -7,14 +7,15 @@ as the resulting data files.
 Pipeline description
 --------------------
 
+All scripts operate on `master.db`, which is an SQLite 3 database.
+
 ### `update_species.py`
 
 This script parses the official [IOC World Bird
 List](https://www.worldbirdnames.org/ioc-lists/master-list-2/) spreadsheet
-(Multilingual Version). It outputs `species.csv`, which has a row for each
-species and a column for each language. This file also tracks unique species
-ids, which are small integers (16 bits) that uniquely identify a scientific
-name.
+(Multilingual Version). It outputs to the `species` table and the
+`common_names` table. The `species` table tracks unique species ids, which are
+small integers (16 bits) that uniquely identify a scientific name.
 
 Note that what constitutes a "species" changes as scientific insight
 progresses, which is why the IOC releases new lists every once in a while. For
@@ -28,9 +29,9 @@ version.
 ### `update_xc.py`
 
 This script fetches recording metadata through the [xeno-canto
-API](https://www.xeno-canto.org/explore/api) and writes it to `sources/xc.csv`.
-It takes about an hour to run, but responses are cached, so if it fails for
-some reason it can just be restarted.
+API](https://www.xeno-canto.org/explore/api) and writes it to the `recordings`
+table. It takes about an hour to run, but responses are cached, so if it fails
+for some reason it can just be restarted.
 
 Note that the xeno-canto API does pagination (returning 500 recordings at a
 time), but does not order the results in any meaningful way, or offer anything
@@ -41,8 +42,8 @@ get duplicates (which we filter out).
 ### `update_regions.py`
 
 This ingests `xc.csv` and groups recordings by location into 1×1 degree
-"squares" of latitude and longitude, writing the output to
-`sources/regions.csv`.
+"squares" of latitude and longitude, writing the output to the `recordings`
+table.
 
 Of course, the farther you go from the equator, the more narrow and pointy
 these become, but this is not really a problem for our purposes because most

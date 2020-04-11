@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO port to SQLite
+
 '''
 Groups recordings by geographical regions, and ranks them by species from most
 to least occurring.
