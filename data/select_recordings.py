@@ -44,7 +44,7 @@ def _main():
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser()
-    args = parser.parse_args()
+    parser.parse_args()
 
     session = db.create_session()
 
@@ -57,10 +57,10 @@ def _main():
     for recording in progress.percent(session.query(Recording)\
             .options(defer('*'), *map(undefer, ['recording_id', 'genus', 'species', 'type']))\
             .filter(
-                Recording.quality == 'A',
-                Recording.length_seconds >= 5,
-                Recording.length_seconds <= 20,
-                Recording.background_species == [])):
+                    Recording.quality == 'A',
+                    Recording.length_seconds >= 5,
+                    Recording.length_seconds <= 20,
+                    Recording.background_species == [])):
         species = session.query(Species)\
             .filter(Species.scientific_name == recording.scientific_name)\
             .one_or_none()

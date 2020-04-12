@@ -25,6 +25,10 @@ class ExtraSession(Session):
     '''
 
     def bulk_save_objects_with_replace(self, objects):
+        '''
+        Like Session.bulk_save_objects, but replaces any whose primary key is
+        already present. Only works on SQLite.
+        '''
         # https://stackoverflow.com/questions/2218304/sqlalchemy-insert-ignore
         # This is a bit hacky, because the deregister call will remove *all*
         # visitors, not the one we just registered. But I don't see a better
@@ -40,7 +44,8 @@ class ExtraSession(Session):
 
 def _create_engine(file_name):
     logging.info(f'Opening database {file_name}')
-    engine = sqlalchemy.create_engine('sqlite:///' + file_name, echo=os.environ.get('ECHO_SQL') == '1')
+    engine = sqlalchemy.create_engine('sqlite:///' + file_name,
+                                      echo=os.environ.get('ECHO_SQL') == '1')
 
     # Presumably, all classes for which we need tables have been imported by now.
     Base.metadata.create_all(engine)
@@ -52,4 +57,7 @@ _session_factory = sqlalchemy.orm.sessionmaker(class_=ExtraSession)
 
 
 def create_session(file_name=os.path.join(os.path.dirname(__file__), 'master.db')):
+    '''
+    Creates and returns a new session connected to the master database.
+    '''
     return _session_factory(bind=_create_engine(file_name))

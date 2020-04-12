@@ -1,7 +1,8 @@
-import json
+'''
+Common base classes.
+'''
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.types import TypeDecorator, String
 
 
 Base = declarative_base()

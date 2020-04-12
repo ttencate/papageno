@@ -127,7 +127,8 @@ def _main():
             .filter(Species.scientific_name == scientific_name)\
             .one_or_none()
         if species:
-            logging.info(f'Already have species {species.scientific_name} (id {species.species_id})')
+            logging.info(f'Already have species {species.scientific_name} '
+                         f'(id {species.species_id})')
         else:
             species = Species(species_id=None, scientific_name=row['Scientific Name'])
             session.add(species)
@@ -144,7 +145,8 @@ def _main():
                 if common_names:
                     common_name = common_names[0]
                 else:
-                    common_name = CommonName(species_id=species.species_id, language_code=language_code)
+                    common_name = CommonName(species_id=species.species_id,
+                                             language_code=language_code)
                     session.add(common_name)
                 if common_name.common_name != value:
                     common_name.common_name = value

@@ -2,9 +2,6 @@
 Classes representing metadata about audio recordings.
 '''
 
-import logging
-import os.path
-
 from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, Date, Enum, JSON, ForeignKey
 from sqlalchemy.schema import Index
 

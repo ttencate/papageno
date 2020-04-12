@@ -2,12 +2,8 @@
 Classes that represent species and lists of species.
 '''
 
-import logging
-import os.path
-
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.schema import Index
 
 from base import Base
 
