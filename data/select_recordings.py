@@ -8,6 +8,7 @@ import argparse
 import collections
 import hashlib
 import logging
+import os.path
 import sys
 
 from sqlalchemy.orm import defer, undefer
@@ -53,6 +54,14 @@ def _main():
 
     candidate_recordings_by_species_id = collections.defaultdict(list)
 
+    blacklist_file = os.path.join(os.path.dirname(__file__), 'recordings_blacklist.txt')
+    logging.info(f'Loading blacklist {blacklist_file}')
+    with open(blacklist_file, 'rt') as blacklist:
+        blacklist_ids = set(filter(None, [
+            line.partition('#')[0].strip()
+            for line in blacklist
+        ]))
+
     logging.info(f'Selecting candidate recordings')
     for recording in progress.percent(session.query(Recording)\
             .options(defer('*'), *map(undefer, ['recording_id', 'genus', 'species', 'type']))\
@@ -61,6 +70,8 @@ def _main():
                     Recording.length_seconds >= 5,
                     Recording.length_seconds <= 20,
                     Recording.background_species == [])):
+        if recording.recording_id in blacklist_ids:
+            continue
         species = session.query(Species)\
             .filter(Species.scientific_name == recording.scientific_name)\
             .one_or_none()

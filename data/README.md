@@ -62,11 +62,21 @@ exploration in QGIS. Open `qgis/regions.qgz` in QGIS to view it.
 
 ### `select_recordings.py`
 
-Filters the recordings from `sources/xc.csv` down to the ones that are suitable
-for our application: not too short, not too long, no background species, and of
+Filters the recordings from `recordings` down to the ones that are suitable for
+our application: not too short, not too long, no background species, and of
 decent quality. Then only those species are selected for which we have enough
-good recordings. The output is written to `sources/selected_recordings.csv` and
-`sources/selected_species.csv`.
+good recordings. The output is written to `selected_recordings` and
+`selected_species`.
+
+A blacklist `recordings_blacklist.txt` contains ids of recordings that are, for
+whatever reason, not eligible.
+
+### `fetch_audio_files.py`
+
+Fetches all selected recordings from xeno-canto. Any permanent errors should be
+manually added to `recordings_blacklist.txt` and then `select_recordings.py`
+should be re-run to select alternative recordings or drop that species
+altogether.
 
 Setting up
 ----------
