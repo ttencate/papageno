@@ -141,10 +141,6 @@ def _main():
         '--clear_cache', action='store_true',
         help='Wipe the response cache and start from scratch')
     parser.add_argument(
-        '--keep_existing', action='store_true',
-        help='Do not erase existing xeno-canto recordings from the database '
-        '(but overwrite them if needed)')
-    parser.add_argument(
         '--jobs', '-j', type=int, default=10,
         help='Number of parallel fetches to run; do not set too high or else '
         'the XenoCanto server might get upset!')
@@ -152,8 +148,7 @@ def _main():
 
     session = db.create_session()
 
-    if not args.keep_existing:
-        session.query(Recording).filter(Recording.source == 'xc').delete()
+    session.query(Recording).filter(Recording.source == 'xc').delete()
 
     query = XcQuery({'nr': f'{args.start_id}-{args.end_id}'},
                     pool_size=args.jobs,
