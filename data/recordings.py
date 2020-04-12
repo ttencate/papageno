@@ -55,16 +55,6 @@ class Recording(Base):
         '''
         return self.genus + ' ' + self.species
 
-    @property
-    def lat_lon(self):
-        '''
-        A (latitude, longitude) tuple in WGS84 coordinates.
-        '''
-        if self.latitude is not None and self.longitude is not None:
-            return (self.latitude, self.longitude)
-        else:
-            return None
-
 
 Index('recordings_scientific_name', Recording.genus, Recording.species)
 

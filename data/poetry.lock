@@ -80,18 +80,6 @@ version = "0.6.1"
 
 [[package]]
 category = "main"
-description = "Simple yet flexible natural sorting in Python."
-name = "natsort"
-optional = false
-python-versions = ">=3.4"
-version = "7.0.1"
-
-[package.extras]
-fast = ["fastnumbers (>=2.0.0)"]
-icu = ["PyICU (>=1.0.0)"]
-
-[[package]]
-category = "main"
 description = "A Python library to read/write Excel 2010 xlsx/xlsm files"
 name = "openpyxl"
 optional = false
@@ -189,7 +177,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [metadata]
-content-hash = "9b1d48c2b4498ca22530d7157dd962b5e2fbe4aefcf425c1477b33cf3f98132b"
+content-hash = "f627ff4ee1d1de4051a6a9c02aaa2080b85518337be6ef05d1f08aebc1ac8234"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -242,10 +230,6 @@ lazy-object-proxy = [
 mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
-]
-natsort = [
-    {file = "natsort-7.0.1-py3-none-any.whl", hash = "sha256:d3fd728a3ceb7c78a59aa8539692a75e37cbfd9b261d4d702e8016639820f90a"},
-    {file = "natsort-7.0.1.tar.gz", hash = "sha256:a633464dc3a22b305df0f27abcb3e83515898aa1fd0ed2f9726c3571a27258cf"},
 ]
 openpyxl = [
     {file = "openpyxl-3.0.3.tar.gz", hash = "sha256:547a9fc6aafcf44abe358b89ed4438d077e9d92e4f182c87e2dc294186dc4b64"},
