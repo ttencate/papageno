@@ -41,7 +41,10 @@ class ExtraSession(Session):
 def _create_engine(file_name):
     logging.info(f'Opening database {file_name}')
     engine = sqlalchemy.create_engine('sqlite:///' + file_name, echo=os.environ.get('ECHO_SQL') == '1')
+
+    # Presumably, all classes for which we need tables have been imported by now.
     Base.metadata.create_all(engine)
+
     return engine
 
 

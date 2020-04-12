@@ -34,8 +34,7 @@ def _main():
                 Recording.quality == 'A',
                 Recording.length_seconds >= 5,
                 Recording.length_seconds <= 20,
-                Recording.background_species == '[]')\
-            .all():
+                Recording.background_species == '[]'):
         species = session.query(Species)\
             .filter(Species.scientific_name == recording.scientific_name)\
             .one_or_none()
@@ -46,7 +45,7 @@ def _main():
     logging.info(f'Selected {session.query(SelectedRecording).count()} recordings')
 
     logging.info(f'Filtering {session.query(Species).count()} species')
-    for species in session.query(Species).all():
+    for species in session.query(Species):
         if num_recordings_by_species_id[species.species_id] >= 5:
             session.add(SelectedSpecies(species_id=species.species_id))
     logging.info(f'Selected {session.query(SelectedSpecies).count()} species')
