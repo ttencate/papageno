@@ -9,7 +9,7 @@ Pipeline description
 
 All scripts operate on `master.db`, which is an SQLite 3 database.
 
-### `update_species.py`
+### `load_species.py`
 
 This script parses the official [IOC World Bird
 List](https://www.worldbirdnames.org/ioc-lists/master-list-2/) spreadsheet
@@ -26,7 +26,7 @@ section](https://www.xeno-canto.org/articles) on the site for updates about
 which version they last updated to. For best results, we should use the same
 version.
 
-### `update_xc.py`
+### `load_recordings.py`
 
 This script fetches recording metadata through the [xeno-canto
 API](https://www.xeno-canto.org/explore/api) and writes it to the `recordings`
@@ -39,7 +39,7 @@ like page tokens. So if recordings are added while the script is running, the
 pages might shuffle around. The result is that we may miss some recordings, or
 get duplicates (which we filter out).
 
-### `update_regions.py`
+### `create_regions.py`
 
 This ingests `xc.csv` and groups recordings by location into 1×1 degree
 "squares" of latitude and longitude, writing the output to the `recordings`
