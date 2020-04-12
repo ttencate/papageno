@@ -55,10 +55,10 @@ source like the number of _occurrences_ or _sightings_ of a species, makes
 sense for this app; after all, what we most care about is which birds you're
 likely to hear most.
 
-### `regions_to_gpkg.sh`
+### `regions_to_gpkg.py`
 
-This just converts `sources/regions.csv` to `sources/regions.gpkg` for faster
-rendering in QGIS. Requires `ogr2ogr` from the GDAL package to be installed.
+This just exports the `regions` table to `qgis/regions.gpkg` for display and
+exploration in QGIS. Open `qgis/regions.qgz` in QGIS to view it.
 
 ### `select_recordings.py`
 

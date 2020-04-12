@@ -61,7 +61,13 @@ def _main():
 
     logging.info('Adding recordings to regions')
     prev_progress_percent = 0
+    num_recordings = session.query(Recording).count()
     for i, recording in enumerate(session.query(Recording)):
+        progress_percent = i * 100 // num_recordings
+        if progress_percent != prev_progress_percent:
+            logging.info(f'Processed {i} recordings ({progress_percent}%)')
+            prev_progress_percent = progress_percent
+
         if not recording.latitude or not recording.longitude:
             continue
 
@@ -79,11 +85,6 @@ def _main():
             _round_down(recording.latitude, _SIZE_LAT),
             _round_down(recording.longitude, _SIZE_LON))]
         region.add_recording(species.scientific_name)
-
-        progress_percent = (i + 1) // num_recordings
-        if progress_percent != prev_progress_percent:
-            logging.info('Processed {i} recordings ({progress_percent}%)')
-            prev_progress_percent = progress_percent
 
     logging.info('Committing transaction')
     session.bulk_save_objects(regions.values())

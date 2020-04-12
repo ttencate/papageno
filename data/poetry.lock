@@ -41,6 +41,14 @@ python-versions = "*"
 version = "1.0.1"
 
 [[package]]
+category = "main"
+description = "GDAL: Geospatial Data Abstraction Library"
+name = "gdal"
+optional = false
+python-versions = "*"
+version = "3.0.4"
+
+[[package]]
 category = "dev"
 description = "A Python utility / library to sort Python imports."
 name = "isort"
@@ -177,7 +185,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [metadata]
-content-hash = "f627ff4ee1d1de4051a6a9c02aaa2080b85518337be6ef05d1f08aebc1ac8234"
+content-hash = "a37e866c1e6b0207c6bf15d1df00ef234ab33103f4525f86f70a8f64d53b0f86"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -195,6 +203,9 @@ diskcache = [
 ]
 et-xmlfile = [
     {file = "et_xmlfile-1.0.1.tar.gz", hash = "sha256:614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b"},
+]
+gdal = [
+    {file = "GDAL-3.0.4.tar.gz", hash = "sha256:a17eaa6872e4b7f7fa82f86aeccecc57d224bd054952a56db64368ecaf18509c"},
 ]
 isort = [
     {file = "isort-4.3.21-py2.py3-none-any.whl", hash = "sha256:6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd"},

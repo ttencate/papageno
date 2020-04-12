@@ -42,12 +42,16 @@ class Region(Base):
         '''
         Returns the total number of recordings counted in this region.
         '''
+        if not self.num_recordings_by_scientific_name:
+            return 0
         return sum(self.num_recordings_by_scientific_name.values())
 
     def num_species(self):
         '''
         Returns the total number of distinct species counted in this region.
         '''
+        if not self.num_recordings_by_scientific_name:
+            return 0
         return len(self.num_recordings_by_scientific_name)
 
     def to_wkt(self):
@@ -69,6 +73,8 @@ class Region(Base):
         Returns the list of species ids recorded in this region, ordered from
         most to least recorded.
         '''
+        if not self.num_recordings_by_scientific_name:
+            return []
         return [
             scientific_name
             for (num_recordings, scientific_name)
