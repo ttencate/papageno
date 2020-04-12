@@ -6,11 +6,8 @@ to least occurring.
 '''
 
 import argparse
-import collections
-import csv
 import logging
 import os.path
-import math
 import sys
 
 from osgeo import gdal, ogr, osr

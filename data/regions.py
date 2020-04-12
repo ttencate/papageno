@@ -2,12 +2,7 @@
 Classes related to geography.
 '''
 
-import logging
-import os.path
-
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, JSON
-from sqlalchemy.orm import relationship
-from sqlalchemy.schema import Index
+from sqlalchemy import Column, Integer, Float, JSON
 
 from base import Base
 

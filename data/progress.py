@@ -7,7 +7,7 @@ import sys
 import time
 
 
-def percent(iterable, message_format='{}'):
+def percent(iterable):
     '''
     A generator wrapper that prints progress in %.
     '''

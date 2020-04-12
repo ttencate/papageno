@@ -6,14 +6,12 @@ to least occurring.
 '''
 
 import argparse
-import collections
-import csv
 import logging
-import os.path
 import math
 import sys
 
 import db
+import progress
 from recordings import Recording
 from species import Species
 from regions import Region
@@ -27,14 +25,7 @@ def _round_down(x, multiple_of):
     return math.floor(x / multiple_of) * multiple_of
 
 
-def _main():
-    logging.basicConfig(level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
-
-    session = db.create_session()
-
+def _create_regions(session):
     logging.info('Creating regions')
     session.query(Region).delete()
     regions = {}
@@ -58,16 +49,12 @@ def _main():
             regions[(lat_start, lon_start)] = region
             lon += _SIZE_LON
         lat += _SIZE_LAT
+    return regions
 
+
+def _add_recordings_to_regions(session, recordings, regions):
     logging.info('Adding recordings to regions')
-    prev_progress_percent = 0
-    num_recordings = session.query(Recording).count()
-    for i, recording in enumerate(session.query(Recording)):
-        progress_percent = i * 100 // num_recordings
-        if progress_percent != prev_progress_percent:
-            logging.info(f'Processed {i} recordings ({progress_percent}%)')
-            prev_progress_percent = progress_percent
-
+    for recording in progress.percent(recordings):
         if not recording.latitude or not recording.longitude:
             continue
 
@@ -85,6 +72,18 @@ def _main():
             _round_down(recording.latitude, _SIZE_LAT),
             _round_down(recording.longitude, _SIZE_LON))]
         region.add_recording(species.scientific_name)
+
+
+def _main():
+    logging.basicConfig(level=logging.INFO)
+
+    parser = argparse.ArgumentParser()
+    parser.parse_args()
+
+    session = db.create_session()
+
+    regions = _create_regions(session)
+    _add_recordings_to_regions(session, session.query(Recording), regions)
 
     logging.info('Committing transaction')
     session.bulk_save_objects(regions.values())
