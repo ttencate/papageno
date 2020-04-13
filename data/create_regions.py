@@ -84,6 +84,4 @@ def main(unused_args, session):
     regions = _create_regions(session)
     _add_recordings_to_regions(session, session.query(Recording), regions)
 
-    logging.info('Committing transaction')
     session.bulk_save_objects(regions.values())
-    session.commit()
