@@ -1,35 +1,26 @@
-#!/usr/bin/env python3
-
 '''
-Groups recordings by geographical regions, and ranks them by species from most
-to least occurring.
+Exports the `regions` table to `qgis/regions.gpkg` for display and exploration
+in QGIS. Open `qgis/regions.qgz` in QGIS to view it.
 '''
 
-import argparse
 import logging
 import os.path
-import sys
 
 from osgeo import gdal, ogr, osr
 from sqlalchemy.orm import joinedload
 
-import db
 from regions import Region
 from species import Species
 
 
-def _main():
-    logging.basicConfig(level=logging.INFO)
-
-    gdal.UseExceptions()
-
-    parser = argparse.ArgumentParser()
+def add_args(parser):
     parser.add_argument(
         '--gpkg_file', default=os.path.join(os.path.dirname(__file__), 'qgis', 'regions.gpkg'),
         help='Path to output .gpkg file')
-    args = parser.parse_args()
 
-    session = db.create_session()
+
+def main(args, session):
+    gdal.UseExceptions()
 
     logging.info(f'Loading common names')
     common_names = {
@@ -71,7 +62,3 @@ def _main():
                 common_names.get(scientific_name, {}).get('nl') or '?'
                 for scientific_name in region.ranked_scientific_names())
             layer.CreateFeature(feature)
-
-
-if __name__ == '__main__':
-    sys.exit(_main())

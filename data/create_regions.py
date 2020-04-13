@@ -1,16 +1,22 @@
-#!/usr/bin/env python
-
 '''
-Groups recordings by geographical regions, and ranks them by species from most
-to least occurring.
+Ingests the `recordings` table and groups recordings by location into 1×1
+degree "squares" of latitude and longitude, writing the output to the
+`regions` table.
+
+Of course, the farther you go from the equator, the more narrow and pointy
+these become, but this is not really a problem for our purposes because most
+birds don't live on the poles anyway.
+
+For each square, it creates a ranking of which species were recorded, from most
+to least. Basing this on the number of _recordings_, rather than some other
+source like the number of _occurrences_ or _sightings_ of a species, makes
+sense for this app; after all, what we most care about is which birds you're
+likely to hear most.
 '''
 
-import argparse
 import logging
 import math
-import sys
 
-import db
 import progress
 from recordings import Recording
 from species import Species
@@ -74,21 +80,10 @@ def _add_recordings_to_regions(session, recordings, regions):
         region.add_recording(species.scientific_name)
 
 
-def _main():
-    logging.basicConfig(level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
-    parser.parse_args()
-
-    session = db.create_session()
-
+def main(unused_args, session):
     regions = _create_regions(session)
     _add_recordings_to_regions(session, session.query(Recording), regions)
 
     logging.info('Committing transaction')
     session.bulk_save_objects(regions.values())
     session.commit()
-
-
-if __name__ == '__main__':
-    sys.exit(_main())

@@ -1,23 +1,26 @@
-#!/usr/bin/env python
-
 '''
-Traverses the official IOC World Bird List
-(https://www.worldbirdnames.org/ioc-lists/master-list-2/), the multilingual
-version thereof, to produce a machine-readable list of all bird species.
+Parses the official [IOC World Bird
+List](https://www.worldbirdnames.org/ioc-lists/master-list-2/) spreadsheet
+(Multilingual Version). It outputs to the `species` table and the
+`common_names` table.
 
-Also assigns stable, unique species ids.
+Note that what constitutes a "species" changes as scientific insight
+progresses, which is why the IOC releases new lists every once in a while. For
+our purposes, species = scientific name.
+
+xeno-canto also uses the sheets from IOC as their source; see [the Articles
+section](https://www.xeno-canto.org/articles) on the site for updates about
+which version they last updated to. For best results, we should use the same
+version.
 '''
 
-import argparse
 import logging
 import os
 import re
-import sys
 
 import openpyxl
 from sqlalchemy.orm import joinedload
 
-import db
 from species import Species, CommonName
 
 
@@ -96,18 +99,14 @@ class Multiling:
         yield merged_row
 
 
-def _main():
-    logging.basicConfig(level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
+def add_args(parser):
     parser.add_argument(
         '--ioc_multiling_file',
         default=os.path.join(os.path.dirname(__file__), 'sources', 'Multiling IOC 9.1b.xlsx'),
         help='Path to the multilingual Excel file downloaded from IOC')
-    args = parser.parse_args()
 
-    session = db.create_session()
 
+def main(args, session):
     multiling = Multiling(args.ioc_multiling_file)
     logging.info(f'Found column headings: {multiling.fields}')
 
@@ -150,10 +149,3 @@ def _main():
                     session.add(common_name)
                 if common_name.common_name != value:
                     common_name.common_name = value
-
-    logging.info('Committing transaction')
-    session.commit()
-
-
-if __name__ == '__main__':
-    sys.exit(_main())

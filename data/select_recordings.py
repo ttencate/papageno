@@ -1,19 +1,21 @@
-#!/usr/bin/env python
-
 '''
-Selects recordings that are suitable for our application.
+Filters the recordings from `recordings` down to the ones that are suitable for
+our application: not too short, not too long, no background species, and of
+decent quality. Then only those species are selected for which we have enough
+good recordings. The output is written to `selected_recordings` and
+`selected_species`.
+
+A blacklist `recordings_blacklist.txt` contains ids of recordings that are, for
+whatever reason, not eligible.
 '''
 
-import argparse
 import collections
 import hashlib
 import logging
 import os.path
-import sys
 
 from sqlalchemy.orm import defer, undefer
 
-import db
 import progress
 from recordings import Recording, SelectedRecording
 from species import Species, SelectedSpecies
@@ -41,14 +43,7 @@ def _recording_quality(recording):
     return _sha1(recording.recording_id)
 
 
-def _main():
-    logging.basicConfig(level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
-    parser.parse_args()
-
-    session = db.create_session()
-
+def main(unused_args, session):
     session.query(SelectedRecording).delete()
     session.query(SelectedSpecies).delete()
 
@@ -98,7 +93,3 @@ def _main():
 
     logging.info('Committing transaction')
     session.commit()
-
-
-if __name__ == '__main__':
-    sys.exit(_main())
