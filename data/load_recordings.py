@@ -1,25 +1,27 @@
-#!/usr/bin/env python3
-
 '''
-Fetches metadata for all recordings from the XenoCanto website
-(https://xeno-canto.org/) through its API
-(https://www.xeno-canto.org/explore/api).
+Fetches recording metadata through the [xeno-canto
+API](https://www.xeno-canto.org/explore/api) and writes it to the `recordings`
+table. It takes about an hour to run, but responses are cached, so if it fails
+for some reason it can just be restarted.
+
+Note that the xeno-canto API does pagination (returning 500 recordings at a
+time), but does not order the results in any meaningful way, or offer anything
+like page tokens. So if recordings are added while the script is running, the
+pages might shuffle around. The result is that we may miss some recordings, or
+get duplicates (which we filter out).
 '''
 
-import argparse
 import datetime
 import itertools
 import json
 import logging
 import os.path
 import multiprocessing.pool
-import sys
 
 import diskcache
 import tenacity
 import urllib3
 
-import db
 from recordings import Recording
 
 
@@ -127,39 +129,35 @@ def _parse_recording(r):
     )
 
 
-def _main():
-    logging.basicConfig(level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
+def add_args(parser):
     parser.add_argument(
-        '--start_id', type=int, default=1,
-        help='First id to fetch')
+        '--start_xc_id', type=int, default=1,
+        help='First xeno-canto id to fetch')
     parser.add_argument(
-        '--end_id', type=int, default=999999999,
-        help='Last id to fetch (inclusive)')
+        '--end_xc_id', type=int, default=999999999,
+        help='Last xeno-canto id to fetch (inclusive)')
     parser.add_argument(
-        '--clear_cache', action='store_true',
+        '--clear_recordings_cache', action='store_true',
         help='Wipe the response cache and start from scratch')
     parser.add_argument(
-        '--jobs', '-j', type=int, default=10,
+        '--recording_load_jobs', type=int, default=10,
         help='Number of parallel fetches to run; do not set too high or else '
         'the XenoCanto server might get upset!')
-    args = parser.parse_args()
 
-    session = db.create_session()
 
+def main(args, session):
     session.query(Recording).filter(Recording.source == 'xc').delete()
 
-    query = XcQuery({'nr': f'{args.start_id}-{args.end_id}'},
-                    pool_size=args.jobs,
-                    clear_cache=args.clear_cache)
+    query = XcQuery({'nr': f'{args.start_xc_id}-{args.end_xc_id}'},
+                    pool_size=args.recording_load_jobs,
+                    clear_cache=args.clear_recordings_cache)
     first_page = query.fetch_page(1)
     num_pages = first_page['numPages']
     num_recordings = int(first_page['numRecordings'])
     logging.info(f'Found {num_pages} pages, {num_recordings} recordings')
     pages_fetched = 0
     num_parsed_recordings = 0
-    with multiprocessing.pool.ThreadPool(args.jobs) as pool:
+    with multiprocessing.pool.ThreadPool(args.recording_load_jobs) as pool:
         for page in itertools.chain(
                 [first_page],
                 pool.imap(query.fetch_page, range(2, num_pages + 1))):
@@ -181,7 +179,3 @@ def _main():
 
     logging.info('Committing transaction')
     session.commit()
-
-
-if __name__ == '__main__':
-    sys.exit(_main())

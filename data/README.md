@@ -1,82 +1,8 @@
 Papageno data
 =============
 
-This directory contains Python scripts to fetch and process input data, as well
-as the resulting data files.
-
-Pipeline description
---------------------
-
-All scripts operate on `master.db`, which is an SQLite 3 database.
-
-### `load_species.py`
-
-This script parses the official [IOC World Bird
-List](https://www.worldbirdnames.org/ioc-lists/master-list-2/) spreadsheet
-(Multilingual Version). It outputs to the `species` table and the
-`common_names` table. The `species` table tracks unique species ids, which are
-small integers (16 bits) that uniquely identify a scientific name.
-
-Note that what constitutes a "species" changes as scientific insight
-progresses, which is why the IOC releases new lists every once in a while. For
-our purposes, species = scientific name = species id.
-
-xeno-canto also uses the sheets from IOC as their source; see [the Articles
-section](https://www.xeno-canto.org/articles) on the site for updates about
-which version they last updated to. For best results, we should use the same
-version.
-
-### `load_recordings.py`
-
-This script fetches recording metadata through the [xeno-canto
-API](https://www.xeno-canto.org/explore/api) and writes it to the `recordings`
-table. It takes about an hour to run, but responses are cached, so if it fails
-for some reason it can just be restarted.
-
-Note that the xeno-canto API does pagination (returning 500 recordings at a
-time), but does not order the results in any meaningful way, or offer anything
-like page tokens. So if recordings are added while the script is running, the
-pages might shuffle around. The result is that we may miss some recordings, or
-get duplicates (which we filter out).
-
-### `create_regions.py`
-
-This ingests `xc.csv` and groups recordings by location into 1×1 degree
-"squares" of latitude and longitude, writing the output to the `recordings`
-table.
-
-Of course, the farther you go from the equator, the more narrow and pointy
-these become, but this is not really a problem for our purposes because most
-birds don't live on the poles anyway.
-
-For each square, it creates a ranking of which species were recorded, from most
-to least. Basing this on the number of _recordings_, rather than some other
-source like the number of _occurrences_ or _sightings_ of a species, makes
-sense for this app; after all, what we most care about is which birds you're
-likely to hear most.
-
-### `regions_to_gpkg.py`
-
-This just exports the `regions` table to `qgis/regions.gpkg` for display and
-exploration in QGIS. Open `qgis/regions.qgz` in QGIS to view it.
-
-### `select_recordings.py`
-
-Filters the recordings from `recordings` down to the ones that are suitable for
-our application: not too short, not too long, no background species, and of
-decent quality. Then only those species are selected for which we have enough
-good recordings. The output is written to `selected_recordings` and
-`selected_species`.
-
-A blacklist `recordings_blacklist.txt` contains ids of recordings that are, for
-whatever reason, not eligible.
-
-### `fetch_audio_files.py`
-
-Fetches all selected recordings from xeno-canto. Any permanent errors should be
-manually added to `recordings_blacklist.txt` and then `select_recordings.py`
-should be re-run to select alternative recordings or drop that species
-altogether.
+This directory contains Python scripts to fetch and process input data. Its
+output is a SQLite3 database called `master.db`.
 
 Setting up
 ----------
@@ -93,9 +19,12 @@ To create and enter such a virtual environment:
 Running
 -------
 
-All scripts can be run with `--help` to get a description of supported command
-line arguments. Typically, running them without arguments will do the right
-thing.
+To get a description of the pipeline stages, run:
+
+    ./master.py --help
+
+Typically, none of the optional arguments are needed; the defaults are set to
+the values used to produce the "official" `master.db`.
 
 You may need to create a `cache` directory first, which is used to hold
 intermediate results:

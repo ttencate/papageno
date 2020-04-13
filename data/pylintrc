@@ -144,7 +144,9 @@ disable=print-statement,
         # This warning is silly.
         too-few-public-methods,
         # Too many false positives.
-        invalid-name
+        invalid-name,
+        # Public duck-typed methods in stage modules don't need docstrings.
+        missing-function-docstring
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
