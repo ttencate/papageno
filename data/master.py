@@ -11,9 +11,13 @@ order given on the command line.
 '''
 
 import argparse
+import datetime
 import importlib
 import logging
 import sys
+import time
+
+from sqlalchemy.exc import InvalidRequestError
 
 import db
 
@@ -57,7 +61,19 @@ def _main():
 
     for stage, module in _STAGE_MODULES.items():
         if getattr(args, stage):
+            logging.info(f'Starting stage {stage}')
+            start_time = time.now()
+
             getattr(module, 'main')(args, session)
+            logging.info('Committing transaction')
+            try:
+                session.commit()
+            except InvalidRequestError:
+                logging.info('Transaction is empty, nothing to commit')
+                pass
+
+            elapsed = datetime.timeinterval(seconds=time.now() - start_time)
+            logging.info(f'Finished stage {stage} in {elapsed}')
 
 
 if __name__ == '__main__':

@@ -90,6 +90,3 @@ def main(unused_args, session):
             session.add(SelectedSpecies(species_id=species.species_id))
     logging.info(f'Selected {session.query(SelectedSpecies).count()} species')
     logging.info(f'Selected {session.query(SelectedRecording).count()} recordings')
-
-    logging.info('Committing transaction')
-    session.commit()

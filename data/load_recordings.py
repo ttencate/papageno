@@ -176,6 +176,3 @@ def main(args, session):
                 logging.error(f'Error parsing page:\n{json.dumps(page, indent="  ")}',
                               exc_info=True)
                 raise
-
-    logging.info('Committing transaction')
-    session.commit()
