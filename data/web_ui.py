@@ -6,6 +6,7 @@ manually selected.
 import logging
 
 from flask import Flask, request, abort, render_template
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import text
 
@@ -20,33 +21,36 @@ session = None
 
 @app.route('/')
 def _root_route():
-    species_selected = session.query(Species, SelectedSpecies)\
-        .outerjoin(SelectedSpecies)\
+    recording_counts_subquery = session\
+        .query(Species.species_id, func.count('*').label('num_recordings'))\
+        .join(Recording, Species.scientific_name == Recording.scientific_name)\
+        .group_by(Species.species_id)\
+        .subquery()
+    species_with_selection = session.query(Species, SelectedSpecies)\
+        .outerjoin(SelectedSpecies, Species.species_id == SelectedSpecies.species_id)\
+        .join(recording_counts_subquery, recording_counts_subquery.c.species_id == Species.species_id)\
         .options(joinedload(Species.common_names))\
-        .order_by(text('''
-            (
-                select count(*)
-                from recordings
-                where recordings.scientific_name == species_scientific_name
-            ) DESC
-            '''))\
+        .order_by(recording_counts_subquery.c.num_recordings.desc())\
         .all()
-    selected_species = []
-    unselected_species = []
-    remaining_species = []
-    for species, selected in species_selected:
-        selected = selected and selected.selected
-        if selected is True:
-            selected_species.append(species)
-        elif selected is False:
-            unselected_species.append(species)
-        else:
-            remaining_species.append(species)
+    selected_species = [species for (species, selected) in species_with_selection if selected]
+    unselected_species = [species for (species, selected) in species_with_selection if not selected]
+    recording_counts = dict(session\
+        .query(Species.species_id, func.count('*').label('num_recordings'))\
+        .join(Recording, Species.scientific_name == Recording.scientific_name)\
+        .group_by(Species.species_id)\
+        .all())
+    selected_recording_counts = dict(session\
+        .query(Species.species_id, func.count('*').label('num_recordings'))\
+        .join(Recording, Species.scientific_name == Recording.scientific_name)\
+        .join(SelectedRecording, SelectedRecording.recording_id == Recording.recording_id)\
+        .group_by(Species.species_id)\
+        .all())
     return render_template(
         'root.html',
         selected_species=selected_species,
         unselected_species=unselected_species,
-        remaining_species=remaining_species)
+        recording_counts=recording_counts,
+        selected_recording_counts=selected_recording_counts)
 
 
 @app.route('/<string:scientific_name>')

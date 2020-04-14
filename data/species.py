@@ -82,4 +82,3 @@ class SelectedSpecies(Base):
 
     species_id = Column(String, ForeignKey('species.species_id'),
                         primary_key=True, index=True, nullable=False)
-    selected = Column(Boolean, index=True)
