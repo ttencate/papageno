@@ -3,42 +3,15 @@ Launches a web server serving a UI through which recordings and species can be
 manually selected.
 '''
 
-import hashlib
 import logging
 
 from flask import Flask, request, abort, render_template
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import text
 
+import analysis
 from recordings import Recording, SelectedRecording
 from species import Species, SelectedSpecies
-
-
-_ALLOWED_TYPES = set([
-    'song', 'dawn song', 'subsong', 'canto',
-    'call', 'calls', 'flight call', 'flight calls', 'nocturnal flight call', 'alarm call',
-    # 'begging call', 'drumming'
-    'male', 'female', 'sex uncertain', 'adult',
-])
-
-
-def _recording_quality(recording):
-    allowed_types_score = -len(set(recording.types).difference(_ALLOWED_TYPES))
-    background_species_score = -len(recording.background_species)
-    quality_score = 'EDCBA'.find(recording.quality or 'E')
-    length_score = 5 - abs(5 - recording.length_seconds)
-    # Hash the recording_id for a stable pseudo-random tie breaker.
-    hasher = hashlib.sha1()
-    hasher.update(str(recording.recording_id).encode('utf-8'))
-    recording_id_hash = hasher.digest()
-    # Higher is better.
-    return (
-        allowed_types_score,
-        background_species_score,
-        quality_score,
-        length_score,
-        recording_id_hash,
-    )
 
 
 app = Flask(__name__)
@@ -84,9 +57,10 @@ def _species_route(scientific_name):
     if not species:
         abort(404)
     recordings = session.query(Recording)\
+        .options(joinedload(Recording.sonogram_analysis))\
         .filter(Recording.scientific_name == scientific_name)\
         .all()
-    recordings.sort(key=_recording_quality, reverse=True)
+    recordings.sort(key=analysis.recording_quality, reverse=True)
 
     group_size_limit = int(request.args.get('group_size_limit', 30))
     groups = {
