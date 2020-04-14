@@ -2,19 +2,17 @@
   <div>
     <h2>Selected</h2>
     {% for species in selected_species %}
-      <a href="/{{species.scientific_name}}"><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</a><br>
+      <a href="/{{species.scientific_name}}"><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</a>
+      ({{selected_recording_counts[species.species_id]|default(0)}}/{{recording_counts[species.species_id]}})
+      <br>
     {% endfor %}
   </div>
   <div>
     <h2>Unselected</h2>
     {% for species in unselected_species %}
-      <a href="/{{species.scientific_name}}"><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</a><br>
-    {% endfor %}
-  </div>
-  <div>
-    <h2>Remaining</h2>
-    {% for species in remaining_species %}
-      <a href="/{{species.scientific_name}}"><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</a><br>
+      <a href="/{{species.scientific_name}}"><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</a>
+      ({{selected_recording_counts[species.species_id]|default(0)}}/{{recording_counts[species.species_id]}})
+      <br>
     {% endfor %}
   </div>
 </div>
