@@ -79,7 +79,7 @@
     function stop() {
       if (playingButton) {
         audioPlayer.pause()
-        audioPlayer.src = null // This doesn't actually work but whatever.
+        audioPlayer.removeAttribute('src')
         playingButton.innerHTML = '▶'
         playingButton = null
       }
