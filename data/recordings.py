@@ -3,6 +3,7 @@ Classes representing metadata about audio recordings.
 '''
 
 from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, Date, Enum, JSON, ForeignKey
+from sqlalchemy.orm import relationship
 
 from base import Base
 
@@ -47,6 +48,22 @@ class Recording(Base):
     @property
     def types(self):
         return list(filter(None, map(str.strip, self.type.lower().split(','))))
+
+
+class SonogramAnalysis(Base):
+    '''
+    Data derived from a recording's sonogram, stored for quicker calculations.
+    '''
+    __tablename__ = 'sonogram_analyses'
+
+    recording_id = Column(String, ForeignKey('recordings.recording_id'),
+                          primary_key=True, index=True, nullable=False)
+    sonogram_quality = Column(Float, nullable=False)
+
+    recording = relationship('Recording', back_populates='sonogram_analysis')
+
+
+Recording.sonogram_analysis = relationship('SonogramAnalysis', back_populates='recording', uselist=False)
 
 
 class SelectedRecording(Base):

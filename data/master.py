@@ -32,6 +32,8 @@ _STAGES = [
     'load_recordings',
     'create_regions',
     'regions_to_gpkg',
+    'select_species',
+    'select_recordings',
     'web_ui',
     'fetch_audio_files',
 ]
@@ -40,15 +42,21 @@ _STAGE_MODULES = {stage: importlib.import_module(stage) for stage in _STAGES}
 
 def _main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+
+    common_args = parser.add_argument_group('common arguments')
+    common_args.add_argument(
         '--log_level', default='info', choices=['debug', 'info', 'warning', 'error', 'critical'],
         help='Verbosity of logging')
+
+    stage_args = parser.add_argument_group('stage selection arguments')
     for stage, module in _STAGE_MODULES.items():
-        parser.add_argument(f'--{stage}', action='store_true', help=module.__doc__)
+        stage_args.add_argument(f'--{stage}', action='store_true', help=module.__doc__)
+
+    module_args = parser.add_argument_group('stage-specific configuration arguments')
     for module in _STAGE_MODULES.values():
         add_args = getattr(module, 'add_args', None)
         if add_args:
-            add_args(parser)
+            add_args(module_args)
 
     args = parser.parse_args()
 
@@ -56,6 +64,9 @@ def _main():
     logging.basicConfig(level=log_level)
     # urllib3 gets rather spammy at INFO level, reporting every redirect made.
     logging.getLogger('urllib3.poolmanager').setLevel(level=max(log_level, logging.WARNING))
+    # PIL gets spammy at DEBUG level.
+    logging.getLogger('PIL.Image').setLevel(level=max(log_level, logging.INFO))
+    logging.getLogger('PIL.PngImagePlugin').setLevel(level=max(log_level, logging.INFO))
 
     session = db.create_session()
 
