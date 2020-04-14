@@ -32,7 +32,7 @@ _STAGES = [
     'load_recordings',
     'create_regions',
     'regions_to_gpkg',
-    'select_recordings',
+    'web_ui',
     'fetch_audio_files',
 ]
 _STAGE_MODULES = {stage: importlib.import_module(stage) for stage in _STAGES}
@@ -44,7 +44,7 @@ def _main():
         '--log_level', default='info', choices=['debug', 'info', 'warning', 'error', 'critical'],
         help='Verbosity of logging')
     for stage, module in _STAGE_MODULES.items():
-        parser.add_argument(stage, action='store_true', help=module.__doc__)
+        parser.add_argument(f'--{stage}', action='store_true', help=module.__doc__)
     for module in _STAGE_MODULES.values():
         add_args = getattr(module, 'add_args', None)
         if add_args:
@@ -62,7 +62,7 @@ def _main():
     for stage, module in _STAGE_MODULES.items():
         if getattr(args, stage):
             logging.info(f'Starting stage {stage}')
-            start_time = time.now()
+            start_time = time.monotonic()
 
             getattr(module, 'main')(args, session)
             logging.info('Committing transaction')
@@ -70,9 +70,8 @@ def _main():
                 session.commit()
             except InvalidRequestError:
                 logging.info('Transaction is empty, nothing to commit')
-                pass
 
-            elapsed = datetime.timeinterval(seconds=time.now() - start_time)
+            elapsed = datetime.timedelta(seconds=time.monotonic() - start_time)
             logging.info(f'Finished stage {stage} in {elapsed}')
 
 

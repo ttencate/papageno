@@ -2,7 +2,7 @@
 Classes that represent species and lists of species.
 '''
 
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 from base import Base
@@ -51,6 +51,12 @@ class Species(Base):
     species_id = Column(Integer, primary_key=True, index=True, nullable=False, autoincrement=True)
     scientific_name = Column(String, unique=True, index=True, nullable=False)
 
+    def common_name(self, language_code):
+        for common_name in self.common_names:
+            if common_name.language_code == language_code:
+                return common_name.common_name
+        return None
+
 
 class CommonName(Base):
     '''
@@ -76,3 +82,4 @@ class SelectedSpecies(Base):
 
     species_id = Column(String, ForeignKey('species.species_id'),
                         primary_key=True, index=True, nullable=False)
+    selected = Column(Boolean, index=True)

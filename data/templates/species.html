@@ -1,0 +1,117 @@
+<head>
+  <title>{{species.common_name('nl')}}</title>
+</head>
+
+<body>
+  <h2><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</h2>
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    {% for group, recordings in groups.items() %}
+      <div>
+        <h3>{{group|title}} - {{group_sizes[group]}}</h3>
+        {% for recording in recordings %}
+        <div class="recording-box {% if recording.recording_id in selected_recording_ids %}selected{% endif %}"
+             data-recording-id="{{recording.recording_id}}">
+            <div style="width: 150px;">
+              <a href="https://www.xeno-canto.org/{{recording.recording_id.split(':')[1]}}">{{recording.recording_id}}</a><br>
+              {{recording.length_seconds}} s<br>
+              {{recording.type}}<br>
+              <small>q: {{recording.quality}} – bkg.sp.: {{recording.background_species|length}}</small>
+            </div>
+            <div>
+              <img src="{{recording.sonogram_url_small}}" width="240" height="80" class="toggler">
+            </div>
+            <div style="margin-left: 8px;">
+              <button class="play-button" data-audio-url="{{recording.audio_url}}" style="width: 40px; height: 80px; border: 0; padding: 0; cursor: pointer;">▶</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <a href="?group_size_limit={{group_size_limit + 30}}">Load 30 more</a>
+
+  <audio id="audio-player">
+
+  <style>
+    .recording-box {
+      display: flex; flex-direction: row; background: #def; padding: 8px
+    }
+    .recording-box.selected {
+      background: #efd;
+    }
+    button {
+      background: #f8f8f8;
+    }
+    button:hover {
+      background: #eee;
+    }
+    .toggler {
+      cursor: pointer;
+    }
+  </style>
+
+  <script>
+    const audioPlayer = document.getElementById('audio-player')
+    audioPlayer.addEventListener('playing', onPlaying)
+    audioPlayer.addEventListener('ended', onEnded)
+    let playingButton = null
+    function onPlayClick(event) {
+      event.preventDefault()
+      if (playingButton == this) {
+        stop()
+        return
+      } else {
+        stop()
+      }
+      audioPlayer.src = this.dataset.audioUrl
+      audioPlayer.play()
+      this.innerHTML = '…'
+      playingButton = this
+    }
+    function onPlaying() {
+      playingButton.innerHTML = '⏹'
+    }
+    function onEnded() {
+      stop()
+    }
+    function stop() {
+      if (playingButton) {
+        audioPlayer.pause()
+        audioPlayer.src = null // This doesn't actually work but whatever.
+        playingButton.innerHTML = '▶'
+        playingButton = null
+      }
+    }
+    for (const button of document.getElementsByClassName('play-button')) {
+      button.addEventListener('click', onPlayClick)
+    }
+
+    function onRecordingBoxClick(event) {
+      if (!event.target.classList.contains('toggler')) {
+        return
+      }
+      event.preventDefault()
+      const recordingId = this.dataset.recordingId
+      const selected = !this.classList.contains('selected')
+      const url = `/select_recording/${encodeURIComponent(recordingId)}/${selected ? 1 : 0}`
+      const request = new XMLHttpRequest()
+      request.addEventListener('readystatechange', () => {
+        if (request.readyState == XMLHttpRequest.DONE) {
+          if (request.status != 200) {
+            alert(`Request to ${url} returned status code ${request.status}`)
+          } else {
+            this.classList.toggle('selected', selected)
+          }
+        }
+      })
+      request.open('POST', url, true)
+      request.send()
+    }
+    for (const recordingBox of document.getElementsByClassName('recording-box')) {
+      recordingBox.addEventListener('click', onRecordingBoxClick)
+    }
+  </script>
+
+</body>
