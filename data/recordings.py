@@ -3,7 +3,6 @@ Classes representing metadata about audio recordings.
 '''
 
 from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, Date, Enum, JSON, ForeignKey
-from sqlalchemy.schema import Index
 
 from base import Base
 
@@ -16,6 +15,7 @@ class Recording(Base):
 
     recording_id = Column(String, primary_key=True, index=True, nullable=False)
     source = Column(Enum('xc'), nullable=False)
+    scientific_name = Column(String, index=True) # genus + species, for joining the species table
     genus = Column(String)
     species = Column(String)
     subspecies = Column(String)
@@ -45,15 +45,8 @@ class Recording(Base):
     playback_used = Column(Boolean)
 
     @property
-    def scientific_name(self):
-        '''
-        Returns the scientific name of the recorded species, without the
-        subspecies (if any).
-        '''
-        return self.genus + ' ' + self.species
-
-
-Index('recordings_scientific_name', Recording.genus, Recording.species)
+    def types(self):
+        return list(filter(None, map(str.strip, self.type.lower().split(','))))
 
 
 class SelectedRecording(Base):

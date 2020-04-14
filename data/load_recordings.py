@@ -15,13 +15,10 @@ import datetime
 import itertools
 import json
 import logging
-import os.path
 import multiprocessing.pool
 
-import diskcache
-import tenacity
-import urllib3
-
+import progress
+from fetcher import Fetcher
 from recordings import Recording
 
 
@@ -30,36 +27,23 @@ class XcQuery:
     Wrapper around the XenoCanto API.
     '''
 
-    def __init__(self, parts, pool_size, clear_cache=False):
-        self._cache = diskcache.Index(os.path.join(os.path.dirname(__file__), 'cache', 'xc_api'))
-        if clear_cache:
-            self._cache.clear()
-        self._http = urllib3.PoolManager(num_pools=1,
-                                         maxsize=pool_size,
-                                         timeout=urllib3.util.Timeout(total=300))
+    def __init__(self, parts, fetcher):
         self._query = '%20'.join(f'{k}:{v}' for k, v in parts.items())
+        self._fetcher = fetcher
 
-    # Note that we even retry 400 errors (i.e. client side). These spuriously
-    # happen, perhaps due to a bug in the API.
-    @tenacity.retry(stop=tenacity.stop_after_attempt(5))
     def fetch_page(self, page_number):
         '''
         Fetches the given page (1-based) and returns the parsed JSON.
         '''
         url = f'https://www.xeno-canto.org/api/2/recordings?query={self._query}&page={page_number}'
-        if url in self._cache:
-            logging.info(f'Returning {url} from cache')
-            return self._cache[url]
-        logging.info(f'Fetching {url}')
-        response = self._http.request('GET', url)
-        if response.status != 200:
-            raise RuntimeError(f'URL {url} returned status code {response.status} '
-                               f'and said:\n{response.data}')
-        parsed_response = json.loads(response.data)
-        # Sanity check so we can retry before returning if needed.
-        if 'recordings' not in parsed_response:
-            raise RuntimeError(f'URL {url} returned JSON without "recordings":\n{response.data}')
-        self._cache[url] = parsed_response
+        data = self._fetcher.fetch_cached(url)
+        # We previously stored parsed JSON in the cache, rather than raw
+        # response bytes. These two lines make it backwards compatible and
+        # avoid an hour-long fetch. It can be removed if we ever end up
+        # clearing the cache.
+        if isinstance(data, dict):
+            return data
+        parsed_response = json.loads(data)
         return parsed_response
 
 
@@ -99,6 +83,7 @@ def _parse_recording(r):
     return Recording(
         recording_id='xc:' + r['id'],
         source='xc',
+        scientific_name=r['gen'] + ' ' + r['sp'],
         genus=r['gen'],
         species=r['sp'],
         subspecies=r['ssp'],
@@ -146,32 +131,27 @@ def add_args(parser):
 
 
 def main(args, session):
+    logging.info('Deleting existing xeno-canto recordings')
     session.query(Recording).filter(Recording.source == 'xc').delete()
 
-    query = XcQuery({'nr': f'{args.start_xc_id}-{args.end_xc_id}'},
-                    pool_size=args.recording_load_jobs,
-                    clear_cache=args.clear_recordings_cache)
+    fetcher = Fetcher(cache_group='xc_api',
+                      pool_size=args.recording_load_jobs,
+                      clear_cache=args.clear_recordings_cache)
+    query = XcQuery({'nr': f'{args.start_xc_id}-{args.end_xc_id}'}, fetcher)
     first_page = query.fetch_page(1)
     num_pages = first_page['numPages']
     num_recordings = int(first_page['numRecordings'])
     logging.info(f'Found {num_pages} pages, {num_recordings} recordings')
-    pages_fetched = 0
-    num_parsed_recordings = 0
     with multiprocessing.pool.ThreadPool(args.recording_load_jobs) as pool:
-        for page in itertools.chain(
-                [first_page],
-                pool.imap(query.fetch_page, range(2, num_pages + 1))):
+        for page in progress.percent(
+                itertools.chain([first_page], pool.imap(query.fetch_page, range(2, num_pages + 1))),
+                num_pages):
             try:
                 # Allow replacements in case the API shifts pages around
                 # (it seems to do that, probably when new recordings are
                 # added during the run).
                 recordings = [_parse_recording(r) for r in page['recordings']]
                 session.bulk_save_objects_with_replace(recordings)
-                pages_fetched += 1
-                num_parsed_recordings += len(recordings)
-                logging.info(f'Fetched {pages_fetched}/{num_pages} pages, '
-                             f'parsed {num_parsed_recordings}/{num_recordings} recordings '
-                             f'({pages_fetched / num_pages * 100:.1f}%)')
             except Exception:
                 logging.error(f'Error parsing page:\n{json.dumps(page, indent="  ")}',
                               exc_info=True)
