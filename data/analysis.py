@@ -5,7 +5,7 @@ Fancy analysis algorithms.
 import hashlib
 import logging
 
-import imageio
+import imageio # TODO port to pillow
 import numpy as np
 
 

@@ -20,6 +20,7 @@ import time
 from sqlalchemy.exc import InvalidRequestError
 
 import db
+import progress
 
 
 # To add a new stage `foo`:
@@ -36,6 +37,7 @@ _STAGES = [
     'select_recordings',
     'web_ui',
     'fetch_audio_files',
+    'load_images',
 ]
 _STAGE_MODULES = {stage: importlib.import_module(stage) for stage in _STAGES}
 
@@ -47,6 +49,9 @@ def _main():
     common_args.add_argument(
         '--log_level', default='info', choices=['debug', 'info', 'warning', 'error', 'critical'],
         help='Verbosity of logging')
+    common_args.add_argument(
+        '--no_progress', action='store_true',
+        help='Disable progress reporting even if stderr is connected to a tty')
 
     stage_args = parser.add_argument_group('stage selection arguments')
     for stage, module in _STAGE_MODULES.items():
@@ -67,6 +72,9 @@ def _main():
     # PIL gets spammy at DEBUG level.
     logging.getLogger('PIL.Image').setLevel(level=max(log_level, logging.INFO))
     logging.getLogger('PIL.PngImagePlugin').setLevel(level=max(log_level, logging.INFO))
+
+    if args.no_progress:
+        progress.disable()
 
     session = db.create_session()
 

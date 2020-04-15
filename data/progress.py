@@ -8,6 +8,14 @@ import sys
 import time
 
 
+_enabled = True
+
+
+def disable():
+    global _enabled
+    _enabled = False
+
+
 def percent(iterable, length=None):
     '''
     A generator wrapper that prints progress in %. If the iterable has no
@@ -17,7 +25,7 @@ def percent(iterable, length=None):
     Does nothing if stderr is not connected directly to a terminal.
     '''
 
-    if not os.isatty(2):
+    if not _enabled or not os.isatty(2):
         yield from iterable
         return
 
