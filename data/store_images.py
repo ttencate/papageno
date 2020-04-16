@@ -64,7 +64,7 @@ _args = None
 def add_args(parser):
     parser.add_argument(
         '--image_output_dir',
-        default=os.path.join(os.path.dirname(__file__), '..', 'app', 'assets', 'photos'),
+        default=os.path.join(os.path.dirname(__file__), '..', 'app', 'assets', 'images'),
         help='Target directory for resized and compressed images')
     parser.add_argument(
         '--image_process_jobs', type=int, default=8,

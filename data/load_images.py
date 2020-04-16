@@ -49,10 +49,7 @@ def _fetch_wiki(domain, page_name, prop):
     if 'error' in response and response['error']['code'] == 'missingtitle':
         return None
 
-    try:
-        return response['parse'][prop]
-    except KeyError as ex:
-        raise ParseError(f'Key not found in response to {url}') from ex
+    return response['parse'][prop]
 
 
 def _fetch_image_info(page_name):
@@ -64,25 +61,18 @@ def _fetch_image_info(page_name):
                '&prop=imageinfo'
                f'&titles={urllib.parse.quote_plus(page_name)}'
                '&redirects'
-               '&iiprop=url|extmetadata'
+               '&iiprop=url|mime|size|bitdepth|sha1|extmetadata'
                '&formatversion=2'
                '&format=json')
         response = _fetcher.fetch_cached(url)
-        try:
-            page = json.loads(response)['query']['pages'][0]
-            if page.get('missing'):
-                continue
-            return page['imageinfo'][0]
-        except (KeyError, IndexError) as ex:
-            raise ParseError(f'Key or index not found in response to {url}') from ex
-    raise ParseError(f'{page_name} was not found')
+        page = json.loads(response)['query']['pages'][0]
+        if page.get('missing'):
+            continue
+        return page['imageinfo'][0]
+    return None
 
 
-def _parse_wiki_page(scientific_name):
-    parsetree = _fetch_wiki('en.wikipedia.org', scientific_name, 'parsetree')
-    if not parsetree:
-        return (None, None, None)
-
+def _parse_wiki_page(parsetree):
     soup = BeautifulSoup(parsetree, 'lxml-xml')
 
     def _loose_match(text):
@@ -148,10 +138,7 @@ def _parse_wiki_page(scientific_name):
     return (genus, species, image_page_name)
 
 
-def _fetch_license(domain, image_page_name):
-    image_page_url = _page_url(domain, image_page_name)
-
-    image_info = _fetch_image_info(image_page_name)
+def _parse_license(image_info):
     def info_field(key):
         return image_info['extmetadata'].get(key, {}).get('value', None)
     
@@ -175,11 +162,6 @@ def _fetch_license(domain, image_page_name):
     return license_name, license_url, attribution_required, attribution
 
 
-def _fetch_image_file_url(domain, image_page_name):
-    image_info = _fetch_image_info(image_page_name)
-    return image_info['url']
-
-
 def _process_image(species):
     '''
     Entry point for parallel processing.
@@ -191,51 +173,55 @@ def _process_image(species):
 
     scientific_name = species.scientific_name
 
-    try:
-        page_url = _page_url('en.wikipedia.org', scientific_name)
-
-        gen, sp, image_page_name = _parse_wiki_page(scientific_name)
-        if gen is None or sp is None:
-            logging.warning(f'Page <{page_url}> does not exist')
-            return None
-
-        # Sometimes we get stuff like genus = "Acrocephalus (bird)" so a
-        # simple match is too simple.
-        if scientific_name.split()[0] not in gen or \
-                scientific_name.split()[1] not in sp:
-            # Logging at debug level is enough; this happens regularly and
-            # was always benign in the cases that I checked (all
-            # disagreements or changes in taxonomy).
-            logging.info(f'Page <{page_url}> is actually about {gen} {sp}')
-    except Exception as ex:
-        raise ParseError(f'Error getting image page URL for {scientific_name} '
-                         f'from <{page_url}>: {ex!r}')
-
-    if not image_page_name:
-        logging.info(f'Page <{page_url}> for {scientific_name} contains no image')
+    page_url = _page_url('en.wikipedia.org', scientific_name)
+    parsetree = _fetch_wiki('en.wikipedia.org', scientific_name, 'parsetree')
+    if not parsetree:
+        logging.warning(f'Page does not exist: {page_url}')
         return None
 
-    try:
-        image_page_url = _page_url('commons.wikimedia.org', image_page_name)
-        license_name, license_url, attribution_required, attribution = \
-            _fetch_license('commons.wikimedia.org', image_page_name)
-        # print(f'{image_page_url}\n  {license}\n  {license_url}\n  {attribution}\n')
-    except Exception as ex:
-        raise ParseError(f'Error getting image license for {scientific_name} '
-                         f'from <{image_page_url}>: {ex!r}')
+    gen, sp, image_page_name = _parse_wiki_page(parsetree)
+    if gen is None or sp is None:
+        logging.warning(f'Unknown genus or species: {page_url}')
+        return None
+
+    # Sometimes we get stuff like genus = "Acrocephalus (bird)" so a
+    # simple match is too simple.
+    if scientific_name.split()[0] not in gen or \
+            scientific_name.split()[1] not in sp:
+        # Logging at debug level is enough; this happens regularly and
+        # was always benign in the cases that I checked (all
+        # disagreements or changes in taxonomy).
+        logging.info(f'Page is actually about {gen} {sp}: {page_url}')
+
+    if not image_page_name:
+        logging.info(f'Page for {scientific_name} contains no image: {page_url}')
+        return None
+
+    image_page_url = _page_url('commons.wikimedia.org', image_page_name)
+    image_info = _fetch_image_info(image_page_name)
+    if not image_info:
+        logging.warning(f'Image page does not exist: {image_page_url}')
+        return None
+
+    image_file_url = image_info['url']
+    image_width = image_info['width']
+    image_height = image_info['height']
+
+    license_name, license_url, attribution_required, attribution = _parse_license(image_info)
+    # print(f'{image_page_url}\n  {license}\n  {license_url}\n  {attribution}\n')
     if not license_name:
-        logging.error(f'No license found for <{image_page_url}>')
+        logging.warning(f'No license found: {image_page_url}')
     if attribution_required and not attribution:
         # TODO ensure that we link back to the Wikimedia Commons page for these cases!
-        logging.error(f'Attribution required for <{image_page_url}> but no author found')
-
-    image_file_url = _fetch_image_file_url('commons.wikimedia.org', image_page_name)
+        logging.warning(f'Attribution required but no author found: {image_page_url}')
 
     output_file_name = scientific_name.replace(' ', '_') + '.webp'
 
     return Image(species_id=species.species_id,
                  source_page_url=image_page_url,
                  image_file_url=image_file_url,
+                 image_width=image_width,
+                 image_height=image_height,
                  output_file_name=output_file_name,
                  license_name=license_name,
                  license_url=license_url,
