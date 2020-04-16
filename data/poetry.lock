@@ -212,6 +212,14 @@ python-versions = ">=3.5"
 version = "7.1.1"
 
 [[package]]
+category = "main"
+description = "Manipulate audio with an simple and easy high level interface"
+name = "pydub"
+optional = false
+python-versions = "*"
+version = "0.23.1"
+
+[[package]]
 category = "dev"
 description = "python code static checker"
 name = "pylint"
@@ -304,7 +312,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [metadata]
-content-hash = "9acb68bd79f68263c7d077c9c60f2fff5a444ec869908e2a304182a095118b09"
+content-hash = "72c3e75c0c1b28d6c2b42935fecaa71b422f168faa654ddaf11656af9296aa5b"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -496,6 +504,10 @@ pillow = [
     {file = "Pillow-7.1.1-pp373-pypy36_pp73-win32.whl", hash = "sha256:90cd441a1638ae176eab4d8b6b94ab4ec24b212ed4c3fbee2a6e74672481d4f8"},
     {file = "Pillow-7.1.1-py3.8-macosx-10.9-x86_64.egg", hash = "sha256:5eef904c82b5f8e4256e8d420c971357da2884c0b812ba4efa15a7ad2ec66247"},
     {file = "Pillow-7.1.1.tar.gz", hash = "sha256:0f89ddc77cf421b8cd34ae852309501458942bf370831b4a9b406156b599a14e"},
+]
+pydub = [
+    {file = "pydub-0.23.1-py2.py3-none-any.whl", hash = "sha256:d29901a486fb421c5d7b0f3d5d3a60527179204d8ffb20e74e1ae81c17e81b46"},
+    {file = "pydub-0.23.1.tar.gz", hash = "sha256:c362fa02da1eebd1d08bd47aa9b0102582dff7ca2269dbe9e043d228a0c1ea93"},
 ]
 pylint = [
     {file = "pylint-2.4.4-py3-none-any.whl", hash = "sha256:886e6afc935ea2590b462664b161ca9a5e40168ea99e5300935f6591ad467df4"},
