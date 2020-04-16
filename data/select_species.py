@@ -14,6 +14,10 @@ def add_args(parser):
         '--min_recordings_per_species', type=int, default=50,
         help='Minimum number of xeno-canto recordings needed for a species '
         'to be selected for inclusion in the app')
+    parser.add_argument(
+        '--min_image_size', type=int, default=512,
+        help='Minimum image size for images (and thus species) '
+        'to be selected for inclusion in the app')
 
 
 def main(args, session):
@@ -43,9 +47,14 @@ def main(args, session):
                     and output_file_name <> ''
                     and license_name is not null
                     and license_name <> ''
+                    and image_width >= :min_image_size
+                    and image_height >= :min_image_size
             )
         ''',
-        {'min_recordings': args.min_recordings_per_species})\
+        {
+            'min_recordings': args.min_recordings_per_species,
+            'min_image_size': args.min_image_size,
+        })\
         .fetchall()
     for (species_id,) in progress.percent(selected_species_ids):
         session.add(SelectedSpecies(species_id=species_id))
