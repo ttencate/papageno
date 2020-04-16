@@ -31,13 +31,14 @@ import progress
 _STAGES = [
     'load_species',
     'load_recordings',
+    'load_images',
     'create_regions',
     'regions_to_gpkg',
     'select_species',
     'select_recordings',
     'web_ui',
-    'fetch_audio_files',
-    'load_images',
+    'store_audio_files',
+    'store_images',
 ]
 _STAGE_MODULES = {stage: importlib.import_module(stage) for stage in _STAGES}
 

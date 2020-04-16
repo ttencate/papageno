@@ -15,7 +15,9 @@ class Image(Base):
     __tablename__ = 'images'
 
     species_id = Column(Integer, primary_key=True, index=True, nullable=False, autoincrement=True)
-    file_name = Column(String)
+    source_page_url = Column(String)
+    image_file_url = Column(String)
+    output_file_name = Column(String)
     license_name = Column(String)
     license_url = Column(String)
     attribution = Column(String)

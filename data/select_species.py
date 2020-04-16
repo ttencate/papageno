@@ -19,15 +19,31 @@ def add_args(parser):
 def main(args, session):
     session.query(SelectedSpecies).delete()
 
-    logging.info('Filtering species by number of available recordings')
+    logging.info('Filtering species by number of available recordings and images')
     selected_species_ids = session.execute(
         '''
         select species_id
         from species
-        left join recordings using (scientific_name)
-        where recordings.url is not null and recordings.url <> ''
-        group by species_id
-        having count(recording_id) >= :min_recordings
+        where
+            (
+                select count(*)
+                from recordings
+                where
+                    recordings.scientific_name = species.scientific_name
+                    and recordings.url is not null
+                    and recordings.url <> ''
+            ) >= :min_recordings
+            and
+            exists (
+                select *
+                from images
+                where
+                    images.species_id = species.species_id
+                    and output_file_name is not null
+                    and output_file_name <> ''
+                    and license_name is not null
+                    and license_name <> ''
+            )
         ''',
         {'min_recordings': args.min_recordings_per_species})\
         .fetchall()
