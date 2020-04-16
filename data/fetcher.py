@@ -12,21 +12,8 @@ import urllib3
 
 class FetchError(RuntimeError):
 
-    def __init__(self, url, response):
-        super().__init__(
-            f'URL {url} returned status code {response.status} '
-            f'and said:\n{response.data[:100]}{"..." if len(response.data) > 100 else ""}')
-        self.url = url
-        self.status = response.status
-
-    def is_not_found(self):
-        return self.status == 404
-
-
-class NotFound(RuntimeError):
-
     def __init__(self, url):
-        super().__init__(f'Not found: {url}')
+        super().__init__(f'Error fetching "{url}"')
         self.url = url
 
 
@@ -122,16 +109,19 @@ class Fetcher:
         if url.startswith('//'):
             url = 'https:' + url
         logging.debug(f'Fetching {url}')
-        response = self._http.request(
-            'GET', url,
-            timeout=urllib3.Timeout(
-                connect=20.0,
-                read=60.0),
-            retries=urllib3.Retry(
-                total=7,
-                # Retry 400 errors (Bad Request). These spuriously happen in
-                # the xeno-canto API, perhaps due to a bug.
-                status_forcelist=[400] + list(range(500, 600)),
-                backoff_factor=0.1,
-                raise_on_status=True))
+        try:
+            response = self._http.request(
+                'GET', url,
+                timeout=urllib3.Timeout(
+                    connect=20.0,
+                    read=60.0),
+                retries=urllib3.Retry(
+                    total=7,
+                    # Retry 400 errors (Bad Request). These spuriously happen in
+                    # the xeno-canto API, perhaps due to a bug.
+                    status_forcelist=[400] + list(range(500, 600)),
+                    backoff_factor=0.1,
+                    raise_on_status=True))
+        except urllib3.exceptions.HTTPError as ex:
+            raise FetchError(url) from ex
         return response.data

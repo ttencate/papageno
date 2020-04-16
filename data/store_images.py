@@ -40,22 +40,24 @@ def _process_image(image):
         _fetcher = fetcher.Fetcher('wp_images', pool_size=1)
 
     full_output_file_name = os.path.join(_args.image_output_dir, image.output_file_name)
-    if not os.path.exists(full_output_file_name) or _args.recreate_images:
-        image_data = _fetcher.fetch_cached(image.image_file_url)
+    if os.path.exists(full_output_file_name) and not _args.recreate_images:
+        return
 
-        image = PIL.Image.open(io.BytesIO(image_data))
+    image_data = _fetcher.fetch_cached(image.image_file_url)
 
-        if image.width > _args.image_size or image.height > _args.image_size:
-            if image.width >= image.height:
-                output_width = _args.image_size
-                output_height = round(output_width / image.width * image.height)
-            else:
-                output_height = _args.image_size
-                output_width = round(output_height / image.height * image.width)
-            image = image.resize((output_width, output_height), resample=PIL.Image.LANCZOS)
+    image = PIL.Image.open(io.BytesIO(image_data))
 
-        image.save(full_output_file_name,
-                   format='WebP', quality=_args.image_quality)
+    if image.width > _args.image_size or image.height > _args.image_size:
+        if image.width >= image.height:
+            output_width = _args.image_size
+            output_height = round(output_width / image.width * image.height)
+        else:
+            output_height = _args.image_size
+            output_width = round(output_height / image.height * image.width)
+        image = image.resize((output_width, output_height), resample=PIL.Image.LANCZOS)
+
+    image.save(full_output_file_name,
+               format='WebP', quality=_args.image_quality)
 
 
 _args = None
@@ -94,7 +96,7 @@ def main(args, session):
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     with multiprocessing.pool.Pool(args.image_process_jobs) as pool:
         signal.signal(signal.SIGINT, original_sigint_handler)
-        for image in progress.percent(
+        for _ in progress.percent(
                 pool.imap(_process_image, images),
                 len(images)):
             pass

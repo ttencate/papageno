@@ -13,7 +13,7 @@ import analysis
 import fetcher
 import progress
 from recordings import Recording, SonogramAnalysis, SelectedRecording
-from species import SelectedSpecies
+from species import Species, SelectedSpecies
 
 
 _NUM_RECORDINGS_BY_TYPE = {
@@ -73,24 +73,28 @@ def main(args, session):
         logging.info('Deleting all recording selections')
         session.query(SelectedRecording).delete()
 
-    logging.info('Ordering selected species from most to least recorded')
-    selected_scientific_names = session.execute(
-        '''
-        select scientific_name
-        from selected_species
-        inner join species using (species_id)
-        left join recordings using (scientific_name)
-        group by species_id
-        order by count(*) desc
-        ''')\
-        .fetchall()
+    logging.info('Fetching selected species')
+    selected_species = session.query(Species)\
+        .join(SelectedSpecies)\
+        .all()
 
+    recording_filter = [
+        Recording.url != None,
+        Recording.url != '',
+        Recording.audio_url != None,
+        Recording.audio_url != '',
+        Recording.sonogram_url_small != None,
+        Recording.sonogram_url_small != '',
+    ]
+
+    logging.info('Selecting best recordings for each species')
     # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python#35134329
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    with multiprocessing.pool.Pool(args.recording_load_jobs) as pool:
+    with multiprocessing.pool.Pool(args.analysis_jobs) as pool:
         signal.signal(signal.SIGINT, original_sigint_handler)
 
-        for (scientific_name,) in selected_scientific_names:
+        for species in progress.percent(selected_species):
+            scientific_name = species.scientific_name
             num_selected_recordings = session.execute(
                 '''
                 select count(recording_id)
@@ -104,13 +108,10 @@ def main(args, session):
                 logging.info(f'Already have {num_selected_recordings} selected recordings for {scientific_name}, skipping')
                 continue
 
-            logging.info(f'Analyzing sonograms for {scientific_name}')
+            logging.debug(f'Analyzing sonograms for {scientific_name}')
             recordings_to_be_analyzed = session.query(Recording)\
                 .filter(Recording.scientific_name == scientific_name,
-                        Recording.url != None,
-                        Recording.url != '',
-                        Recording.sonogram_url_small != None,
-                        Recording.sonogram_url_small != '',
+                        *recording_filter,
                         ~Recording.sonogram_analysis.has())\
                 .all()
             for sonogram_analysis in progress.percent(
@@ -118,17 +119,14 @@ def main(args, session):
                     len(recordings_to_be_analyzed)):
                 session.add(sonogram_analysis)
 
-            logging.info(f'Loading recordings and analyses for {scientific_name}')
+            logging.debug(f'Loading recordings and analyses for {scientific_name}')
             recordings = session.query(Recording)\
                 .options(joinedload(Recording.sonogram_analysis))\
                 .filter(Recording.scientific_name == scientific_name,
-                        Recording.url != None,
-                        Recording.url != '',
-                        Recording.sonogram_url_small != None,
-                        Recording.sonogram_url_small != '')\
+                        *recording_filter)\
                 .all()
 
-            logging.info(f'Sorting {len(recordings)} of {scientific_name} by quality')
+            logging.debug(f'Sorting {len(recordings)} of {scientific_name} by quality')
             recordings.sort(key=analysis.recording_quality, reverse=True)
 
             recordings_by_type = {t: [] for t in _NUM_RECORDINGS_BY_TYPE}
@@ -149,16 +147,16 @@ def main(args, session):
                 for t in selected_types:
                     recordings_of_type = recordings_by_type[t]
                     num_recordings = _NUM_RECORDINGS_BY_TYPE[t]
-                    logging.info(f'Selecting best {num_recordings} recordings of type "{t}" '
-                                 f'for {scientific_name}')
+                    logging.debug(f'Selecting best {num_recordings} recordings of type "{t}" '
+                                  f'for {scientific_name}')
                     for recording in recordings_of_type[:num_recordings]:
                         session.add(SelectedRecording(recording_id=recording.recording_id))
             else:
                 num_recordings = _FALLBACK_NUM_RECORDINGS
-                logging.info(f'No particular types selected for {scientific_name}, '
-                             f'selecting best {num_recordings} overall')
+                logging.debug(f'No particular types selected for {scientific_name}, '
+                              f'selecting best {num_recordings} overall')
                 for recording in recordings[:num_recordings]:
                     session.add(SelectedRecording(recording_id=recording.recording_id))
 
-            logging.info(f'Committing transaction')
+            logging.debug(f'Committing transaction')
             session.commit()

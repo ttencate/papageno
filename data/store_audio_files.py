@@ -8,70 +8,74 @@ altogether.
 import logging
 import multiprocessing.pool
 import os.path
+import signal
 
 import urllib3
 
+import fetcher
 import progress
 from recordings import Recording, SelectedRecording
 
 
-class _Fetcher:
+_fetcher = None
 
-    def __init__(self, pool_size):
-        self._http = urllib3.PoolManager(num_pools=1, maxsize=pool_size)
 
-    def fetch(self, recording):
-        url = recording.audio_url
-        if not url:
-            logging.error(f'Recording {recording.recording_id} has no URL')
-            return recording, None
-        data = None
-        try:
-            response = self._http.request('GET', url)
-            if response.status != 200:
-                raise RuntimeError(f'Got status {response.status}')
-            data = response.data
-        except: # pylint: disable=bare-except
-            logging.error(f'Fetch failed for recording {recording.recording_id}, URL {url}', exc_info=True)
-        return recording, data
+def _process_recording(recording):
+    '''
+    Entry point for parallel processing.
+    '''
+
+    global _fetcher
+    if not _fetcher:
+        _fetcher = fetcher.Fetcher('audio_files', pool_size=1)
+
+    output_file_name = f'{recording.recording_id}.ogg'
+    full_output_file_name = os.path.join(_args.audio_file_output_dir, output_file_name)
+    if os.path.exists(full_output_file_name) and not _args.recreate_images:
+        return
+
+    try:
+        data = _fetcher.fetch_cached(recording.audio_url)
+    except fetcher.FetchError as ex:
+        logging.error(f'Error fetching {recording.recording_id}: {ex}')
+        return
+
+    # TODO trim and write as OGG
 
 
 def add_args(parser):
     parser.add_argument(
-        '--output_dir', default=os.path.join(os.path.dirname(__file__), 'cache', 'audio_files'),
-        help='Directory to write output files to')
+        '--audio_file_output_dir',
+        default=os.path.join(os.path.dirname(__file__), '..', 'app', 'assets', 'sounds'),
+        help='Directory to write compressed and trimmed audio files for recordings to')
     parser.add_argument(
-        '--replace_existing', action='store_true',
-        help='Re-fetch and overwrite files instead of assuming they are up to date')
+        '--recreate_audio_files', action='store_true',
+        help='Overwrite files instead of assuming they are up to date')
     parser.add_argument(
-        '--audio_fetch_jobs', type=int, default=10,
+        '--audio_process_jobs', type=int, default=8,
         help='Number of parallel fetches to run; do not set too high or else '
         'the XenoCanto server might get upset!')
 
 
+_args = None
+
+
 def main(args, session):
+    global _args
+    _args = args
+
     logging.info('Loading selected recordings')
     selected_recordings = session.query(Recording).join(SelectedRecording).all()
 
     def file_name(recording):
         return os.path.join(args.output_dir, recording.recording_id + '.mp3')
 
-    if not args.replace_existing:
-        logging.info('Checking existing files')
-        recordings_to_fetch = []
-        for recording in progress.percent(selected_recordings):
-            if not os.path.isfile(file_name(recording)):
-                recordings_to_fetch.append(recording)
-    else:
-        recordings_to_fetch = selected_recordings
-
-    logging.info('Fetching audio files')
-    fetcher = _Fetcher(pool_size=args.audio_fetch_jobs)
-    with multiprocessing.pool.ThreadPool(args.audio_fetch_jobs) as pool:
-        for recording, data in progress.percent(
-                pool.imap(fetcher.fetch, recordings_to_fetch),
-                len(recordings_to_fetch)):
-            if not data:
-                continue
-            with open(file_name(recording), 'wb') as output_file:
-                output_file.write(data)
+    logging.info('Fetching and processing audio files')
+    # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python#35134329
+    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    with multiprocessing.pool.Pool(args.image_process_jobs) as pool:
+        signal.signal(signal.SIGINT, original_sigint_handler)
+        for _ in progress.percent(
+                pool.imap(_process_recording, selected_recordings),
+                len(selected_recordings)):
+            pass
