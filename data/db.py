@@ -5,7 +5,6 @@ intermediate data.
 
 import logging
 import os
-import os.path
 
 import sqlalchemy
 
@@ -44,20 +43,27 @@ class ExtraSession(Session):
 
 def _create_engine(file_name):
     logging.info(f'Opening database {file_name}')
-    engine = sqlalchemy.create_engine('sqlite:///' + file_name,
-                                      echo=os.environ.get('ECHO_SQL') == '1')
+    return sqlalchemy.create_engine('sqlite:///' + file_name,
+                                    echo=os.environ.get('ECHO_SQL') == '1')
 
-    # Presumably, all classes for which we need tables have been imported by now.
-    Base.metadata.create_all(engine)
 
-    return engine
+def create_connection(file_name):
+    '''
+    Creates a connecting (no ORM session) to an arbitrary database.
+    '''
+    return _create_engine(file_name).connect()
 
 
 _session_factory = sqlalchemy.orm.sessionmaker(class_=ExtraSession)
 
 
-def create_session(file_name=os.path.join(os.path.dirname(__file__), 'master.db')):
+def create_session(file_name):
     '''
-    Creates and returns a new session connected to the master database.
+    Creates and returns a new session and populates it with the tables of the
+    master database.
     '''
     return _session_factory(bind=_create_engine(file_name))
+
+
+def create_master_schema(session):
+    Base.metadata.create_all(session.connection().engine)

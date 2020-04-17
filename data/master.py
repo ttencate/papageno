@@ -14,6 +14,7 @@ import argparse
 import datetime
 import importlib
 import logging
+import os.path
 import sys
 import time
 
@@ -39,6 +40,7 @@ _STAGES = [
     'select_recordings',
     'store_audio_files',
     'store_images',
+    'store_database',
 
     'web_ui',
 ]
@@ -79,7 +81,8 @@ def _main():
     if args.no_progress:
         progress.disable()
 
-    session = db.create_session()
+    session = db.create_session(os.path.join(os.path.dirname(__file__), 'master.db'))
+    db.create_master_schema(session)
 
     for stage, module in _STAGE_MODULES.items():
         if getattr(args, stage):
@@ -89,7 +92,7 @@ def _main():
             getattr(module, 'main')(args, session)
             logging.info('Committing transaction')
             try:
-                session.commit()
+                session and session.commit()
             except InvalidRequestError:
                 logging.info('Transaction is empty, nothing to commit')
 
