@@ -41,23 +41,25 @@ def _process_image(image):
 
     full_output_file_name = os.path.join(_args.image_output_dir, image.output_file_name)
     if os.path.exists(full_output_file_name) and not _args.recreate_images:
-        return
+        return image.output_file_name
 
     image_data = _fetcher.fetch_cached(image.image_file_url)
 
-    image = PIL.Image.open(io.BytesIO(image_data))
+    pil_image = PIL.Image.open(io.BytesIO(image_data))
 
-    if image.width > _args.image_size or image.height > _args.image_size:
-        if image.width >= image.height:
+    if pil_image.width > _args.image_size or pil_image.height > _args.image_size:
+        if pil_image.width >= pil_image.height:
             output_width = _args.image_size
-            output_height = round(output_width / image.width * image.height)
+            output_height = round(output_width / pil_image.width * pil_image.height)
         else:
             output_height = _args.image_size
-            output_width = round(output_height / image.height * image.width)
-        image = image.resize((output_width, output_height), resample=PIL.Image.LANCZOS)
+            output_width = round(output_height / pil_image.height * pil_image.width)
+        pil_image = pil_image.resize((output_width, output_height), resample=PIL.Image.LANCZOS)
 
-    image.save(full_output_file_name,
-               format='WebP', quality=_args.image_quality)
+    pil_image.save(full_output_file_name,
+                   format='WebP', quality=_args.image_quality)
+
+    return image.output_file_name
 
 
 _args = None
@@ -78,7 +80,7 @@ def add_args(parser):
         '--image_size', default=1080,
         help='Maximum size in pixels of bird photos measured along the longest edge')
     parser.add_argument(
-        '--image_quality', default=50,
+        '--image_quality', default=70,
         help='WebP quality level of bird photos')
 
 
@@ -92,11 +94,22 @@ def main(args, session):
         .join(SelectedSpecies)\
         .all()
 
+    logging.info('Listing existing images')
+    old_images = set(os.listdir(args.image_output_dir))
+
     # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python#35134329
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     with multiprocessing.pool.Pool(args.image_process_jobs) as pool:
         signal.signal(signal.SIGINT, original_sigint_handler)
-        for _ in progress.percent(
+        for image_file_name in progress.percent(
                 pool.imap(_process_image, images),
                 len(images)):
-            pass
+            if image_file_name:
+                old_images.discard(image_file_name)
+
+    logging.info(f'Deleting {len(old_images)} old images')
+    for old_image in old_images:
+        try:
+            os.remove(os.path.join(args.image_output_dir, old_image))
+        except OSError as ex:
+            logging.warning(f'Could not delete {old_image}: {ex}')

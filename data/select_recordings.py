@@ -2,167 +2,115 @@
 Selects recordings to use for each selected species.
 '''
 
-import hashlib
+import collections
 import logging
 import os.path
-import multiprocessing.pool
-import signal
 
+from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 
 import analysis
-import fetcher
 import progress
-from recordings import Recording, SonogramAnalysis, SelectedRecording
+from recordings import Recording, SelectedRecording
 from species import Species, SelectedSpecies
 
 
-_NUM_RECORDINGS_BY_TYPE = {
-    'call': 3,
-    'song': 5,
-}
-_FALLBACK_NUM_RECORDINGS = 5
-
-
-_sonogram_fetcher = None
-def _analyze(recording):
-    try:
-        # Create one fetcher per process.
-        global _sonogram_fetcher
-        if not _sonogram_fetcher:
-            _sonogram_fetcher = fetcher.Fetcher(cache_group='xc_sonograms_small', pool_size=1)
-
-        sonogram = None
-        try:
-            sonogram = _sonogram_fetcher.fetch_cached(recording.sonogram_url_small)
-        except fetcher.FetchError as ex:
-            if ex.is_not_found():
-                logging.warning(f'Sonogram for recording {recording.recording_id} was not found')
-            else:
-                raise ex
-
-        sonogram_quality = -999999
-        if sonogram:
-            sonogram_quality = analysis.sonogram_quality(recording.recording_id, sonogram)
-
-        return SonogramAnalysis(recording_id=recording.recording_id,
-                                sonogram_quality=sonogram_quality)
-    except Exception as ex:
-        # Re-raise as something that's guaranteed to be pickleable.
-        logging.error('Exception during analysis', exc_info=True)
-        raise RuntimeError(f'Exception during analysis: {ex}')
+_RECORDING_TYPES = ['call', 'song']
 
 
 def add_args(parser):
     parser.add_argument(
-        '--restart_analysis', action='store_true',
-        help='Delete all sonogram analyses before starting')
+        '--max_selected_recordings_per_species', type=int, default=8,
+        help='Number of selected recordings for the most important species')
     parser.add_argument(
-        '--reselect_recordings', action='store_true',
-        help='Re-run the recording selection even for species '
-        'for which we already have selected recordings')
+        '--min_selected_recordings_per_species', type=int, default=3,
+        help='Minimum number of selected recordings for a species')
     parser.add_argument(
-        '--analysis_jobs', default=8,
-        help='Number of parallel sonogram analysis jobs to run')
+        '--recording_selection_decay', type=int, default=0.997,
+        help='For each next species, multiply the number of selected recordings by this value')
 
 
 def main(args, session):
-    if args.restart_analysis:
-        logging.info('Deleting all sonogram analyses')
-        session.query(SonogramAnalysis).delete()
-    if args.reselect_recordings:
-        logging.info('Deleting all recording selections')
-        session.query(SelectedRecording).delete()
+    logging.info('Deleting all recording selections')
+    session.query(SelectedRecording).delete()
 
-    logging.info('Fetching selected species')
+    logging.info('Ordering selected species by importance')
     selected_species = session.query(Species)\
         .join(SelectedSpecies)\
+        .order_by(text('''
+            (
+                select count(*)
+                from recordings
+                where recordings.scientific_name = species.scientific_name
+            ) desc
+        '''))\
         .all()
 
     logging.info('Loading recording blacklist')
     with open(os.path.join(os.path.dirname(__file__), 'recordings_blacklist.txt')) as f:
         blacklisted_recording_ids = list(filter(None, (line.partition('#')[0].strip() for line in f)))
 
-    recording_filter = [
-        ~Recording.recording_id.in_(blacklisted_recording_ids),
-        Recording.url != None,
-        Recording.url != '',
-        Recording.audio_url != None,
-        Recording.audio_url != '',
-        Recording.sonogram_url_small != None,
-        Recording.sonogram_url_small != '',
-    ]
-
     logging.info('Selecting best recordings for each species')
-    # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python#35134329
-    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    with multiprocessing.pool.Pool(args.analysis_jobs) as pool:
-        signal.signal(signal.SIGINT, original_sigint_handler)
+    # Not parallelized, because it's mostly database work.
+    for index, species in progress.percent(enumerate(selected_species)):
+        scientific_name = species.scientific_name
 
-        for species in progress.percent(selected_species):
-            scientific_name = species.scientific_name
-            num_selected_recordings = session.execute(
-                '''
-                select count(recording_id)
-                from selected_recordings
-                inner join recordings using (recording_id)
-                where scientific_name = :scientific_name
-                ''',
-                {'scientific_name': scientific_name})\
-                .scalar()
-            if num_selected_recordings > 0:
-                logging.info(f'Already have {num_selected_recordings} selected recordings for {scientific_name}, skipping')
+        num_selected_recordings = max(
+            round(args.max_selected_recordings_per_species * args.recording_selection_decay**index),
+            args.min_selected_recordings_per_species)
+
+        logging.debug(f'Loading recordings and analyses for {scientific_name}')
+        recordings = session.query(Recording)\
+            .options(joinedload(Recording.sonogram_analysis))\
+            .filter(Recording.scientific_name == scientific_name,
+                    ~Recording.recording_id.in_(blacklisted_recording_ids),
+                    Recording.url != None, # pylint: disable=singleton-comparison
+                    Recording.url != '',
+                    Recording.audio_url != None, # pylint: disable=singleton-comparison
+                    Recording.audio_url != '',
+                    Recording.sonogram_analysis.has())\
+            .all()
+
+        logging.debug(f'Sorting {len(recordings)} recordings of {scientific_name} by quality')
+        recordings.sort(key=analysis.recording_quality)
+
+        num_recordings_by_type = collections.defaultdict(int)
+        for recording in recordings:
+            for type_ in recording.types:
+                num_recordings_by_type[type_] += 1
+        types = list(num_recordings_by_type.keys())
+        logging.debug(f'Most occurring types for {scientific_name}: '
+                      f'{", ".join(f"{t}: {c}" for c, t in sorted(((c, t) for t, c in num_recordings_by_type.items()), reverse=True)[:10])}')
+
+        selected_recordings = []
+        num_selected_recordings_by_type = collections.defaultdict(int)
+        def underrepresentation(type_):
+            target_representation = num_recordings_by_type[type_] / len(recordings) * num_selected_recordings
+            current_representation = num_selected_recordings_by_type[type_]
+            underrepresentation = target_representation / max(1.0, current_representation)
+            return underrepresentation
+
+        while recordings and len(selected_recordings) < num_selected_recordings:
+            # Find most underrepresented type.
+            type_ = max(types, key=underrepresentation)
+
+            # Find best recording of that type.
+            recording = None
+            for index in range(len(recordings) - 1, -1, -1):
+                if type_ in recordings[index].types:
+                    recording = recordings[index]
+                    break
+            
+            # No more recordings of this type? Stop trying to represent it better.
+            if not recording:
+                types.discard(type_)
                 continue
 
-            logging.debug(f'Analyzing sonograms for {scientific_name}')
-            recordings_to_be_analyzed = session.query(Recording)\
-                .filter(Recording.scientific_name == scientific_name,
-                        *recording_filter,
-                        ~Recording.sonogram_analysis.has())\
-                .all()
-            for sonogram_analysis in progress.percent(
-                    pool.imap(_analyze, recordings_to_be_analyzed),
-                    len(recordings_to_be_analyzed)):
-                session.add(sonogram_analysis)
-
-            logging.debug(f'Loading recordings and analyses for {scientific_name}')
-            recordings = session.query(Recording)\
-                .options(joinedload(Recording.sonogram_analysis))\
-                .filter(Recording.scientific_name == scientific_name,
-                        *recording_filter)\
-                .all()
-
-            logging.debug(f'Sorting {len(recordings)} of {scientific_name} by quality')
-            recordings.sort(key=analysis.recording_quality, reverse=True)
-
-            recordings_by_type = {t: [] for t in _NUM_RECORDINGS_BY_TYPE}
-            for recording in recordings:
-                recording_types = []
-                for recording_type in recording.types:
-                    for t in _NUM_RECORDINGS_BY_TYPE:
-                        if recording_type.startswith(t):
-                            recording_types.append(t)
-                if len(recording_types) == 1:
-                    recordings_by_type[recording_types[0]].append(recording)
-
-            selected_types = [
-                t for t in _NUM_RECORDINGS_BY_TYPE
-                if len(recordings_by_type[t]) >= 0.02 * len(recordings)
-            ]
-            if selected_types:
-                for t in selected_types:
-                    recordings_of_type = recordings_by_type[t]
-                    num_recordings = _NUM_RECORDINGS_BY_TYPE[t]
-                    logging.debug(f'Selecting best {num_recordings} recordings of type "{t}" '
-                                  f'for {scientific_name}')
-                    for recording in recordings_of_type[:num_recordings]:
-                        session.add(SelectedRecording(recording_id=recording.recording_id))
-            else:
-                num_recordings = _FALLBACK_NUM_RECORDINGS
-                logging.debug(f'No particular types selected for {scientific_name}, '
-                              f'selecting best {num_recordings} overall')
-                for recording in recordings[:num_recordings]:
-                    session.add(SelectedRecording(recording_id=recording.recording_id))
-
-            logging.debug(f'Committing transaction')
-            session.commit()
+            # Select recording and update counters.
+            selected_recordings.append(recording)
+            recordings.pop(index)
+            session.add(SelectedRecording(recording_id=recording.recording_id))
+            for type_ in recording.types:
+                num_selected_recordings_by_type[type_] += 1
+        logging.debug(f'Selected {num_selected_recordings} of  {species.scientific_name} '
+                      f'of types {", ".join(f"{t}: {c}" for c, t in sorted(((c, t) for t, c in num_selected_recordings_by_type.items() if c > 0), reverse=True))}')

@@ -35,6 +35,9 @@ def percent(iterable, length=None):
         except TypeError:
             iterable = list(iterable)
             length = len(iterable)
+    if length == 0:
+        return
+
     last_update = 0
     start_time = time.monotonic()
     output_length = 0
@@ -51,5 +54,9 @@ def percent(iterable, length=None):
             sys.stderr.flush()
             output_length = len(output)
             last_update = now
-    sys.stderr.write((' ' * output_length) + '\r')
+    elapsed_time = datetime.timedelta(seconds=now - start_time)
+    index = length
+    pct = 100
+    output = f' {index}/{length}   {pct:.1f}%    {elapsed_time}'
+    sys.stderr.write(output + (' ' * (output_length - len(output))) + '\n')
     sys.stderr.flush()
