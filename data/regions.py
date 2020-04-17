@@ -65,8 +65,8 @@ class Region(Base):
 
     def ranked_scientific_names(self):
         '''
-        Returns the list of species ids recorded in this region, ordered from
-        most to least recorded.
+        Returns the list of scientific names of species recorded in this
+        region, ordered from most to least recorded.
         '''
         if not self.num_recordings_by_scientific_name:
             return []
