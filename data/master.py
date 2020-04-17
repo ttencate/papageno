@@ -35,10 +35,12 @@ _STAGES = [
     'create_regions',
     'regions_to_gpkg',
     'select_species',
+    'analyze_recordings',
     'select_recordings',
-    'web_ui',
     'store_audio_files',
     'store_images',
+
+    'web_ui',
 ]
 _STAGE_MODULES = {stage: importlib.import_module(stage) for stage in _STAGES}
 

@@ -1,15 +1,17 @@
 <div style="display: flex; flex-direction: row; justify-content: space-between;">
   <div>
-    <h2>Selected</h2>
+    <h2>Selected ({{selected_species|length}})</h2>
     {% for species in selected_species %}
+      {{loop.index}}:
       <a href="/{{species.scientific_name}}"><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</a>
       ({{selected_recording_counts[species.species_id]|default(0)}}/{{recording_counts[species.species_id]}})
       <br>
     {% endfor %}
   </div>
   <div>
-    <h2>Unselected</h2>
+    <h2>Unselected ({{unselected_species|length}})</h2>
     {% for species in unselected_species %}
+      {{loop.index}}:
       <a href="/{{species.scientific_name}}"><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</a>
       ({{selected_recording_counts[species.species_id]|default(0)}}/{{recording_counts[species.species_id]}})
       <br>

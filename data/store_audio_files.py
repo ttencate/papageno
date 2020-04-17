@@ -8,6 +8,7 @@ altogether.
 import io
 import logging
 import multiprocessing.pool
+import os
 import os.path
 import signal
 
@@ -53,20 +54,20 @@ def _process_recording(recording):
     output_file_name = f'{recording.recording_id}.ogg'
     full_output_file_name = os.path.join(_args.audio_file_output_dir, output_file_name)
     if os.path.exists(full_output_file_name) and not _args.recreate_audio_files:
-        return
+        return output_file_name
 
     try:
         data = _fetcher.fetch_cached(recording.audio_url)
     except fetcher.FetchError as ex:
         logging.error(f'Error fetching {recording.recording_id}: {ex}')
-        return
+        return None
 
     try:
         sound = pydub.AudioSegment.from_file(io.BytesIO(data), 'mp3')
     except Exception as ex:
         # These errors can get extremely long.
         logging.error(f'Failed to decode audio file for {recording.url}: {str(ex)[:5000]}')
-        return
+        return None
 
     # pydub does everything in milliseconds.
     sound = sound[:1000 * _args.max_audio_duration]
@@ -89,6 +90,8 @@ def _process_recording(recording):
     sound = sound.set_frame_rate(_args.audio_sample_rate)
     sound.export(full_output_file_name + '.tmp', format='ogg', parameters=['-q:a', str(_args.audio_quality)])
     os.rename(full_output_file_name + '.tmp', full_output_file_name)
+
+    return output_file_name
 
 
 def add_args(parser):
@@ -130,15 +133,23 @@ def main(args, session):
     logging.info('Loading selected recordings')
     selected_recordings = session.query(Recording).join(SelectedRecording).all()
 
-    def file_name(recording):
-        return os.path.join(args.output_dir, recording.recording_id + '.mp3')
+    logging.info('Listing existing audio files')
+    old_audio_files = set(os.listdir(args.audio_file_output_dir))
 
     logging.info('Fetching and processing audio files')
     # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python#35134329
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     with multiprocessing.pool.Pool(args.image_process_jobs) as pool:
         signal.signal(signal.SIGINT, original_sigint_handler)
-        for _ in progress.percent(
+        for output_file_name in progress.percent(
                 pool.imap(_process_recording, selected_recordings),
                 len(selected_recordings)):
-            pass
+            if output_file_name:
+                old_audio_files.discard(output_file_name)
+
+    logging.info(f'Deleting {len(old_audio_files)} old audio files')
+    for old_audio_file in old_audio_files:
+        try:
+            os.remove(os.path.join(args.audio_file_output_dir, old_audio_file))
+        except OSError as ex:
+            logging.warning(f'Could not delete {old_audio_file}: {ex}')

@@ -75,9 +75,11 @@ def _species_route(scientific_name):
     group_sizes = {group: 0 for group in groups}
     for recording in recordings:
         types = recording.types
-        if any('song' in type for type in types):
+        song = any('song' in type for type in types)
+        call = any('call' in type for type in types)
+        if song and not call:
             groups['song'].append(recording)
-        elif any('call' in type for type in types):
+        elif call and not song:
             groups['call'].append(recording)
         else:
             groups['other'].append(recording)
