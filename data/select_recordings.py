@@ -4,6 +4,7 @@ Selects recordings to use for each selected species.
 
 import hashlib
 import logging
+import os.path
 import multiprocessing.pool
 import signal
 
@@ -57,7 +58,7 @@ def add_args(parser):
         '--restart_analysis', action='store_true',
         help='Delete all sonogram analyses before starting')
     parser.add_argument(
-        '--restart_select_recordings', action='store_true',
+        '--reselect_recordings', action='store_true',
         help='Re-run the recording selection even for species '
         'for which we already have selected recordings')
     parser.add_argument(
@@ -69,7 +70,7 @@ def main(args, session):
     if args.restart_analysis:
         logging.info('Deleting all sonogram analyses')
         session.query(SonogramAnalysis).delete()
-    if args.restart_select_recordings:
+    if args.reselect_recordings:
         logging.info('Deleting all recording selections')
         session.query(SelectedRecording).delete()
 
@@ -78,7 +79,12 @@ def main(args, session):
         .join(SelectedSpecies)\
         .all()
 
+    logging.info('Loading recording blacklist')
+    with open(os.path.join(os.path.dirname(__file__), 'recordings_blacklist.txt')) as f:
+        blacklisted_recording_ids = list(filter(None, (line.partition('#')[0].strip() for line in f)))
+
     recording_filter = [
+        ~Recording.recording_id.in_(blacklisted_recording_ids),
         Recording.url != None,
         Recording.url != '',
         Recording.audio_url != None,

@@ -61,7 +61,12 @@ def _process_recording(recording):
         logging.error(f'Error fetching {recording.recording_id}: {ex}')
         return
 
-    sound = pydub.AudioSegment.from_file(io.BytesIO(data), 'mp3')
+    try:
+        sound = pydub.AudioSegment.from_file(io.BytesIO(data), 'mp3')
+    except Exception as ex:
+        # These errors can get extremely long.
+        logging.error(f'Failed to decode audio file for {recording.url}: {str(ex)[:5000]}')
+        return
 
     # pydub does everything in milliseconds.
     sound = sound[:1000 * _args.max_audio_duration]
@@ -82,11 +87,8 @@ def _process_recording(recording):
     sound = pydub.effects.normalize(sound)
 
     sound = sound.set_frame_rate(_args.audio_sample_rate)
-    try:
-        sound.export(full_output_file_name, format='ogg', parameters=['-q:a', str(_args.audio_quality)])
-    except:
-        os.remove(full_output_file_name)
-        raise
+    sound.export(full_output_file_name + '.tmp', format='ogg', parameters=['-q:a', str(_args.audio_quality)])
+    os.rename(full_output_file_name + '.tmp', full_output_file_name)
 
 
 def add_args(parser):
