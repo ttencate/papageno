@@ -40,18 +40,18 @@ class AppDb {
   }
 
   Future<Species> species(int speciesId) async {
-    final records = await _db.rawQuery('select * from species where species_id = ?', [speciesId]);
+    final records = await _db.rawQuery('select * from species where species_id = ?', <dynamic>[speciesId]);
     if (records.isEmpty) {
       throw NotFoundException(speciesId);
     }
     final r = records[0];
     return Species(
-        r['species_id'],
-        r['scientific_name'],
+        r['species_id'] as int,
+        r['scientific_name'] as String,
         BuiltMap<LanguageCode, String>.build((builder) {
           builder.addEntries(r.entries
               .where((e) => e.key.startsWith('common_name_'))
-              .map((e) => MapEntry(languageCodeFromString(e.key.substring(12)), e.value)));
+              .map((e) => MapEntry(languageCodeFromString(e.key.substring(12)), e.value as String)));
         }));
   }
 }
