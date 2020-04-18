@@ -1,20 +1,35 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 
+import 'appdb.dart';
 import 'localization.dart';
 import 'model.dart';
+import 'revealing_image.dart';
 import 'strings.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(App());
 }
 
-class MyApp extends StatelessWidget {
+class App extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => AppState();
+}
+
+class AppState extends State<App> {
+  Future<AppDb> _appDb;
+
+  @override
+  void initState() {
+    super.initState();
+    _appDb = AppDb.open();
+  }
+
   @override
   Widget build(BuildContext context) {
     final inheritanceDelegate = InheritanceDelegate({
@@ -26,7 +41,24 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: QuizScreen(QuestionFactory(), 20),
+      home: FutureBuilder<AppDb>(
+        future: _appDb,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return Provider<AppDb>.value(
+              value: snapshot.data,
+              child: CourseScreen(),
+            );
+          } else if (snapshot.hasError) {
+            return ErrorScreen('Error loading app database', snapshot.error);
+          } else {
+            // TODO show splash screen instead
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
+      ),
       localizationsDelegates: [
         inheritanceDelegate,
         GlobalMaterialLocalizations.delegate,
@@ -38,13 +70,49 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// TODO only for development; stop using this
+class ErrorScreen extends StatelessWidget {
+
+  final String message;
+  final dynamic exception;
+
+  const ErrorScreen(this.message, this.exception) : super();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Text('${message}\n${exception}')
+      ),
+    );
+  }
+}
+
+class CourseScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final appDb = Provider.of<AppDb>(context);
+    final quiz = Quiz(appDb);
+    return FutureBuilder<Question>(
+      future: quiz.getNextQuestion(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return QuizScreen(quiz);
+        } else if (snapshot.hasError) {
+          return ErrorScreen('Error creating question', snapshot.error);
+        } else {
+          return Center(child: CircularProgressIndicator());
+        }
+      },
+    );
+  }
+}
+
 class QuizScreen extends StatefulWidget {
 
-  QuizScreen(this.questionFactory, this.totalQuestionCount, [this.currentQuestionIndex = 1]);
+  QuizScreen(this.quiz);
 
-  final questionFactory;
-  final int totalQuestionCount;
-  final int currentQuestionIndex;
+  final Quiz quiz;
 
   @override
   State<StatefulWidget> createState() => _QuizScreenState();
@@ -52,32 +120,42 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
 
-  Question _currentQuestion;
+  Future<Question> _currentQuestion;
 
   @override
   void initState() {
     super.initState();
-    _currentQuestion = widget.questionFactory.createQuestion();
+    _currentQuestion = widget.quiz.getNextQuestion();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Strings.of(context).questionIndex(widget.currentQuestionIndex, widget.totalQuestionCount)),
+        title: Text(Strings.of(context).questionIndex(widget.quiz.currentQuestionIndex + 1, widget.quiz.totalQuestionCount)),
         // TODO show some sort of progress bar
       ),
-      body: QuestionScreen(
-        key: ObjectKey(_currentQuestion),
-        question: _currentQuestion,
-        onProceed: _showNextQuestion
+      body: FutureBuilder<Question>(
+        future: _currentQuestion,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return QuestionScreen(
+                key: ObjectKey(snapshot.data),
+                question: snapshot.data,
+                onProceed: _showNextQuestion
+            );
+          } else {
+            return Container();
+          }
+        },
       ),
     );
   }
 
   void _showNextQuestion() {
+    // TODO this only slides the new question in; also slide the old one out
     final route = PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(widget.questionFactory, widget.totalQuestionCount, widget.currentQuestionIndex + 1),
+      pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(widget.quiz),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var tween = Tween(begin: Offset(1.0, 0.0), end: Offset.zero)
             .chain(CurveTween(curve: Curves.easeInOut));
@@ -90,104 +168,6 @@ class _QuizScreenState extends State<QuizScreen> {
       },
     );
     Navigator.of(context).pushReplacement(route);
-  }
-}
-
-class CircleClipper extends CustomClipper<Rect> {
-  const CircleClipper({Listenable reclip, this.fraction = 1.0}) :
-      super(reclip: reclip);
-
-  final double fraction;
-
-  @override
-  Rect getApproximateClipRect(Size size) {
-    return getClip(size);
-  }
-
-  @override
-  Rect getClip(Size size) {
-    final diameter = fraction * sqrt(size.width * size.width + size.height * size.height);
-    return Rect.fromCenter(center: size.center(Offset.zero), width: diameter, height: diameter);
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Rect> oldClipper) {
-    return oldClipper.runtimeType == CircleClipper ? (oldClipper as CircleClipper).fraction != fraction : true;
-  }
-}
-
-class RevealingImage extends StatefulWidget {
-  RevealingImage({@required this.image, this.revealed = true}) :
-      assert(image != null);
-
-  final ImageProvider image;
-  final bool revealed;
-
-  @override
-  State<StatefulWidget> createState() => _RevealingImageState();
-}
-
-class _RevealingImageState extends State<RevealingImage> with SingleTickerProviderStateMixin {
-  AnimationController controller;
-  Animation<double> animation;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    animation = Tween<double>(begin: 0.0, end: 1.0).animate(controller);
-    // TODO figure out why we need this -- CustomClipper.reclip is tied to this animation so it should be updating outside the build cycle, right?
-    animation.addListener(() { setState(() {}); });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.revealed) {
-      controller.forward();
-    } else {
-      controller.reverse();
-    }
-    return Stack(
-      children: <Widget>[
-        Positioned.fill(
-          child: Container(
-            color: Colors.grey.shade200,
-            child: FittedBox(
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-              child: Padding(
-                padding: EdgeInsets.all(2.0),
-                child: Text(
-                  '?',
-                  style: TextStyle(color: Colors.grey.shade500),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: ClipOval(
-            clipper: CircleClipper(
-              fraction: animation.value,
-              reclip: animation,
-            ),
-            // Supposed to be faster than antiAlias, and during animation the
-            // difference is invisible anyway.
-            clipBehavior: Clip.hardEdge,
-            child: Image(
-              image: widget.image,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
   }
 }
 
@@ -303,7 +283,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 //        ),
       ),
       child: ListTile(
-        title: Text(species.nameIn(Language.dutch).capitalize()),
+        title: Text(species.commonNameIn(LanguageCode.language_nl).capitalize()),
         trailing: icon,
         onTap: _choice == null ? () { _choose(species); } : null,
       ),
