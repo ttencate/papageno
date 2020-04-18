@@ -154,7 +154,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void _showNextQuestion() {
     // TODO this only slides the new question in; also slide the old one out
-    final route = PageRouteBuilder(
+    final route = PageRouteBuilder<void>(
       pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(widget.quiz),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var tween = Tween(begin: Offset(1.0, 0.0), end: Offset.zero)
