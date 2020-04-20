@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
 import 'quiz.dart';
-import 'errors.dart';
 
 class CourseScreen extends StatelessWidget {
   @override
@@ -17,7 +16,7 @@ class CourseScreen extends StatelessWidget {
         if (snapshot.hasData) {
           return QuizScreen(quiz);
         } else if (snapshot.hasError) {
-          return ErrorScreen('Error creating question', snapshot.error);
+          throw snapshot.error;
         } else {
           return Center(child: CircularProgressIndicator());
         }
