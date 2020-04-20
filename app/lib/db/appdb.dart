@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'model.dart';
+import '../model/model.dart';
 
 class NotFoundException implements Exception {
   final dynamic what;
