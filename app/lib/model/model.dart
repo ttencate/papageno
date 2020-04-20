@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 
-import 'appdb.dart';
+import '../db/appdb.dart';
 
 /// Language codes for all supported languages.
 ///
