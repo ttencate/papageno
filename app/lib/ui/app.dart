@@ -8,7 +8,6 @@ import '../db/appdb.dart';
 import 'course.dart';
 import 'localization.dart';
 import 'strings.dart';
-import 'errors.dart';
 
 class App extends StatefulWidget {
   @override
@@ -44,7 +43,7 @@ class AppState extends State<App> {
               child: CourseScreen(),
             );
           } else if (snapshot.hasError) {
-            return ErrorScreen('Error loading app database', snapshot.error);
+            throw snapshot.error;
           } else {
             // TODO show splash screen instead
             return Center(
