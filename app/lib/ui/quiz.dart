@@ -41,7 +41,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 onProceed: _showNextQuestion
             );
           } else {
-            return Container();
+            return Container(child: Center(child: CircularProgressIndicator()));
           }
         },
       ),

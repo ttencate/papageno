@@ -123,7 +123,7 @@ def main(args, session):
             .join(SelectedSpecies)
     ])
 
-    logging.info('Inserting selected regions')
+    logging.info('Inserting nonempty regions')
     out.execute(out_regions.insert(), [
         {
             'region_id': r.region_id,
@@ -136,5 +136,9 @@ def main(args, session):
             },
         }
         for r in session.query(Region)\
-            .filter(Region.num_recordings_by_scientific_name != None)
+            .filter(Region.num_recordings_by_scientific_name != None,
+                    Region.num_recordings_by_scientific_name != [])
+        if any(
+            scientific_name in selected_species_ids_by_scientific_name
+            for scientific_name in r.num_recordings_by_scientific_name)
     ])

@@ -44,14 +44,11 @@ class AppDb {
     if (records.isEmpty) {
       throw NotFoundException(speciesId);
     }
-    final r = records[0];
-    return Species(
-        r['species_id'] as int,
-        r['scientific_name'] as String,
-        BuiltMap<LanguageCode, String>.build((builder) {
-          builder.addEntries(r.entries
-              .where((e) => e.key.startsWith('common_name_'))
-              .map((e) => MapEntry(languageCodeFromString(e.key.substring(12)), e.value as String)));
-        }));
+    return Species.fromMap(records[0]);
+  }
+
+  Future<List<Region>> allRegions() async {
+    final records = await _db.rawQuery('select * from regions');
+    return records.map((r) => Region.fromMap(r)).toList();
   }
 }
