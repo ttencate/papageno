@@ -24,10 +24,10 @@ Future<Course> createCourse(AppDb appDb) async {
       location.distanceTo(a.centroid).compareTo(
           location.distanceTo(b.centroid)));
 
-  const numRegionsUsed = 9;
+  const numRegionsUsed = 1;
   final weights = <int, int>{};
   for (var i = 0; i < numRegionsUsed; i++) {
-    final regionWeight = numRegionsUsed - i; // TODO gaussian based on distance
+    final regionWeight = numRegionsUsed - i; // TODO some kind of interpolation
     for (final entry in regions[i].weightBySpeciesId.entries) {
       if (!weights.containsKey(entry.key)) {
         weights[entry.key] = 0;
@@ -44,5 +44,19 @@ Future<Course> createCourse(AppDb appDb) async {
     speciesOrder.add(await appDb.species(speciesId));
   }
 
-  return Course(location, BuiltList.of(speciesOrder));
+  final lessons = <Lesson>[];
+  final speciesInLesson = <Species>[];
+  for (final species in speciesOrder) {
+    speciesInLesson.add(species);
+    if (speciesInLesson.length >= _numSpeciesInLesson(lessons.length)) {
+      lessons.add(Lesson(lessons.length, BuiltList.of(speciesInLesson)));
+      speciesInLesson.clear();
+    }
+  }
+
+  return Course(location, BuiltList.of(lessons));
+}
+
+int _numSpeciesInLesson(int index) {
+  return index == 0 ? 10 : 5;
 }
