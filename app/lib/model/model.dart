@@ -119,11 +119,22 @@ class Region {
       });
 }
 
+@immutable
 class Course {
   final LatLon location;
-  final BuiltList<Species> speciesOrder;
+  final BuiltList<Lesson> lessons;
 
-  Course(this.location, this.speciesOrder);
+  Course(this.location, this.lessons);
+}
+
+@immutable
+class Lesson {
+  final int index;
+  final BuiltList<Species> species;
+
+  Lesson(this.index, this.species);
+
+  int get number => index + 1;
 }
 
 class Quiz {

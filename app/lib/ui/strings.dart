@@ -9,6 +9,7 @@ abstract class Strings {
 
   String get appTitle;
   String courseTitle(LatLon location);
+  String lessonTitle(int lessonNumber);
   String questionIndex(int currentQuestionIndex, int totalQuestionCount);
   String get rightAnswerInstructions;
   String get wrongAnswerInstructions;
@@ -19,6 +20,8 @@ class Strings_en implements Strings {
   String get appTitle => 'Papageno';
   @override
   String courseTitle(LatLon location) => 'Birds near ${location.lat}, ${location.lon}';
+  @override
+  String lessonTitle(int lessonNumber) => 'Lesson ${lessonNumber}';
   @override
   String questionIndex(int currentQuestionIndex, int totalQuestionCount) => 'Question $currentQuestionIndex of $totalQuestionCount';
   @override
@@ -32,6 +35,8 @@ class Strings_nl implements Strings {
   String get appTitle => 'Papageno';
   @override
   String courseTitle(LatLon location) => 'Vogels in de omgeving van ${location.lat}, ${location.lon}';
+  @override
+  String lessonTitle(int lessonNumber) => 'Les ${lessonNumber}';
   @override
   String questionIndex(int currentQuestionIndex, int totalQuestionCount) => 'Vraag $currentQuestionIndex van $totalQuestionCount';
   @override
