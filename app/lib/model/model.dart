@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 
 import '../db/appdb.dart';
+import '../utils/angle_utils.dart';
 
 /// Language codes for all supported languages.
 ///
@@ -59,6 +61,15 @@ class Species {
   Species(this.speciesId, this.scientificName, this.commonNames) :
         assert(LanguageCode.values.every((language) => commonNames.containsKey(language)));
 
+  Species.fromMap(Map<String, dynamic> map) :
+      speciesId = map['species_id'] as int,
+      scientificName = map['scientific_name'] as String,
+      commonNames = BuiltMap<LanguageCode, String>.build((builder) {
+        builder.addEntries(map.entries
+            .where((e) => e.key.startsWith('common_name_'))
+            .map((e) => MapEntry(languageCodeFromString(e.key.substring(12)), e.value as String)));
+        });
+
   String commonNameIn(LanguageCode language) {
     final commonName = commonNames[language];
     if (commonName == null || commonName.isEmpty) {
@@ -76,18 +87,43 @@ class Recording {
   Recording(this.species, this.fileName);
 }
 
-class Question {
-  final Recording recording;
-  final List<Species> choices;
+@immutable
+class LatLon {
+  final double lat;
+  final double lon;
 
-  Question(this.recording, this.choices) :
-        assert(recording != null),
-        assert(choices.isNotEmpty),
-        assert(choices.contains(recording.species));
+  LatLon(this.lat, this.lon);
 
-  Species get answer => recording.species;
+  double distanceTo(LatLon other) {
+    // https://en.wikipedia.org/wiki/Great-circle_distance#Formulae
+    const earthRadius = 6371.0;
+    final angle = acos(
+        sin(lat.degToRad()) * sin(other.lat.degToRad()) +
+        cos(lat.degToRad()) * cos(other.lat.degToRad()) * cos(lon.degToRad() - other.lon.degToRad()));
+    return angle * earthRadius;
+  }
+}
 
-  bool isCorrect(Species species) => species == answer;
+@immutable
+class Region {
+  final int regionId;
+  final LatLon centroid;
+  final BuiltMap<int, int> weightBySpeciesId;
+
+  Region.fromMap(Map<String, dynamic> map) :
+      regionId = map['region_id'] as int,
+      centroid = LatLon(map['centroid_lat'] as double, map['centroid_lon'] as double),
+      weightBySpeciesId = BuiltMap<int, int>.build((builder) {
+        final json = jsonDecode(map['weight_by_species_id'] as String) as Map<String, dynamic>;
+        builder.addEntries(json.entries.map((e) => MapEntry<int, int>(int.parse(e.key), e.value as int)));
+      });
+}
+
+class Course {
+  final LatLon location;
+  final BuiltList<Species> speciesOrder;
+
+  Course(this.location, this.speciesOrder);
 }
 
 class Quiz {
@@ -115,4 +151,18 @@ class Quiz {
     currentQuestionIndex++;
     return Question(Recording(answer, 'recordings/common_blackbird.mp3'), choices);
   }
+}
+
+class Question {
+  final Recording recording;
+  final List<Species> choices;
+
+  Question(this.recording, this.choices) :
+        assert(recording != null),
+        assert(choices.isNotEmpty),
+        assert(choices.contains(recording.species));
+
+  Species get answer => recording.species;
+
+  bool isCorrect(Species species) => species == answer;
 }
