@@ -99,14 +99,54 @@ class Multiling:
         yield merged_row
 
 
+class Comparison:
+    '''
+    Wrapper around "IOC versus other lists" XLSX file.
+    '''
+
+    def __init__(self, file_name):
+        logging.info(f'Loading {file_name}')
+        workbook = openpyxl.load_workbook(file_name, read_only=True)
+        self._worksheet = workbook.active
+        self.fields = [cell.value for cell in next(self._worksheet.rows)]
+
+    def rows(self):
+        '''
+        Yields each row as a dict, except header rows.
+        '''
+        for row in self._worksheet.iter_rows(min_row=2, values_only=True):
+            yield dict(zip(self.fields, row))
+
+
 def add_args(parser):
     parser.add_argument(
         '--ioc_multiling_file',
         default=os.path.join(os.path.dirname(__file__), 'sources', 'Multiling IOC 9.1b.xlsx'),
         help='Path to the multilingual Excel file downloaded from IOC')
+    parser.add_argument(
+        '--ioc_comparison_file',
+        default=os.path.join(os.path.dirname(__file__), 'sources', 'IOC_9.1_vs_other_lists.xlsx'),
+        help='Path to the multilingual Excel file downloaded from IOC')
 
 
 def main(args, session):
+    logging.info('Deleting existing species and common names')
+    session.query(CommonName).delete()
+    session.query(Species).delete()
+
+    comparison = Comparison(args.ioc_comparison_file)
+    logging.info(f'Found column headings: {comparison.fields}')
+
+    ioc_field = [f for f in comparison.fields if 'ioc world bird list' in f.lower()][0]
+    clements_field = [f for f in comparison.fields if 'clements checklist of birds of the world' in f.lower()][0]
+
+    ioc_to_clements = {}
+    for row in comparison.rows():
+        ioc = (row[ioc_field] or '').strip()
+        clements = (row[clements_field] or '').strip()
+        if ioc and clements:
+            ioc_to_clements[ioc] = clements
+
     multiling = Multiling(args.ioc_multiling_file)
     logging.info(f'Found column headings: {multiling.fields}')
 
@@ -129,7 +169,11 @@ def main(args, session):
             logging.info(f'Already have species {species.scientific_name} '
                          f'(id {species.species_id})')
         else:
-            species = Species(species_id=None, scientific_name=row['Scientific Name'])
+            scientific_name = row['Scientific Name']
+            species = Species(
+                species_id=None,
+                scientific_name=scientific_name,
+                scientific_name_clements=ioc_to_clements.get(scientific_name, None))
             session.add(species)
             session.flush()
             logging.info(f'Added new species {species.scientific_name} (id {species.species_id})')

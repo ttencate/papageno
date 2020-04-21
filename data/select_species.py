@@ -1,12 +1,16 @@
 '''
-Selects those species for which there are enough recordings, and writes them to
-the `selected_species` table.
+Selects which species to include in the app, and writes them to the
+`selected_species` table.
 '''
 
+import collections
 import logging
 
+from sqlalchemy.sql.expression import text
+
 import progress
-from species import SelectedSpecies
+from regions import Region
+from species import Species, SelectedSpecies
 
 
 def add_args(parser):
@@ -23,12 +27,10 @@ def main(args, session):
     logging.info('Deleting existing species selections')
     session.query(SelectedSpecies).delete()
 
-    logging.info('Filtering species by number of available recordings and images')
-    selected_species_ids = session.execute(
-        '''
-        select species_id
-        from species
-        where
+    logging.info('Filtering species by sufficient available recordings and images')
+    candidate_species = session.query(Species)\
+        .filter(text(
+            '''
             exists (
                 select *
                 from images
@@ -41,28 +43,29 @@ def main(args, session):
                     and image_width >= :min_image_size
                     and image_height >= :min_image_size
             )
-        order by
-            (
-                select count(*)
-                from recordings
-                where
-                    recordings.scientific_name = species.scientific_name
-                    and recordings.url is not null
-                    and recordings.url <> ''
-                    and recordings.audio_url is not null
-                    and recordings.audio_url <> ''
-                    and recordings.sonogram_url_small is not null
-                    and recordings.sonogram_url_small <> ''
-            ) desc
-        limit
-            :num_selected_species
-        ''',
-        {
-            'num_selected_species': args.num_selected_species,
-            'min_image_size': args.min_image_size,
-        })\
-        .fetchall()
-    for (species_id,) in progress.percent(selected_species_ids):
-        session.add(SelectedSpecies(species_id=species_id))
+            '''))\
+        .params(
+            num_selected_species=args.num_selected_species,
+            min_image_size=args.min_image_size)\
+        .all()
 
-    logging.info(f'Selected {session.query(SelectedSpecies).count()} species')
+    logging.info('Counting number of regions in which species occur')
+    num_regions_by_species = collections.defaultdict(int)
+    for region in progress.percent(session.query(Region).all()):
+        for scientific_name in region.scientific_names:
+            num_regions_by_species[scientific_name] += 1
+
+    logging.info('Sorting candidate species by number of regions')
+    candidate_species.sort(
+        key=lambda s: num_regions_by_species.get(s.scientific_name, 0),
+        reverse=True)
+
+    logging.info('Selecting top species')
+    selected_species = candidate_species[:args.num_selected_species]
+    for index, species in enumerate(progress.percent(selected_species)):
+        session.add(SelectedSpecies(
+            species_id=species.species_id,
+            ranking=index + 1))
+
+    logging.info(f'Selected {session.query(SelectedSpecies).count()} species; top 10: '
+                 f'{", ".join(s.scientific_name for s in selected_species[:10])}')

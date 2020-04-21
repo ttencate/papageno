@@ -49,14 +49,14 @@ def percent(iterable, length=None):
             elapsed_time = datetime.timedelta(seconds=now - start_time)
             total_time = elapsed_time / (index + 1) * length
             remaining_time = total_time - elapsed_time
-            output = f' {index}/{length}   {pct:.1f}%    {elapsed_time}/{total_time}    (ETA {remaining_time})'
-            sys.stderr.write(output + (' ' * (output_length - len(output))) + '\r')
+            output = f'{index}/{length}   {pct:.1f}%    {elapsed_time}/{total_time}    (ETA {remaining_time}) '
+            sys.stderr.write('\r' + output + (' ' * (output_length - len(output))))
             sys.stderr.flush()
             output_length = len(output)
             last_update = now
     elapsed_time = datetime.timedelta(seconds=now - start_time)
     index = length
     pct = 100
-    output = f' {index}/{length}   {pct:.1f}%    {elapsed_time}'
-    sys.stderr.write(output + (' ' * (output_length - len(output))) + '\n')
+    output = f'{index}/{length}   {pct:.1f}%    {elapsed_time}'
+    sys.stderr.write('\r' + output + (' ' * (output_length - len(output))) + '\n')
     sys.stderr.flush()

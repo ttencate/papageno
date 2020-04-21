@@ -43,8 +43,7 @@ def _analyze(recording):
         if sonogram:
             sonogram_quality = analysis.sonogram_quality(recording_id, sonogram)
 
-        return SonogramAnalysis(recording_id=recording_id,
-                                sonogram_quality=sonogram_quality)
+        return (recording_id, sonogram_quality)
     except Exception as ex:
         # Re-raise as something that's guaranteed to be pickleable.
         logging.error('Exception during analysis', exc_info=True)
@@ -80,8 +79,10 @@ def main(args, session):
     with multiprocessing.pool.Pool(args.analysis_jobs) as pool:
         signal.signal(signal.SIGINT, original_sigint_handler)
 
-        for sonogram_analysis in progress.percent(
-                pool.imap(_analyze, ((r.recording_id, r.sonogram_url_small) for r in recordings)),
+        for recording_id, sonogram_quality in progress.percent(
+                pool.imap(_analyze, [(r.recording_id, r.sonogram_url_small) for r in recordings]),
                 len(recordings)):
-            session.add(sonogram_analysis)
+            session.add(SonogramAnalysis(
+                recording_id=recording_id,
+                sonogram_quality=sonogram_quality))
             session.commit()

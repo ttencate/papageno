@@ -103,7 +103,7 @@ def main(args, session):
             
             # No more recordings of this type? Stop trying to represent it better.
             if not recording:
-                types.discard(type_)
+                types.remove(type_)
                 continue
 
             # Select recording and update counters.
