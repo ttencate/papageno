@@ -10,8 +10,8 @@ from base import Base
 class Region(Base):
     '''
     A region on the globe representing a "square" of a particular size, aligned
-    along the latitude and longitude axes. Contains a count by species of the
-    number of recordings created in this region.
+    along the latitude and longitude axes. Contains a weight by species, based
+    on the number of observations of this species in this region.
     '''
     __tablename__ = 'regions'
 
@@ -22,32 +22,31 @@ class Region(Base):
     lon_end = Column(Float, nullable=False, index=True)
     centroid_lat = Column(Float, nullable=False)
     centroid_lon = Column(Float, nullable=False)
-    num_recordings_by_scientific_name = Column(JSON)
+    species_weight_by_scientific_name = Column(JSON)
 
-    def add_recording(self, scientific_name):
-        '''
-        Tallies the species id as having been recorded in this region.
-        '''
-        if not self.num_recordings_by_scientific_name:
-            self.num_recordings_by_scientific_name = {}
-        self.num_recordings_by_scientific_name[scientific_name] = \
-            self.num_recordings_by_scientific_name.get(scientific_name, 0) + 1
-
-    def num_recordings(self):
+    def total_weight(self):
         '''
         Returns the total number of recordings counted in this region.
         '''
-        if not self.num_recordings_by_scientific_name:
+        if not self.species_weight_by_scientific_name:
             return 0
-        return sum(self.num_recordings_by_scientific_name.values())
+        return sum(self.species_weight_by_scientific_name.values())
 
     def num_species(self):
         '''
         Returns the total number of distinct species counted in this region.
         '''
-        if not self.num_recordings_by_scientific_name:
+        if not self.species_weight_by_scientific_name:
             return 0
-        return len(self.num_recordings_by_scientific_name)
+        return len(self.species_weight_by_scientific_name)
+
+    @property
+    def scientific_names(self):
+        '''
+        Returns a list of scientific names of all species occurring in this
+        region.
+        '''
+        return list(self.species_weight_by_scientific_name.keys())
 
     def to_wkt(self):
         '''
@@ -68,12 +67,12 @@ class Region(Base):
         Returns the list of scientific names of species recorded in this
         region, ordered from most to least recorded.
         '''
-        if not self.num_recordings_by_scientific_name:
+        if not self.species_weight_by_scientific_name:
             return []
         return [
             scientific_name
-            for (num_recordings, scientific_name)
+            for (weight, scientific_name)
             in sorted(
-                ((v, k) for k, v in self.num_recordings_by_scientific_name.items()),
+                ((v, k) for k, v in self.species_weight_by_scientific_name.items()),
                 reverse=True)
         ]

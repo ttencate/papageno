@@ -30,7 +30,7 @@ def _root_route():
         .outerjoin(SelectedSpecies, Species.species_id == SelectedSpecies.species_id)\
         .join(recording_counts_subquery, recording_counts_subquery.c.species_id == Species.species_id)\
         .options(joinedload(Species.common_names))\
-        .order_by(recording_counts_subquery.c.num_recordings.desc())\
+        .order_by(SelectedSpecies.ranking, recording_counts_subquery.c.num_recordings.desc())\
         .all()
     selected_species = [species for (species, selected) in species_with_selection if selected]
     unselected_species = [species for (species, selected) in species_with_selection if not selected]

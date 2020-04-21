@@ -31,9 +31,9 @@ import progress
 # - add `foo` to the list below in the right place
 _STAGES = [
     'load_species',
+    'load_regions',
     'load_recordings',
     'load_images',
-    'create_regions',
     'regions_to_gpkg',
     'select_species',
     'analyze_recordings',

@@ -50,6 +50,7 @@ class Species(Base):
 
     species_id = Column(Integer, primary_key=True, index=True, nullable=False, autoincrement=True)
     scientific_name = Column(String, unique=True, index=True, nullable=False)
+    scientific_name_clements = Column(String, index=True)
 
     def common_name(self, language_code):
         for common_name in self.common_names:
@@ -82,3 +83,4 @@ class SelectedSpecies(Base):
 
     species_id = Column(String, ForeignKey('species.species_id'),
                         primary_key=True, index=True, nullable=False)
+    ranking = Column(Integer, nullable=False)
