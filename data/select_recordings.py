@@ -37,13 +37,7 @@ def main(args, session):
     logging.info('Ordering selected species by importance')
     selected_species = session.query(Species)\
         .join(SelectedSpecies)\
-        .order_by(text('''
-            (
-                select count(*)
-                from recordings
-                where recordings.scientific_name = species.scientific_name
-            ) desc
-        '''))\
+        .order_by(SelectedSpecies.ranking)\
         .all()
 
     logging.info('Loading recording blacklist')
