@@ -19,23 +19,20 @@ import '../model/model.dart';
 
 Future<Course> createCourse(AppDb appDb) async {
   final location = LatLon(52.830102, 6.4475933);
-  final regions = await appDb.allRegions();
-  regions.sort((a, b) =>
-      location.distanceTo(a.centroid).compareTo(
-          location.distanceTo(b.centroid)));
 
-  const numRegionsUsed = 1;
-  final weights = <int, int>{};
-  for (var i = 0; i < numRegionsUsed; i++) {
-    final regionWeight = numRegionsUsed - i; // TODO some kind of interpolation
-    for (final entry in regions[i].weightBySpeciesId.entries) {
-      if (!weights.containsKey(entry.key)) {
-        weights[entry.key] = 0;
-      }
-      weights[entry.key] += entry.value * regionWeight;
-    }
-  }
+  // Get region whose centroid is closest to our location.
+  //
+  // We could do something along the lines of
+  // https://en.wikipedia.org/wiki/Inverse_distance_weighting,
+  // but it's not clear that it is always better than nearest neighbour (see
+  // e.g. the "Example in 1 dimension" graph).
+  //
+  // We could also find the four regions at the corners and do a bilinear
+  // interpolation, but it's not clear that the added complexity is worth it at
+  // this point.
+  final region = await appDb.closestRegionTo(location);
 
+  final weights = region.weightBySpeciesId;
   final speciesIds = weights.keys.toList();
   speciesIds.sort((a, b) => weights[b].compareTo(weights[a]));
 
