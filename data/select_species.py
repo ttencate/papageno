@@ -65,7 +65,7 @@ def main(args, session):
     for index, species in enumerate(progress.percent(selected_species)):
         session.add(SelectedSpecies(
             species_id=species.species_id,
-            ranking=index + 1))
+            ranking=index))
 
     logging.info(f'Selected {session.query(SelectedSpecies).count()} species; top 10: '
                  f'{", ".join(s.scientific_name for s in selected_species[:10])}')
