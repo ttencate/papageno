@@ -49,6 +49,14 @@ struct Opt {
     #[structopt(long, default_value = "1.0")]
     grid_size: f64,
 
+    /// Minimum number of observations
+    #[structopt(long, default_value = "10")]
+    min_num_observations: u64,
+
+    /// Minimum number of years in which a species was observed
+    #[structopt(long, default_value = "3")]
+    min_num_years: u32,
+
     /// Path to output CSV file
     #[structopt(long, default_value = "../sources/eod_regions.csv")]
     output_file: String,
@@ -96,12 +104,14 @@ struct Region {
 struct Counts {
     observations: u64,
     individuals: u64,
+    years: u64,
 }
 
 impl Counts {
-    fn count_observation(&mut self, num_individuals: u64) {
+    fn count_observation(&mut self, num_individuals: u64, year: u64) {
         self.observations += 1;
         self.individuals += num_individuals;
+        self.years |= 1 << (year - 2020); // If this overflows, too bad, the observation is too old anyway.
     }
 }
 
@@ -130,7 +140,7 @@ fn main() -> std::io::Result<()> {
             }
         };
 
-    let output_file = File::create(opt.output_file)?;
+    let output_file = File::create(&opt.output_file)?;
     let mut writer = csv::Writer::from_writer(output_file);
     writer.write_record(&[
         "region_id",
@@ -147,8 +157,14 @@ fn main() -> std::io::Result<()> {
             index.to_string(),
             centroid.lat.to_string(),
             centroid.lon.to_string(),
-            counts_to_string(region.species.iter()
-                             .map(|(scientific_name, counts)| { (scientific_name, counts.observations) })),
+            counts_to_string(region.species.iter().filter_map(|(scientific_name, counts)| {
+                if counts.observations >= opt.min_num_observations &&
+                    counts.years.count_ones() >= opt.min_num_years {
+                    Some((scientific_name, counts.observations))
+                } else {
+                    None
+                }
+            })),
             // counts_to_string(region.species.iter()
             //                  .map(|(scientific_name, counts)| { (scientific_name, counts.individuals) })),
         ])?;
@@ -161,6 +177,7 @@ fn counts_to_string<'a, I: Iterator<Item = (&'a String, u64)>>(iter: I) -> Strin
     let mut counts = iter.collect::<Vec<_>>();
     counts.sort_by_key(|&(_scientific_name, count)| { -(count as i64) });
 
+    // Poor man's JSON generator. Why didn't I use serde?
     let mut output = String::new();
     output.push('{');
     let mut prepend_comma = false;
@@ -196,6 +213,7 @@ fn process<F: std::io::Read>(opt: &Opt, file: &mut F, file_size: u64) -> std::io
     let individual_count_index = headers.iter().position(|h| h == &"individualCount").unwrap();
     let latitude_index = headers.iter().position(|h| h == &"decimalLatitude").unwrap();
     let longitude_index = headers.iter().position(|h| h == &"decimalLongitude").unwrap();
+    let year_index = headers.iter().position(|h| h == &"year").unwrap();
     let license_index = headers.iter().position(|h| h == &"license").unwrap();
     let issue_index = headers.iter().position(|h| h == &"issue").unwrap();
 
@@ -212,7 +230,7 @@ fn process<F: std::io::Read>(opt: &Opt, file: &mut F, file_size: u64) -> std::io
         let individual_count = fields[individual_count_index].parse::<u64>().unwrap_or(1);
         let latitude = match fields[latitude_index].parse::<f64>() { Ok(v) => v, _ => continue };
         let longitude = match fields[longitude_index].parse::<f64>() { Ok(v) => v, _ => continue };
-        let lat_lon = LatLon { lat: latitude, lon: longitude };
+        let year = match fields[year_index].parse::<u64>() { Ok(v) => v, _ => continue };
         let license = fields[license_index];
         if license != "CC0_1_0" {
             continue;
@@ -223,11 +241,12 @@ fn process<F: std::io::Read>(opt: &Opt, file: &mut F, file_size: u64) -> std::io
         }
         // eprintln!("{} {} {} {}", scientific_name, individual_count, latitude, longitude);
 
+        let lat_lon = LatLon { lat: latitude, lon: longitude };
         grid.regions
             .entry(RegionKey::from_lat_lon(lat_lon, opt.grid_size)).or_insert_with(|| { Region::default() })
             .species
             .entry(scientific_name.to_string()).or_insert_with(|| { Counts::default() })
-            .count_observation(individual_count);
+            .count_observation(individual_count, year);
 
         if lines_read % 10000 == 0 {
             let progress = bytes_read as f64 / file_size as f64;
