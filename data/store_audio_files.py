@@ -66,7 +66,8 @@ def _process_recording(recording):
         sound = pydub.AudioSegment.from_file(io.BytesIO(data), 'mp3')
     except Exception as ex:
         # These errors can get extremely long.
-        logging.error(f'Failed to decode audio file for {recording.url}: {str(ex)[:5000]}')
+        logging.error(f'Failed to decode audio file for {recording.url} '
+                      f'(cache file {_fetcher.cache_file_name(recording.audio_url)}): {str(ex)[:5000]}')
         return None
 
     # pydub does everything in milliseconds.

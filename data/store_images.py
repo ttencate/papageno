@@ -97,6 +97,7 @@ def main(args, session):
     logging.info('Listing existing images')
     old_images = set(os.listdir(args.image_output_dir))
 
+    logging.info('Resizing images')
     # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python#35134329
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     with multiprocessing.pool.Pool(args.image_process_jobs) as pool:
