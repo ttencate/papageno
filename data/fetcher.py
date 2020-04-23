@@ -32,13 +32,13 @@ class Cache:
 
     def __getitem__(self, key):
         try:
-            with open(self._file_for_key(key), 'rb') as f:
+            with open(self.file_for_key(key), 'rb') as f:
                 return f.read()
         except FileNotFoundError:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
-        file_name = self._file_for_key(key)
+        file_name = self.file_for_key(key)
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         # Include PID in the file name to make concurrent writes process-safe.
         temp_file_name = f'{file_name}.{os.getpid()}.tmp'
@@ -55,9 +55,9 @@ class Cache:
             raise
 
     def __contains__(self, key):
-        return os.path.isfile(self._file_for_key(key))
+        return os.path.isfile(self.file_for_key(key))
 
-    def _file_for_key(self, key):
+    def file_for_key(self, key):
         hasher = hashlib.sha1()
         if isinstance(key, str):
             key = key.encode('utf-8')
@@ -86,7 +86,6 @@ class Fetcher:
                                          maxsize=pool_size,
                                          block=True,
                                          timeout=urllib3.util.Timeout(total=300))
-
 
     def fetch_cached(self, url):
         '''
@@ -125,3 +124,6 @@ class Fetcher:
         except urllib3.exceptions.HTTPError as ex:
             raise FetchError(url) from ex
         return response.data
+
+    def cache_file_name(self, url):
+        return self._cache.file_for_key(url)

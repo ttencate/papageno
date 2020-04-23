@@ -6,3 +6,7 @@ xc:154082
 
 # It's a WAV file! They support those?!
 xc:505432
+
+# These seem fine, mplayer and VLC can play them, but pydub (ffmpeg) cannot decode them.
+xc:540071
+xc:540072
