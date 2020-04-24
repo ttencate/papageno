@@ -1,4 +1,0 @@
-#!/bin/bash
-
-[[ -z VIRTUAL_ENV ]] && source venv/bin/activate
-pylint --rcfile=.pylintrc *.py console xenocanto
