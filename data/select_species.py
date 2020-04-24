@@ -18,6 +18,9 @@ def add_args(parser):
         '--num_selected_species', type=int, default=1200,
         help='Number of species to select for inclusion in the app')
     parser.add_argument(
+        '--min_num_recordings', type=int, default=50,
+        help='Minimum number of recordings available for a species for it to be a candidate for selection')
+    parser.add_argument(
         '--min_image_size', type=int, default=512,
         help='Minimum image size for images (and thus species) '
         'to be selected for inclusion in the app')
@@ -31,6 +34,19 @@ def main(args, session):
     candidate_species = session.query(Species)\
         .filter(text(
             '''
+            (
+                select count(*)
+                from recordings
+                where
+                    recordings.scientific_name = species.scientific_name
+                    and recordings.url is not null
+                    and recordings.url <> ''
+                    and recordings.audio_url is not null
+                    and recordings.audio_url <> ''
+                    and recordings.sonogram_url_small is not null
+                    and recordings.sonogram_url_small <> ''
+            ) >= :min_num_recordings
+            and
             exists (
                 select *
                 from images
@@ -46,7 +62,8 @@ def main(args, session):
             '''))\
         .params(
             num_selected_species=args.num_selected_species,
-            min_image_size=args.min_image_size)\
+            min_image_size=args.min_image_size,
+            min_num_recordings=args.min_num_recordings)\
         .all()
 
     logging.info('Counting number of regions in which species occur')
