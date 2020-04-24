@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 
 import '../model/model.dart';
 
+/// Audio player widget with seek bar and play/pause button.
+// TODO: Pause when app goes to background.
+// TODO: Sometimes hot reload causes double playback.
 class Player extends StatefulWidget {
   final Recording recording;
 
@@ -33,6 +36,7 @@ class _PlayerState extends State<Player> {
   @override
   void initState() {
     super.initState();
+    AudioPlayer.logEnabled = true;
     _audioPlayer = AudioPlayer();
     _audioPlayer.setReleaseMode(ReleaseMode.LOOP);
     _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((AudioPlayerState state) {
@@ -45,7 +49,7 @@ class _PlayerState extends State<Player> {
       setState(() { _position = position; });
     });
 
-    _audioCache = AudioCache(fixedPlayer: _audioPlayer);
+    _audioCache = AudioCache(fixedPlayer: _audioPlayer, prefix: 'sounds/');
     _audioCache.play(_recording.fileName).then((_) {
       setState(() {
         _loaded = true;

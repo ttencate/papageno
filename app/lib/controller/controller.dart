@@ -1,21 +1,10 @@
+import 'dart:math';
+
 import 'package:built_collection/built_collection.dart';
 
 import '../db/appdb.dart';
 import '../model/model.dart';
-
-// TODO if we use it, cite GBIF somewhere:
-// Downloaded from https://www.gbif.org/occurrence/download?dataset_key=4fa7b334-ce0d-4e88-aaae-2e0c138d049e
-//
-// SIMPLE
-// Citation: GBIF.org (20 April 2020) GBIF Occurrence Download https://doi.org/10.15468/dl.s5q9xn
-// License: Unspecified
-//
-// SPECIES LIST
-// Citation: GBIF.org (20 April 2020) GBIF Occurrence Download https://doi.org/10.15468/dl.g8nprw
-// License: Unspecified
-//
-// https://www.gbif.org/terms/data-user
-// https://www.gbif.org/citation-guidelines
+import '../utils/random_utils.dart';
 
 Future<Course> createCourse(AppDb appDb) async {
   final location = LatLon(52.830102, 6.4475933);
@@ -56,4 +45,47 @@ Future<Course> createCourse(AppDb appDb) async {
 
 int _numSpeciesInLesson(int index) {
   return index == 0 ? 10 : 5;
+}
+
+Future<Quiz> createQuiz(AppDb appDb, Course course, Lesson lesson) async {
+  assert(course.lessons[lesson.index] == lesson);
+
+  const questionCount = 20;
+  const newSpeciesQuestionCount = 10;
+  assert(newSpeciesQuestionCount <= questionCount);
+  const choiceCount = 4;
+
+  final random = Random();
+
+  final oldSpecies = <Species>[];
+  for (final oldLesson in course.lessons.take(lesson.index)) {
+    oldSpecies.addAll(oldLesson.species);
+  }
+  final newSpecies = lesson.species.asList();
+  final allSpecies = oldSpecies + newSpecies;
+  assert(allSpecies.length >= choiceCount);
+
+  final questions = <Question>[];
+  for (var i = 0; i < questionCount; i++) {
+    final answer = i < newSpeciesQuestionCount || oldSpecies.isEmpty ?
+        newSpecies.randomElement(random) :
+        oldSpecies.randomElement(random);
+    final recording = (await appDb.recordingsFor(answer)).randomElement(random);
+    final choices = <Species>[answer];
+    while (choices.length < choiceCount) {
+      final choice = allSpecies.randomElement(random);
+      if (!choices.contains(choice)) {
+        choices.add(choice);
+      }
+    }
+    choices.shuffle(random);
+    questions.add(Question(
+        recording,
+        choices,
+        answer,
+    ));
+  }
+  questions.shuffle(random);
+
+  return Quiz(questions.toBuiltList());
 }

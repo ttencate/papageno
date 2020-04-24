@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as material;
+import 'package:path/path.dart' hide context;
+import 'package:provider/provider.dart';
 
+import '../db/appdb.dart';
 import '../model/model.dart';
-import 'strings.dart';
-import 'revealing_image.dart';
-import 'player.dart';
+import '../model/model.dart' as model;
 import '../utils/string_utils.dart';
+import 'player.dart';
+import 'revealing_image.dart';
+import 'strings.dart';
 
 class QuestionScreen extends StatefulWidget {
-  final Question question;
+  final model.Question question;
   final Function() onProceed;
 
   QuestionScreen({Key key, @required this.question, this.onProceed}) :
@@ -22,6 +27,18 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   Question get _question => widget.question;
   Species _choice;
+  model.Image _image;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final appDb = Provider.of<AppDb>(context);
+    appDb.imageForOrNull(_question.answer).then((image) {
+      if (image != null) {
+        setState(() { _image = image; });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +55,12 @@ class _QuestionScreenState extends State<QuestionScreen> {
       children: <Widget>[
         Expanded(
           child: RevealingImage(
-            image: AssetImage('assets/photos/common_blackbird.jpg'),
+            image: _image == null ?
+              Placeholder() :
+              material.Image(
+                image: AssetImage(join('assets', 'images', _image.fileName)),
+                fit: BoxFit.cover,
+              ),
             revealed: _choice != null,
           ),
         ),
@@ -70,6 +92,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
     if (_choice == null) {
       return questionScreen;
     } else {
+      // TODO probably cleaner to push a ModalBarrier onto the Navigator instead
       return GestureDetector(
         onTap: widget.onProceed,
         child: questionScreen,

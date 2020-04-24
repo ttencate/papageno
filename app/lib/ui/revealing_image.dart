@@ -30,7 +30,7 @@ class RevealingImage extends StatefulWidget {
   RevealingImage({@required this.image, this.revealed = true}) :
         assert(image != null);
 
-  final ImageProvider image;
+  final Widget image;
   final bool revealed;
 
   @override
@@ -84,10 +84,7 @@ class _RevealingImageState extends State<RevealingImage> with SingleTickerProvid
             // Supposed to be faster than antiAlias, and during animation the
             // difference is invisible anyway.
             clipBehavior: Clip.hardEdge,
-            child: Image(
-              image: widget.image,
-              fit: BoxFit.cover,
-            ),
+            child: widget.image,
           ),
         ),
       ],

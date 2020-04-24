@@ -46,6 +46,19 @@ class AppDb {
     return Species.fromMap(records[0]);
   }
 
+  Future<List<Recording>> recordingsFor(Species species) async {
+    final records = await _db.rawQuery('select * from recordings where species_id = ?', <dynamic>[species.speciesId]);
+    return records.map((r) => Recording.fromMap(r)).toList();
+  }
+
+  Future<Image> imageForOrNull(Species species) async {
+    final records = await _db.rawQuery('select * from images where species_id = ?', <dynamic>[species.speciesId]);
+    if (records.isEmpty) {
+      return null;
+    }
+    return Image.fromMap(records[0]);
+  }
+
   Future<Region> closestRegionTo(LatLon pos) async {
     // SQLite does not have trigonometry functions, so we can't compute the
     // great-circle distance in the database directly. But we can avoid parsing

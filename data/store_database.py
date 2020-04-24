@@ -97,7 +97,7 @@ def main(args, session):
         {
             'recording_id': r.recording_id,
             'species_id': s.species_id,
-            'file_name': f'{r.recording_id}.ogg',
+            'file_name': f'{r.recording_id.replace(":", "_")}.ogg',
             'source_url': _make_absolute(r.url),
             'license_name': _license_url_to_name(r.license_url),
             'license_url': _make_absolute(r.license_url),

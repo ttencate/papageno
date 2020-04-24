@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 
-import '../db/appdb.dart';
 import '../utils/angle_utils.dart';
 
 /// Language codes for all supported languages.
@@ -81,10 +80,40 @@ class Species {
 
 @immutable
 class Recording {
-  final Species species;
+  final String recordingId;
+  final int speciesId;
   final String fileName;
+  final String sourceUrl;
+  final String licenseName;
+  final String licenseUrl;
+  final String attribution;
 
-  Recording(this.species, this.fileName);
+  Recording.fromMap(Map<String, dynamic> map) :
+      recordingId = map['recording_id'] as String,
+      speciesId = map['species_id'] as int,
+      fileName = map['file_name'] as String,
+      sourceUrl = map['source_url'] as String,
+      licenseName = map['license_name'] as String,
+      licenseUrl = map['license_url'] as String,
+      attribution = map['attribution'] as String;
+}
+
+@immutable
+class Image {
+  final int speciesId;
+  final String fileName;
+  final String sourceUrl;
+  final String licenseName;
+  final String licenseUrl;
+  final String attribution;
+
+  Image.fromMap(Map<String, dynamic> map) :
+      speciesId = map['species_id'] as int,
+      fileName = map['file_name'] as String,
+      sourceUrl = map['source_url'] as String,
+      licenseName = map['license_name'] as String,
+      licenseUrl = map['license_url'] as String,
+      attribution = map['attribution'] as String;
 }
 
 @immutable
@@ -137,43 +166,23 @@ class Lesson {
   int get number => index + 1;
 }
 
+@immutable
 class Quiz {
+  final BuiltList<Question> questions;
 
-  final int totalQuestionCount = 20;
-  int currentQuestionIndex = 0;
-
-  final _random = Random();
-  final _answerCount = 4;
-  final AppDb _appDb;
-
-  Quiz(this._appDb);
-
-  Future<Question> getNextQuestion() async {
-    var ids = await _appDb.allSpeciesIds();
-    assert(ids.length >= _answerCount);
-    var choices = <Species>[];
-    for (var i = 0; i < _answerCount; i++) {
-      var index = _random.nextInt(ids.length);
-      choices.add(await _appDb.species(ids[index]));
-      ids[index] = ids.last;
-      ids.removeLast();
-    }
-    var answer = choices[_random.nextInt(choices.length)];
-    currentQuestionIndex++;
-    return Question(Recording(answer, 'recordings/common_blackbird.mp3'), choices);
-  }
+  Quiz(this.questions);
 }
 
+@immutable
 class Question {
   final Recording recording;
   final List<Species> choices;
+  final Species answer;
 
-  Question(this.recording, this.choices) :
+  Question(this.recording, this.choices, this.answer) :
         assert(recording != null),
         assert(choices.isNotEmpty),
-        assert(choices.contains(recording.species));
-
-  Species get answer => recording.species;
+        assert(choices.contains(answer));
 
   bool isCorrect(Species species) => species == answer;
 }
