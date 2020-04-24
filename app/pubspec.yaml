@@ -39,7 +39,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/app.db
-    - assets/photos/
-    - assets/recordings/
-    #- assets/images/
-    #- assets/sounds/
+    - assets/images/
+    - assets/sounds/

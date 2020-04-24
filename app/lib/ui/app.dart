@@ -25,6 +25,31 @@ class AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
+    return FutureProvider<AppDb>.value(
+      value: _appDb,
+      child: Consumer<AppDb>(
+        builder: (context, value, child) {
+          if (value == null) {
+            return _buildSplashScreen();
+          } else {
+            return _buildApp(context);
+          }
+        },
+      ),
+    );
+  }
+
+  Container _buildSplashScreen() {
+    // TODO show logo, title, etc.
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildApp(BuildContext context) {
     final inheritanceDelegate = InheritanceDelegate({
       Locale('en'): Strings_en(),
       Locale('nl'): Strings_nl(),
@@ -34,24 +59,7 @@ class AppState extends State<App> {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: FutureBuilder<AppDb>(
-        future: _appDb,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return Provider<AppDb>.value(
-              value: snapshot.data,
-              child: CourseScreen(),
-            );
-          } else if (snapshot.hasError) {
-            throw snapshot.error;
-          } else {
-            // TODO show splash screen instead
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        },
-      ),
+      home: CourseScreen(),
       localizationsDelegates: [
         inheritanceDelegate,
         GlobalMaterialLocalizations.delegate,

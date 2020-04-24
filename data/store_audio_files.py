@@ -51,7 +51,9 @@ def _process_recording(recording):
     if not _fetcher:
         _fetcher = fetcher.Fetcher('audio_files', pool_size=1)
 
-    output_file_name = f'{recording.recording_id}.ogg'
+    # Android hates colons in file names:
+    # https://stackoverflow.com/questions/52245654/failed-to-open-file-permission-denied
+    output_file_name = f'{recording.recording_id.replace(":", "_")}.ogg'
     full_output_file_name = os.path.join(_args.audio_file_output_dir, output_file_name)
     if os.path.exists(full_output_file_name) and not _args.recreate_audio_files:
         return output_file_name

@@ -6,9 +6,12 @@ import 'question.dart';
 
 class QuizScreen extends StatefulWidget {
 
-  QuizScreen(this.quiz);
+  QuizScreen(this.quiz, {this.questionIndex = 0});
 
   final Quiz quiz;
+  final int questionIndex;
+
+  Question get currentQuestion => quiz.questions[questionIndex];
 
   @override
   State<StatefulWidget> createState() => _QuizScreenState();
@@ -16,42 +19,34 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
 
-  Future<Question> _currentQuestion;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentQuestion = widget.quiz.getNextQuestion();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Strings.of(context).questionIndex(widget.quiz.currentQuestionIndex + 1, widget.quiz.totalQuestionCount)),
+        title: Text(Strings.of(context).questionIndex(widget.questionIndex + 1, widget.quiz.questions.length)),
         // TODO show some sort of progress bar
       ),
-      body: FutureBuilder<Question>(
-        future: _currentQuestion,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return QuestionScreen(
-                key: ObjectKey(snapshot.data),
-                question: snapshot.data,
-                onProceed: _showNextQuestion
-            );
-          } else {
-            return Container(child: Center(child: CircularProgressIndicator()));
-          }
-        },
+      body: QuestionScreen(
+        key: ObjectKey(widget.currentQuestion),
+        question: widget.currentQuestion,
+        onProceed: _showNextQuestion
       ),
     );
   }
 
   void _showNextQuestion() {
+    final nextQuestionIndex = widget.questionIndex + 1;
+    if (nextQuestionIndex >= widget.quiz.questions.length) {
+      Navigator.of(context).pop();
+      return;
+    }
+
     // TODO this only slides the new question in; also slide the old one out
     final route = PageRouteBuilder<void>(
-      pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(widget.quiz),
+      pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(
+        widget.quiz,
+        questionIndex: nextQuestionIndex,
+      ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var tween = Tween(begin: Offset(1.0, 0.0), end: Offset.zero)
             .chain(CurveTween(curve: Curves.easeInOut));

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:papageno/ui/quiz.dart';
 import 'package:provider/provider.dart';
 
 import '../db/appdb.dart';
@@ -40,50 +41,82 @@ class _CourseScreenState extends State<CourseScreen> {
               color: Colors.grey.shade200,
               child: ListView.builder(
                 itemCount: course.lessons.length,
-                itemBuilder: (context, index) => _buildLessonTile(context, course.lessons[index]),
+                itemBuilder: (context, index) => _buildLesson(context, course.lessons[index]),
               ),
             ),
           );
         } else if (snapshot.hasError) {
           throw snapshot.error;
         } else {
-          return Container(child: Center(child: CircularProgressIndicator()));
+          return Container(
+            color: Colors.white,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
       },
     );
   }
 
-  Widget _buildLessonTile(BuildContext context, Lesson lesson) {
+  Widget _buildLesson(BuildContext context, Lesson lesson) {
     return Card(
       key: ObjectKey(lesson.index),
-      child: Padding(
-        padding: EdgeInsets.all(12.0),
-        child: Column(
-          children: <Widget>[
-            Text(
-              Strings.of(context).lessonTitle(lesson.number),
-              style: TextStyle(fontSize: 24.0),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(
-              height: 8.0,
-            ),
-            Wrap(
-              children: lesson.species.map((species) =>
-                  Chip(
-                    label: Text(
-                      species.commonNameIn(LanguageCode.language_nl),
-                      style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w300),
+      // We need IntrinsicHeight here because the inner Row has CrossAxisAlignment.stretch,
+      // which we want so that its child Columns are stretched across the full height.
+      child: IntrinsicHeight(
+        child: Padding(
+          padding: EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: 1,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Text(
+                      Strings.of(context).lessonTitle(lesson.number),
+                      style: TextStyle(fontSize: 24.0),
                     ),
-                    backgroundColor: Colors.grey.shade200,
-                    visualDensity: VisualDensity(vertical: VisualDensity.minimumDensity),
-                  )).toList(),
-              spacing: 4.0,
-              alignment: WrapAlignment.center,
-            ),
-          ],
+                    RaisedButton(
+                      color: Colors.blue,
+                      textColor: Colors.white,
+                      child: Text(Strings.of(context).startLesson.toUpperCase()),
+                      onPressed: () { _startQuiz(lesson); },
+                    )
+                  ],
+                ),
+              ),
+              SizedBox(width: 12.0),
+              Expanded(
+                flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: lesson.species
+                    .map((species) =>
+                      Text(
+                        species.commonNameIn(LanguageCode.language_nl),
+                        style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w300),
+                      ),
+                    )
+                    .toList(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  void _startQuiz(Lesson lesson) async {
+    final appDb = Provider.of<AppDb>(context, listen: false);
+    final course = await _course;
+    final quiz = await createQuiz(appDb, course, lesson);
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (context) => QuizScreen(quiz)
+    ));
   }
 }
