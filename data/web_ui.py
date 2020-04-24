@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+
 '''
 Launches a web server serving a UI through which recordings and species can be
 manually selected.
 '''
 
 import logging
+import os.path
+import sys
 
 from flask import Flask, request, abort, render_template
 from sqlalchemy import func
@@ -11,6 +15,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import text
 
 import analysis
+import db
 from recordings import Recording, SelectedRecording
 from species import Species, SelectedSpecies
 
@@ -119,12 +124,16 @@ def _select_recording_route(recording_id, selected):
     return ''
 
 
-def main(unused_args, session_):
+def main():
     global session # pylint: disable=global-statement
-    session = session_
+    session = db.create_session(os.path.join(os.path.dirname(__file__), 'master.db'))
 
     host = 'localhost'
     port = 8080
     logging.info(f'Launching web server on http://{host}:{port}/')
     # Database session is not thread safe, so we need to disable threading here.
     app.run(host=host, port=port, threaded=False)
+
+
+if __name__ == '__main__':
+    sys.exit(main())

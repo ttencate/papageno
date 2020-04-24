@@ -41,8 +41,6 @@ _STAGES = [
     'store_audio_files',
     'store_images',
     'store_database',
-
-    'web_ui',
 ]
 _STAGE_MODULES = {stage: importlib.import_module(stage) for stage in _STAGES}
 
