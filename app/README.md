@@ -1,7 +1,7 @@
 Papageno: Birdsong Tutor
 ========================
 
-This directory contains the Flutter project for the app.
+This directory contains the Flutter project for the Papageno mobile app.
 
 Getting started with Flutter
 ----------------------------
