@@ -76,6 +76,9 @@ class Species {
     }
     return commonName;
   }
+
+  @override
+  int get hashCode => speciesId.hashCode;
 }
 
 @immutable

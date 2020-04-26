@@ -61,15 +61,23 @@ Future<Quiz> createQuiz(AppDb appDb, Course course, Lesson lesson) async {
   final allSpecies = oldSpecies + newSpecies;
   assert(allSpecies.length >= choiceCount);
 
+  final newSpeciesBag = RandomBag(newSpecies);
+  final oldSpeciesBag = RandomBag(oldSpecies);
+  final allSpeciesBag = RandomBag(allSpecies);
+  final recordingsBags = <Species, RandomBag<Recording>>{};
+
   final questions = <Question>[];
   for (var i = 0; i < questionCount; i++) {
     final answer = i < newSpeciesQuestionCount || oldSpecies.isEmpty ?
-        newSpecies.randomElement(random) :
-        oldSpecies.randomElement(random);
-    final recording = (await appDb.recordingsFor(answer)).randomElement(random);
+        newSpeciesBag.next(random) :
+        oldSpeciesBag.next(random);
+    if (!recordingsBags.containsKey(answer)) {
+      recordingsBags[answer] = RandomBag(await appDb.recordingsFor(answer));
+    }
+    final recording = recordingsBags[answer].next(random);
     final choices = <Species>[answer];
     while (choices.length < choiceCount) {
-      final choice = allSpecies.randomElement(random);
+      final choice = allSpeciesBag.next(random);
       if (!choices.contains(choice)) {
         choices.add(choice);
       }
