@@ -36,7 +36,7 @@ class _PlayerState extends State<Player> {
   @override
   void initState() {
     super.initState();
-    AudioPlayer.logEnabled = true;
+    // AudioPlayer.logEnabled = true;
     _audioPlayer = AudioPlayer();
     _audioPlayer.setReleaseMode(ReleaseMode.LOOP);
     _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((AudioPlayerState state) {
