@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
+import 'package:flutter/rendering.dart';
 import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../db/appdb.dart';
 import '../model/model.dart';
@@ -55,12 +59,70 @@ class _QuestionScreenState extends State<QuestionScreen> {
       children: <Widget>[
         Expanded(
           child: RevealingImage(
-            image: _image == null ?
-              Placeholder() :
-              material.Image(
-                image: AssetImage(join('assets', 'images', _image.fileName)),
-                fit: BoxFit.cover,
-              ),
+            image: Stack(
+              fit: StackFit.expand,
+              alignment: Alignment.center,
+              children: <Widget>[
+                _image == null ?
+                  Placeholder() :
+                  material.Image(
+                    image: AssetImage(join('assets', 'images', _image.fileName)),
+                    fit: BoxFit.cover,
+                  ),
+                Positioned(
+                  left: 0.0,
+                  right: 0.0,
+                  bottom: 0.0,
+                  child: Container(
+                    color: Colors.black.withOpacity(0.2),
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.all(2.0),
+                    child: Text(
+                      // TODO take language code from settings
+                      _question.answer.commonNameIn(LanguageCode.language_nl).capitalize(),
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: <Shadow>[
+                          Shadow(blurRadius: 2.0),
+                          Shadow(blurRadius: 4.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 4.0,
+                  top: 4.0,
+                  child: Text(
+                    _question.answer.scientificName.capitalize(),
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.w400,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.white,
+                      shadows: <Shadow>[
+                        Shadow(blurRadius: 3.0),
+                        Shadow(blurRadius: 6.0),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 0.0,
+                  top: 0.0,
+                  child: IconButton(
+                    icon: Icon(Icons.info_outline),
+                    iconSize: 32.0,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    color: Colors.white.withOpacity(0.5),
+                    onPressed: _showAttribution,
+                  )
+                ),
+              ],
+            ),
             revealed: _choice != null,
           ),
         ),
@@ -135,6 +197,139 @@ class _QuestionScreenState extends State<QuestionScreen> {
     setState(() {
       _choice = species;
     });
+  }
+
+  void _showAttribution() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AttributionDialog(
+        recording: _question.recording,
+        image: _image,
+      ),
+    );
+  }
+}
+
+class AttributionDialog extends StatelessWidget {
+
+  final Recording recording;
+  final model.Image image;
+
+  const AttributionDialog({@required this.recording, @required this.image});
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = Strings.of(context);
+    return AlertDialog(
+      insetPadding: EdgeInsets.all(8.0),
+      contentPadding: EdgeInsets.zero,
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _LinkTile(
+              text: strings.recordingCreator,
+              linkText: _creatorName(recording.attribution, context),
+              url: null,
+              bold: true,
+            ),
+            _LinkTile(
+              text: strings.source,
+              linkText: _prettyUrl(recording.sourceUrl),
+              url: recording.sourceUrl,
+            ),
+            _LinkTile(
+              text: strings.license,
+              linkText: recording.licenseName,
+              url: recording.licenseUrl,
+            ),
+            Divider(),
+            _LinkTile(
+              text: strings.imageCreator,
+              linkText: image.attribution,
+              url: null,
+              bold: true,
+            ),
+            _LinkTile(
+              text: strings.source,
+              linkText: _prettyUrl(image.sourceUrl),
+              url: image.sourceUrl,
+            ),
+            _LinkTile(
+              text: strings.license,
+              linkText: image.licenseName,
+              url: image.licenseUrl,
+            ),
+            Divider(),
+          ],
+        )
+      ),
+      actions: <Widget>[
+        FlatButton(
+          child: Text(strings.ok),
+          onPressed: () => Navigator.of(context).pop(),
+        )
+      ],
+    );
+  }
+
+  String _creatorName(String attribution, BuildContext context) =>
+      attribution != null && attribution.isNotEmpty ?
+      attribution :
+      Strings.of(context).unknownCreator;
+
+  String _prettyUrl(String url) => url.replaceFirst(RegExp('^https?://'), '');
+}
+
+class _LinkTile extends StatelessWidget {
+
+  final String Function(String) text;
+  final String linkText;
+  final String url;
+  final bool bold;
+
+  const _LinkTile({Key key, this.text, this.linkText, this.url, this.bold = false}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var textStyle = DefaultTextStyle.of(context).style;
+    if (bold) {
+      textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
+    }
+    const placeholder = '__LINK_TEXT__';
+    final replacedText = text(placeholder);
+    final placeholderIndex = replacedText.indexOf(placeholder);
+    final textBeforeLink = replacedText.substring(0, placeholderIndex);
+    final textAfterLink = replacedText.substring(placeholderIndex + placeholder.length);
+    return ListTile(
+      title: RichText(
+        text: TextSpan(
+          children: <TextSpan>[
+            TextSpan(
+              text: textBeforeLink,
+              style: textStyle,
+            ),
+            TextSpan(
+              text: linkText,
+              style: url == null ? textStyle : textStyle.copyWith(color: Colors.blue),
+            ),
+            TextSpan(
+              text: textAfterLink,
+              style: textStyle,
+            ),
+          ]
+        ),
+      ),
+      onTap: url == null ? null : () { _openUrl(url); },
+    );
+  }
+
+  void _openUrl(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      log('Could not launch URL ${url}');
+    }
   }
 }
 

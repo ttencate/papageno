@@ -11,14 +11,10 @@ Future<Course> createCourse(AppDb appDb) async {
 
   // Get region whose centroid is closest to our location.
   //
-  // We could do something along the lines of
-  // https://en.wikipedia.org/wiki/Inverse_distance_weighting,
-  // but it's not clear that it is always better than nearest neighbour (see
-  // e.g. the "Example in 1 dimension" graph).
-  //
-  // We could also find the four regions at the corners and do a bilinear
-  // interpolation, but it's not clear that the added complexity is worth it at
-  // this point.
+  // TODO: for sparsely sampled regions (e.g. the Russian steppes), take the sum
+  // of multiple nearby regions until we have some minimum number of species.
+  // Weigh them according to
+  // https://en.wikipedia.org/wiki/Inverse_distance_weighting.
   final region = await appDb.closestRegionTo(location);
 
   final weights = region.weightBySpeciesId;
