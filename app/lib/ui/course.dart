@@ -8,58 +8,34 @@ import '../model/model.dart';
 import '../controller/controller.dart';
 import 'strings.dart';
 
-class CourseScreen extends StatefulWidget {
+class CoursePage extends StatefulWidget {
+  static const route = '/course';
+
   @override
-  _CourseScreenState createState() => _CourseScreenState();
+  _CoursePageState createState() => _CoursePageState();
 }
 
-class _CourseScreenState extends State<CourseScreen> {
-  Future<Course> _course;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_course == null) {
-      final appDb = Provider.of<AppDb>(context);
-      _course = createCourse(appDb);
-    }
-  }
-
+class _CoursePageState extends State<CoursePage> {
   @override
   Widget build(BuildContext context) {
     // final appDb = Provider.of<AppDb>(context);
-    return FutureBuilder<Course>(
-      future: _course,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final course = snapshot.data;
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(Strings.of(context).courseTitle(course.location)),
-            ),
-            body: Container(
-              color: Colors.grey.shade200,
-              child: ListView.builder(
-                itemCount: course.lessons.length,
-                itemBuilder: (context, index) => _buildLesson(context, course.lessons[index]),
-              ),
-            ),
-          );
-        } else if (snapshot.hasError) {
-          throw snapshot.error;
-        } else {
-          return Container(
-            color: Colors.white,
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-      },
+    final strings = Strings.of(context);
+    final course = ModalRoute.of(context).settings.arguments as Course;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(strings.courseTitle(strings.latLon(course.location))),
+      ),
+      body: Container(
+        color: Colors.grey.shade200,
+        child: ListView.builder(
+          itemCount: course.lessons.length,
+          itemBuilder: (context, index) => _buildLesson(context, course, course.lessons[index]),
+        ),
+      ),
     );
   }
 
-  Widget _buildLesson(BuildContext context, Lesson lesson) {
+  Widget _buildLesson(BuildContext context, Course course, Lesson lesson) {
     return Card(
       key: ObjectKey(lesson.index),
       // We need IntrinsicHeight here because the inner Row has CrossAxisAlignment.stretch,
@@ -81,10 +57,10 @@ class _CourseScreenState extends State<CourseScreen> {
                       style: TextStyle(fontSize: 24.0),
                     ),
                     RaisedButton(
-                      color: Colors.blue,
+                      color: Colors.blue, // TODO take from theme
                       textColor: Colors.white,
                       child: Text(Strings.of(context).startLesson.toUpperCase()),
-                      onPressed: () { _startQuiz(lesson); },
+                      onPressed: () { _startQuiz(course, lesson); },
                     )
                   ],
                 ),
@@ -111,12 +87,11 @@ class _CourseScreenState extends State<CourseScreen> {
     );
   }
 
-  void _startQuiz(Lesson lesson) async {
+  void _startQuiz(Course course, Lesson lesson) async {
     final appDb = Provider.of<AppDb>(context, listen: false);
-    final course = await _course;
     final quiz = await createQuiz(appDb, course, lesson);
     await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (context) => QuizScreen(quiz)
+      builder: (context) => QuizPage(quiz)
     ));
   }
 }

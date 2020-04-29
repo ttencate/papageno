@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:papageno/ui/course.dart';
 import 'package:provider/provider.dart';
 
 import '../db/appdb.dart';
-import 'course.dart';
+import 'create_course.dart';
 import 'localization.dart';
 import 'strings.dart';
 
@@ -59,7 +60,11 @@ class AppState extends State<App> {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: CourseScreen(),
+      routes: <String, WidgetBuilder>{
+        CreateCoursePage.route: (context) => CreateCoursePage(),
+        CoursePage.route: (context) => CoursePage(),
+      },
+      initialRoute: CreateCoursePage.route,
       localizationsDelegates: [
         inheritanceDelegate,
         GlobalMaterialLocalizations.delegate,

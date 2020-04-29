@@ -78,6 +78,9 @@ class Species {
   }
 
   @override
+  String toString() => scientificName;
+
+  @override
   int get hashCode => speciesId.hashCode;
 }
 
@@ -157,6 +160,8 @@ class Course {
   final BuiltList<Lesson> lessons;
 
   Course(this.location, this.lessons);
+
+  int get speciesCount => lessons.map((lesson) => lesson.species.length).fold(0, (a, b) => a + b);
 }
 
 @immutable

@@ -4,9 +4,11 @@ import '../model/model.dart';
 import 'strings.dart';
 import 'question.dart';
 
-class QuizScreen extends StatefulWidget {
+class QuizPage extends StatefulWidget {
+  // TODO actually use this (+ route arguments) for navigation
+  static const route = '/quiz';
 
-  QuizScreen(this.quiz, {this.questionIndex = 0});
+  QuizPage(this.quiz, {this.questionIndex = 0});
 
   final Quiz quiz;
   final int questionIndex;
@@ -14,10 +16,10 @@ class QuizScreen extends StatefulWidget {
   Question get currentQuestion => quiz.questions[questionIndex];
 
   @override
-  State<StatefulWidget> createState() => _QuizScreenState();
+  State<StatefulWidget> createState() => _QuizPageState();
 }
 
-class _QuizScreenState extends State<QuizScreen> {
+class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +45,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
     // TODO this only slides the new question in; also slide the old one out
     final route = PageRouteBuilder<void>(
-      pageBuilder: (context, animation, secondaryAnimation) => QuizScreen(
+      pageBuilder: (context, animation, secondaryAnimation) => QuizPage(
         widget.quiz,
         questionIndex: nextQuestionIndex,
       ),

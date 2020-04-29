@@ -9,7 +9,13 @@ abstract class Strings {
 
   String get appTitle;
 
-  String courseTitle(LatLon location);
+  String get createCourseTitle;
+  String get createCourseInstructions;
+  String courseLocation(String location);
+  String get courseSearchingSpecies;
+  String courseSpecies(String topSpecies, int count);
+  String get createCourseButton;
+  String courseTitle(String location);
 
   String lessonTitle(int lessonNumber);
   String get startLesson;
@@ -24,6 +30,8 @@ abstract class Strings {
   String source(String url);
   String license(String name);
   String get ok;
+
+  String latLon(LatLon latLon);
 }
 
 class Strings_en implements Strings {
@@ -31,7 +39,19 @@ class Strings_en implements Strings {
   String appTitle = 'Papageno';
 
   @override
-  String courseTitle(LatLon location) => 'Birds near ${location.lat}, ${location.lon}';
+  String createCourseTitle = 'Start new course';
+  @override
+  String createCourseInstructions = 'Tap the map to choose the location whose birds you want to learn to recognize.';
+  @override
+  String courseLocation(String location) => 'Selected location: ${location}';
+  @override
+  String courseSearchingSpecies = 'Searching for bird species…';
+  @override
+  String courseSpecies(String topSpecies, int count) => 'Found ${count} species, such as: ${topSpecies}';
+  @override
+  String createCourseButton = 'Start course';
+  @override
+  String courseTitle(String location) => 'Birds near ${location}';
 
   @override
   String lessonTitle(int lessonNumber) => 'Lesson ${lessonNumber}';
@@ -57,6 +77,10 @@ class Strings_en implements Strings {
   String license(String name) => 'License: ${name}';
   @override
   String ok = 'OK';
+
+  // TODO make number formatting locale-sensitive (probably needs NumberFormat from intl package)
+  @override
+  String latLon(LatLon latLon) => '${latLon.lat.toStringAsFixed(3)}, ${latLon.lon.toStringAsFixed(3)}';
 }
 
 class Strings_nl implements Strings {
@@ -64,7 +88,19 @@ class Strings_nl implements Strings {
   String appTitle = 'Papageno';
 
   @override
-  String courseTitle(LatLon location) => 'Vogels in de omgeving van ${location.lat}, ${location.lon}';
+  String createCourseTitle = 'Nieuwe cursus beginnen';
+  @override
+  String createCourseInstructions = 'Tik op de kaart om de omgeving te kiezen waarvan je de vogels wilt leren herkennen.';
+  @override
+  String courseLocation(String location) => 'Gekozen locatie: ${location}';
+  @override
+  String courseSearchingSpecies = 'Vogelsoorten worden opgezocht…';
+  @override
+  String courseSpecies(String topSpecies, int count) => '${count} soorten gevonden, waaronder: $topSpecies';
+  @override
+  String createCourseButton = 'Begin cursus';
+  @override
+  String courseTitle(String location) => 'Vogels in de omgeving van ${location}';
 
   @override
   String lessonTitle(int lessonNumber) => 'Les ${lessonNumber}';
@@ -90,4 +126,8 @@ class Strings_nl implements Strings {
   String license(String name) => 'Licensie: ${name}';
   @override
   String ok = 'OK';
+
+  // TODO make number formatting locale-sensitive (probably needs NumberFormat from intl package)
+  @override
+  String latLon(LatLon latLon) => '${latLon.lat.toStringAsFixed(3)}, ${latLon.lon.toStringAsFixed(3)}';
 }

@@ -27,4 +27,7 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
+    <!-- Needed to show embedded maps. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>
