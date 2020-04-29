@@ -6,9 +6,7 @@ import '../db/appdb.dart';
 import '../model/model.dart';
 import '../utils/random_utils.dart';
 
-Future<Course> createCourse(AppDb appDb) async {
-  final location = LatLon(52.830102, 6.4475933);
-
+Future<List<Species>> rankSpecies(AppDb appDb, LatLon location) async {
   // Get region whose centroid is closest to our location.
   //
   // TODO: for sparsely sampled regions (e.g. the Russian steppes), take the sum
@@ -21,14 +19,18 @@ Future<Course> createCourse(AppDb appDb) async {
   final speciesIds = weights.keys.toList();
   speciesIds.sort((a, b) => weights[b].compareTo(weights[a]));
 
-  final speciesOrder = <Species>[];
+  final rankedSpecies = <Species>[];
   for (final speciesId in speciesIds) {
-    speciesOrder.add(await appDb.species(speciesId));
+    rankedSpecies.add(await appDb.species(speciesId));
   }
 
+  return rankedSpecies;
+}
+
+Future<Course> createCourse(LatLon location, List<Species> rankedSpecies) async {
   final lessons = <Lesson>[];
   final speciesInLesson = <Species>[];
-  for (final species in speciesOrder) {
+  for (final species in rankedSpecies) {
     speciesInLesson.add(species);
     if (speciesInLesson.length >= _numSpeciesInLesson(lessons.length)) {
       lessons.add(Lesson(lessons.length, BuiltList.of(speciesInLesson)));
