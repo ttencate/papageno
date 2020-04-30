@@ -1,0 +1,3 @@
+# This lets us have a clone of the independent gh-pages branch inside of our
+# working copy.
+gh-pages/
