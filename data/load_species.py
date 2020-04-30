@@ -31,7 +31,7 @@ _LANGUAGE_MAPPING = {
     # https://stackoverflow.com/questions/4892372/language-codes-for-simplified-chinese-and-traditional-chinese
     'Chinese': 'zh_CN',
     'Chinese (Traditional)': 'zh_TW',
-    'Czech': 'ics',
+    'Czech': 'cs',
     'Danish': 'da',
     'Dutch': 'nl',
     'Estonian': 'et',
