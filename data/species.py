@@ -14,7 +14,7 @@ LANGUAGE_CODES = [
     'ca',
     'zh_CN',
     'zh_TW',
-    'ics',
+    'cs',
     'da',
     'nl',
     'et',
