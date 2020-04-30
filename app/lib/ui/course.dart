@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
 import '../controller/controller.dart';
+import 'settings.dart';
 import 'strings.dart';
 
 class CoursePage extends StatefulWidget {
@@ -36,6 +37,7 @@ class _CoursePageState extends State<CoursePage> {
   }
 
   Widget _buildLesson(BuildContext context, Course course, Lesson lesson) {
+    final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
     return Card(
       key: ObjectKey(lesson.index),
       // We need IntrinsicHeight here because the inner Row has CrossAxisAlignment.stretch,
@@ -73,7 +75,7 @@ class _CoursePageState extends State<CoursePage> {
                   children: lesson.species
                     .map((species) =>
                       Text(
-                        species.commonNameIn(LanguageCode.language_nl),
+                        species.commonNameIn(primarySpeciesLanguageCode),
                         style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w300),
                       ),
                     )
