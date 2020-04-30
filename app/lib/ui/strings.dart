@@ -11,10 +11,10 @@ abstract class Strings {
 
   String get createCourseTitle;
   String get createCourseInstructions;
-  String courseLocation(String location);
   String get courseSearchingSpecies;
-  String courseSpecies(String topSpecies, int count);
-  String get createCourseButton;
+  String get courseSpecies;
+  String get createCourseButtonDisabled;
+  String createCourseButtonEnabled(int speciesCount);
   String courseTitle(String location);
 
   String lessonTitle(int lessonNumber);
@@ -41,15 +41,15 @@ class Strings_en implements Strings {
   @override
   String createCourseTitle = 'Start new course';
   @override
-  String createCourseInstructions = 'Tap the map to choose the location whose birds you want to learn to recognize.';
-  @override
-  String courseLocation(String location) => 'Selected location: ${location}';
+  String createCourseInstructions = 'Tap the map to select an area. Your course will contain bird species from that area, ordered from common to rare.';
   @override
   String courseSearchingSpecies = 'Searching for bird species…';
   @override
-  String courseSpecies(String topSpecies, int count) => 'Found ${count} species, such as: ${topSpecies}';
+  String courseSpecies = 'Common birds in this area:';
   @override
-  String createCourseButton = 'Start course';
+  String createCourseButtonDisabled = 'Start course';
+  @override
+  String createCourseButtonEnabled(int speciesCount) => 'Start course (${speciesCount} birds)';
   @override
   String courseTitle(String location) => 'Birds near ${location}';
 
@@ -90,15 +90,15 @@ class Strings_nl implements Strings {
   @override
   String createCourseTitle = 'Nieuwe cursus beginnen';
   @override
-  String createCourseInstructions = 'Tik op de kaart om de omgeving te kiezen waarvan je de vogels wilt leren herkennen.';
-  @override
-  String courseLocation(String location) => 'Gekozen locatie: ${location}';
+  String createCourseInstructions = 'Tik op de kaart om een regio te kiezen. De cursus bevat vogelsoorten in die regio, op volgorde van meer naar minder voorkomend.';
   @override
   String courseSearchingSpecies = 'Vogelsoorten worden opgezocht…';
   @override
-  String courseSpecies(String topSpecies, int count) => '${count} soorten gevonden, waaronder: $topSpecies';
+  String courseSpecies = 'Veel voorkomende vogels in deze regio:';
   @override
-  String createCourseButton = 'Begin cursus';
+  String createCourseButtonDisabled = 'Begin cursus';
+  @override
+  String createCourseButtonEnabled(int speciesCount) => 'Begin cursus (${speciesCount} vogels)';
   @override
   String courseTitle(String location) => 'Vogels in de omgeving van ${location}';
 
