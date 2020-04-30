@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../controller/controller.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
+import 'settings.dart';
 import 'strings.dart';
 import 'zoombuttons_plugin_option.dart';
 
@@ -38,6 +39,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
+    final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.createCourseTitle),
@@ -102,8 +104,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                           ),
                           if (_rankedSpecies != null) Text(
                             // 20 species should be enough to always hit the ellipsis, and if not, no big deal.
-                            // TODO take language code from settings
-                            _rankedSpecies == null ? '' : _rankedSpecies.take(20).map((species) => species.commonNameIn(LanguageCode.language_nl)).join(', '),
+                            _rankedSpecies == null ? '' : _rankedSpecies.take(20).map((species) => species.commonNameIn(primarySpeciesLanguageCode)).join(', '),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             style: TextStyle(fontWeight: FontWeight.w300),
@@ -159,7 +160,6 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
               subdomains: ['a', 'b', 'c'],
               tileProvider: NonCachingNetworkTileProvider(),
             ),
-            // TODO when the map size changes (due to bottom text size changing), the circle jumps around. Probably a bug in flutter_map.
             if (_selectedLocation != null) CircleLayerOptions(
               circles: [
                 for (var f = 1.0; f > 0.0; f -= 0.25) CircleMarker(

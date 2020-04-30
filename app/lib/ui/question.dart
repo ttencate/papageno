@@ -14,6 +14,7 @@ import '../model/model.dart' as model;
 import '../utils/string_utils.dart';
 import 'player.dart';
 import 'revealing_image.dart';
+import 'settings.dart';
 import 'strings.dart';
 
 class QuestionScreen extends StatefulWidget {
@@ -55,6 +56,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         instructions = Strings.of(context).wrongAnswerInstructions;
       }
     }
+    final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
     // TODO alternative layout for landscape orientation
     var questionScreen = Column(
       children: <Widget>[
@@ -90,8 +92,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     alignment: Alignment.center,
                     padding: EdgeInsets.all(2.0),
                     child: Text(
-                      // TODO take language code from settings
-                      _question.answer.commonNameIn(LanguageCode.language_nl).capitalize(),
+                      _question.answer.commonNameIn(primarySpeciesLanguageCode).capitalize(),
                       style: TextStyle(
                         fontSize: 20.0,
                         fontWeight: FontWeight.w600,
@@ -166,7 +167,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
     if (_choice == null) {
       return questionScreen;
     } else {
-      // TODO probably cleaner to push a ModalBarrier onto the Navigator instead
       return GestureDetector(
         onTap: widget.onProceed,
         child: questionScreen,
@@ -175,6 +175,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 
   Widget _buildChoice(Species species) {
+    final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
     Color color;
     Icon icon;
     if (_choice != null) {
@@ -200,7 +201,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       child: ListTile(
         dense: true,
         title: Text(
-          species.commonNameIn(LanguageCode.language_nl).capitalize(),
+          species.commonNameIn(primarySpeciesLanguageCode).capitalize(),
           style: TextStyle(fontSize: 20.0),
         ),
         trailing: icon,
