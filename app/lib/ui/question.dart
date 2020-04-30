@@ -190,6 +190,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       decoration: BoxDecoration(
         shape: BoxShape.rectangle,
         color: color,
+        // TODO animate the background appearing, in the Material ink manner
 //        gradient: RadialGradient(
 //          radius: 0.5,
 //          colors: [color, color, Colors.transparent],
@@ -197,7 +198,11 @@ class _QuestionScreenState extends State<QuestionScreen> {
 //        ),
       ),
       child: ListTile(
-        title: Text(species.commonNameIn(LanguageCode.language_nl).capitalize()),
+        dense: true,
+        title: Text(
+          species.commonNameIn(LanguageCode.language_nl).capitalize(),
+          style: TextStyle(fontSize: 20.0),
+        ),
         trailing: icon,
         onTap: _choice == null ? () { _choose(species); } : null,
       ),
