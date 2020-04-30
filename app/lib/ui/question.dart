@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
@@ -63,12 +64,23 @@ class _QuestionScreenState extends State<QuestionScreen> {
               fit: StackFit.expand,
               alignment: Alignment.center,
               children: <Widget>[
-                _image == null ?
-                  Placeholder() :
-                  material.Image(
-                    image: AssetImage(join('assets', 'images', _image.fileName)),
-                    fit: BoxFit.cover,
+                if (_image == null) Placeholder(),
+                if (_image != null) material.Image(
+                  image: AssetImage(join('assets', 'images', _image.fileName)),
+                  fit: BoxFit.cover,
+                ),
+                if (_image != null) ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: 8.0,
+                      sigmaY: 8.0,
+                    ),
+                    child: material.Image(
+                      image: AssetImage(join('assets', 'images', _image.fileName)),
+                      fit: BoxFit.contain,
+                    ),
                   ),
+                ),
                 Positioned(
                   left: 0.0,
                   right: 0.0,
