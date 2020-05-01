@@ -55,7 +55,7 @@ class AppState extends State<App> {
       child: MaterialApp(
         onGenerateTitle: (BuildContext context) => Strings.of(context).appTitle,
         theme: ThemeData(
-          primarySwatch: Colors.green,
+          brightness: Brightness.light,
           primaryColor: Colors.green.shade500,
           accentColor: Colors.red.shade600,
         ),
