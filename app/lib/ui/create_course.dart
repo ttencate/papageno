@@ -26,6 +26,7 @@ class CreateCoursePage extends StatefulWidget {
 class _CreateCoursePageState extends State<CreateCoursePage> {
 
   AppDb _appDb;
+  MapController _mapController;
   LatLng _selectedLocation;
   List<Species> _rankedSpecies;
   Course _course;
@@ -34,6 +35,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _appDb = Provider.of<AppDb>(context);
+    _mapController = MapController();
   }
 
   @override
@@ -143,6 +145,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     return Stack(
       children: <Widget>[
         FlutterMap(
+          mapController: _mapController,
           options: MapOptions(
             center: _selectedLocation ?? LatLng(0.0, 0.0),
             zoom: 1.0,
@@ -192,7 +195,13 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   }
 
   void _onMapTap(LatLng latLng) async {
-    // TODO zoom to this region
+    const zoomRadius = 2.0;
+    _mapController.fitBounds(LatLngBounds.fromPoints(<LatLng>[
+      LatLng(latLng.latitude + zoomRadius, latLng.longitude),
+      LatLng(latLng.latitude - zoomRadius, latLng.longitude),
+      LatLng(latLng.latitude, latLng.longitude + zoomRadius),
+      LatLng(latLng.latitude, latLng.longitude - zoomRadius),
+    ]));
 
     setState(() {
       _selectedLocation = latLng;
