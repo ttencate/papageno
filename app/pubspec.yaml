@@ -46,10 +46,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/app.db
+    - assets/logo.png
+    - assets/question.png
     - assets/images/
     - assets/sounds/
 
-# To update the icons, run ./update_icons.sh
+# To update the icons, run ./artwork/export.sh
 flutter_icons:
   android: true
   ios: true
