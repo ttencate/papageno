@@ -37,6 +37,7 @@ dependencies:
   url_launcher: ^5.4.5
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.7.3
   flutter_test:
     sdk: flutter
   pedantic: ^1.9.0
@@ -47,3 +48,9 @@ flutter:
     - assets/app.db
     - assets/images/
     - assets/sounds/
+
+# To update the icons, run ./update_icons.sh
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "artwork/icon.png"
