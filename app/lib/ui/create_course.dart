@@ -40,6 +40,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final strings = Strings.of(context);
     final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
     return Scaffold(
@@ -91,8 +92,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                   right: 0.0,
                   bottom: 0.0,
                   child: Container(
-                    // TODO take color from theme
-                    color: Colors.blue.shade50.withOpacity(0.8),
+                    color: Color.lerp(Colors.white, theme.primaryColor, 0.2).withOpacity(0.8),
                     child: Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Column(
@@ -122,7 +122,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
           Padding(
             padding: EdgeInsets.all(16.0),
             child: RaisedButton(
-              color: Colors.blue, // TODO take from theme
+              color: theme.accentColor,
               textColor: Colors.white,
               child: Text(
                   _rankedSpecies == null ?
@@ -140,7 +140,8 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   }
 
   Widget _buildMap() {
-    const circleColor = Colors.blue; // TODO Take from theme
+    final theme = Theme.of(context);
+    final circleColor = theme.primaryColor;
     const circleRadius = 10000e3 / 90.0 * sqrt1_2; // Guaranteed to contain at least two centroids.
     return Stack(
       children: <Widget>[
@@ -167,7 +168,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
               circles: [
                 for (var f = 1.0; f > 0.0; f -= 0.25) CircleMarker(
                   point: _selectedLocation,
-                  color: circleColor.withOpacity(0.2),
+                  color: circleColor.withOpacity(0.25),
                   radius: f * circleRadius,
                   useRadiusInMeter: true,
                 )
