@@ -9,6 +9,8 @@ abstract class Strings {
 
   String get appTitle;
 
+  String get loading;
+
   String get createCourseTitle;
   String get createCourseInstructions;
   String get courseSearchingSpecies;
@@ -37,6 +39,9 @@ abstract class Strings {
 class Strings_en implements Strings {
   @override
   String appTitle = 'Papageno';
+
+  @override
+  String loading = 'Loading…';
 
   @override
   String createCourseTitle = 'Start new course';
@@ -86,6 +91,9 @@ class Strings_en implements Strings {
 class Strings_nl implements Strings {
   @override
   String appTitle = 'Papageno';
+
+  @override
+  String loading = 'Bezig met laden…';
 
   @override
   String createCourseTitle = 'Nieuwe cursus beginnen';

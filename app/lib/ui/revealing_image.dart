@@ -2,6 +2,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 
 class CircleClipper extends CustomClipper<Rect> {
   const CircleClipper({Listenable reclip, this.fraction = 1.0}) :
@@ -66,10 +67,10 @@ class _RevealingImageState extends State<RevealingImage> with SingleTickerProvid
               fit: BoxFit.contain,
               alignment: Alignment.center,
               child: Padding(
-                padding: EdgeInsets.all(2.0),
-                child: Text(
-                  '?',
-                  style: TextStyle(color: Colors.grey.shade500),
+                padding: EdgeInsets.all(64.0),
+                child: Image(
+                  image: AssetImage('assets/question.png'),
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
