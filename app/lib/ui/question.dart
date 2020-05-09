@@ -56,6 +56,12 @@ class _QuestionScreenState extends State<QuestionScreen> {
         instructions = Strings.of(context).wrongAnswerInstructions;
       }
     }
+    final theme = Theme.of(context);
+    final textOnImageColor = Colors.white;
+    final textOnImageShadows = <Shadow>[
+      Shadow(blurRadius: 3.0),
+      Shadow(blurRadius: 6.0),
+    ];
     final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
     // TODO alternative layout for landscape orientation
     var questionScreen = Column(
@@ -91,33 +97,23 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     color: Colors.black.withOpacity(0.2),
                     alignment: Alignment.center,
                     padding: EdgeInsets.all(2.0),
-                    child: Text(
-                      _question.answer.commonNameIn(primarySpeciesLanguageCode).capitalize(),
-                      style: TextStyle(
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        shadows: <Shadow>[
-                          Shadow(blurRadius: 2.0),
-                          Shadow(blurRadius: 4.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 4.0,
-                  top: 4.0,
-                  child: Text(
-                    _question.answer.scientificName.capitalize(),
-                    style: TextStyle(
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.w400,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.white,
-                      shadows: <Shadow>[
-                        Shadow(blurRadius: 3.0),
-                        Shadow(blurRadius: 6.0),
+                    child: Column(
+                      children: <Widget>[
+                        Text(
+                          _question.answer.commonNameIn(primarySpeciesLanguageCode).capitalize(),
+                          style: theme.textTheme.headline6.copyWith(
+                            color: textOnImageColor,
+                            shadows: textOnImageShadows,
+                          ),
+                        ),
+                        Text(
+                          _question.answer.scientificName.capitalize(),
+                          style: theme.textTheme.caption.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: textOnImageColor,
+                            shadows: textOnImageShadows,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -158,7 +154,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                 duration: Duration(seconds: 3),
                 // TODO DelayedCurve is just a quick and dirty way to delay the start of the animation, but I'm sure there's a better way.
                 curve: _DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
-                child: Text(instructions, style: TextStyle(color: Colors.grey)),
+                child: Text(instructions, style: theme.textTheme.caption),
               )
           ),
         )
@@ -202,7 +198,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         dense: true,
         title: Text(
           species.commonNameIn(primarySpeciesLanguageCode).capitalize(),
-          style: TextStyle(fontSize: 20.0),
+          textScaleFactor: 1.5,
         ),
         trailing: icon,
         onTap: _choice == null ? () { _choose(species); } : null,
@@ -238,6 +234,7 @@ class AttributionDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
+    final theme = Theme.of(context);
     return AlertDialog(
       insetPadding: EdgeInsets.all(8.0),
       contentPadding: EdgeInsets.zero,
@@ -249,7 +246,7 @@ class AttributionDialog extends StatelessWidget {
               text: strings.recordingCreator,
               linkText: _creatorName(recording.attribution, context),
               url: null,
-              bold: true,
+              style: theme.textTheme.headline6,
             ),
             _LinkTile(
               text: strings.source,
@@ -266,7 +263,7 @@ class AttributionDialog extends StatelessWidget {
               text: strings.imageCreator,
               linkText: image.attribution,
               url: null,
-              bold: true,
+              style: theme.textTheme.headline6,
             ),
             _LinkTile(
               text: strings.source,
@@ -304,16 +301,14 @@ class _LinkTile extends StatelessWidget {
   final String Function(String) text;
   final String linkText;
   final String url;
-  final bool bold;
+  final TextStyle style;
 
-  const _LinkTile({Key key, this.text, this.linkText, this.url, this.bold = false}) : super(key: key);
+  const _LinkTile({Key key, this.text, this.linkText, this.url, this.style}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    var textStyle = DefaultTextStyle.of(context).style;
-    if (bold) {
-      textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
-    }
+    var linkColor = Theme.of(context).accentColor;
+    var textStyle = style ?? DefaultTextStyle.of(context).style;
     const placeholder = '__LINK_TEXT__';
     final replacedText = text(placeholder);
     final placeholderIndex = replacedText.indexOf(placeholder);
@@ -329,7 +324,7 @@ class _LinkTile extends StatelessWidget {
             ),
             TextSpan(
               text: linkText,
-              style: url == null ? textStyle : textStyle.copyWith(color: Colors.blue),
+              style: url == null ? textStyle : textStyle.copyWith(color: linkColor),
             ),
             TextSpan(
               text: textAfterLink,

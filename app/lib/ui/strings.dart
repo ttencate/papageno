@@ -59,7 +59,7 @@ class Strings_en implements Strings {
   String courseTitle(String location) => 'Birds near ${location}';
 
   @override
-  String lessonTitle(int lessonNumber) => 'Lesson ${lessonNumber}';
+  String lessonTitle(int lessonNumber) => 'Chapter ${lessonNumber}';
   @override
   String startLesson = 'Start';
 
@@ -111,7 +111,7 @@ class Strings_nl implements Strings {
   String courseTitle(String location) => 'Vogels in de omgeving van ${location}';
 
   @override
-  String lessonTitle(int lessonNumber) => 'Les ${lessonNumber}';
+  String lessonTitle(int lessonNumber) => 'Hoofdstuk ${lessonNumber}';
   @override
   String startLesson = 'Start';
 
