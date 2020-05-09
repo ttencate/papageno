@@ -122,8 +122,6 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
           Padding(
             padding: EdgeInsets.all(16.0),
             child: RaisedButton(
-              color: theme.accentColor,
-              textColor: Colors.white,
               child: Text(
                   _rankedSpecies == null ?
                   strings.createCourseButtonDisabled.toUpperCase() :
@@ -232,8 +230,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
 class _OpenStreetMapCopyright extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final textStyle = DefaultTextStyle.of(context).style
-        .copyWith(fontSize: 12.0);
+    final textStyle = Theme.of(context).textTheme.caption;
     return RichText(
       text: TextSpan(
         children: <TextSpan>[

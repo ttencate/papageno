@@ -71,7 +71,6 @@ class _PlayerState extends State<Player> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
         children: <Widget>[
           Expanded(
@@ -80,12 +79,10 @@ class _PlayerState extends State<Player> {
               max: _duration.inMilliseconds.toDouble(),
               value: _position.inMilliseconds.toDouble(),
               onChanged: _loaded ? _seek : null,
-              activeColor: theme.accentColor,
             ),
           ),
           IconButton(
             icon: Icon(_state == AudioPlayerState.PLAYING ? Icons.pause : Icons.play_arrow),
-            color: theme.accentColor,
             iconSize: 48.0,
             onPressed: _loaded ? _togglePlaying : null,
           ),

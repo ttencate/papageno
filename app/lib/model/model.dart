@@ -12,6 +12,8 @@ import '../utils/angle_utils.dart';
 ///
 /// This is used only for translations of bird species names, and is entirely
 /// separate from the rest of the app's localization.
+///
+/// TODO Looks like Flutter has https://api.flutter.dev/flutter/dart-ui/Locale-class.html already.
 @immutable
 class LanguageCode {
   final String languageCode;

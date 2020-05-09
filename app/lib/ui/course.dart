@@ -38,6 +38,7 @@ class _CoursePageState extends State<CoursePage> {
 
   Widget _buildLesson(BuildContext context, Course course, Lesson lesson) {
     final theme = Theme.of(context);
+    final strings = Strings.of(context);
     final settings = Provider.of<Settings>(context);
     return Card(
       key: ObjectKey(lesson.index),
@@ -56,13 +57,11 @@ class _CoursePageState extends State<CoursePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Text(
-                      Strings.of(context).lessonTitle(lesson.number),
-                      style: TextStyle(fontSize: 24.0),
+                      strings.lessonTitle(lesson.number),
+                      style: theme.textTheme.headline6,
                     ),
                     RaisedButton(
-                      color: theme.accentColor,
-                      textColor: Colors.white,
-                      child: Text(Strings.of(context).startLesson.toUpperCase()),
+                      child: Text(strings.startLesson.toUpperCase()),
                       onPressed: () { _startQuiz(course, lesson); },
                     )
                   ],
@@ -77,7 +76,7 @@ class _CoursePageState extends State<CoursePage> {
                     .map((species) =>
                       Text(
                         species.commonNameIn(settings.primarySpeciesLanguageCode),
-                        style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w300),
+                        style: theme.textTheme.bodyText2,
                       ),
                     )
                     .toList(),
