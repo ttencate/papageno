@@ -1,0 +1,181 @@
+---
+---
+
+// https://material.io/design/color/the-color-system.html
+$background-color: #fafafa; // Gray 50
+$text-color: rgba(0, 0, 0, 0.87); // Black 87%
+$text-color-dark: #000000; // Black 100%
+$text-color-light: rgba(0, 0, 0, 0.54); // Black 54%
+$primary-color: #2e7d32; // Green 800
+$accent-color: #f9a825; // Yellow 800
+
+// Inspired by Bootstrap
+$spacer: 32px;
+
+@mixin desktop {
+  @media (min-width: 768px) {
+    @content;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: Roboto, sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: $text-color;
+  margin: 0;
+}
+
+main {
+  background-color: $background-color;
+  max-width: 920px;
+  margin: 0;
+  padding:$spacer;
+  @include desktop {
+    margin: 0 auto;
+    padding: $spacer;
+  }
+}
+
+h1, h2 {
+  font-family: Martel, serif;
+  margin-bottom: 0.5 * $spacer;
+  line-height: 1;
+}
+
+h1 {
+  color: $text-color-light;
+}
+
+h2 {
+  color: $accent-color;
+}
+
+p, ul, ol {
+  margin-top: 0.5 * $spacer 0;
+}
+
+ul {
+  $indent: $spacer;
+  list-style: none;
+  padding-left: $indent;
+  line-height: 1.5;
+  & > li {
+    position: relative;
+    &::before {
+      position: absolute;
+      left: -0.75 * $indent;
+      top: 1.1ex;
+      content: '\25a0'; // BLACK SQUARE
+      font-size: 50%;
+      color: $text-color-light;
+    }
+  }
+}
+
+strong {
+  font-weight: 700;
+  color: $primary-color;
+}
+
+.mt-0 {
+  margin-top: 0 !important;
+}
+
+.mb-0 {
+  margin-bottom: 0 !important;
+}
+
+.mb-3 {
+  margin-bottom: $spacer !important;
+}
+
+.large {
+  font-size: 133%;
+  font-weight: 100;
+  color: $text-color-dark;
+}
+
+.logo {
+  float: right;
+  margin-left: $spacer;
+  margin-bottom: $spacer;
+}
+
+.color-primary {
+  color: $primary-color;
+}
+
+.device-frame-wrapper {
+  position: relative;
+  width: 100%;
+  @include desktop {
+    width: 33%;
+    float: left;
+    margin-right: $spacer;
+  }
+}
+
+.device-frame {
+  $screen-width: 1080px;
+  $screen-height: 1920px;
+  $frame-width: 1330px;
+  $frame-height: 2532px;
+  position: relative;
+  width: 100%;
+  // Trick for maintaining aspect ratio: 100% is relative to parent *width*.
+  padding-bottom: $frame-height / $frame-width * 100%;
+
+  background-image: url(/assets/img/device_frame.png);
+  background-size: 100% 100%;
+  box-sizing: content-box;
+  // Paddings taken from the image.
+
+  .device-screen {
+    position: absolute;
+    top: 295px / $frame-height * 100%;
+    right: 132px / $frame-width * 100%;
+    bottom: 317px / $frame-height * 100%;
+    left: 118px / $frame-width * 100%;
+
+    overflow: hidden;
+  }
+}
+
+.carousel {
+  font-size: 0;
+  white-space: nowrap;
+  & > img {
+    width: 100%;
+    height: 100%;
+  }
+
+  $num-images: 3;
+  $time-per-image: 3s;
+  $transition-time: 0.6s;
+  $total-time: $num-images * ($time-per-image + $transition-time);
+
+  @keyframes carousel {
+    @for $i from 0 to $num-images {
+      #{$i / $num-images * 100%} {
+        transform: translateX(-$i * 100%);
+      }
+      #{($i + $time-per-image / ($time-per-image + $transition-time)) / $num-images * 100%} {
+        transform: translateX(-$i * 100%);
+      }
+    }
+  }
+  animation-name: carousel;
+  animation-duration: $total-time;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.clear-both {
+  clear: both;
+}

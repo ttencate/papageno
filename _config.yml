@@ -1,0 +1,20 @@
+# Site settings
+# Available in templates via {{ site.myvariable }}.
+title: "Papageno: Birdsong Tutor"
+description: Papageno is a mobile app that helps you learn to recognize bird sounds by ear.
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-feed
+
+# Default front matter
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
