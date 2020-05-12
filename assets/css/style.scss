@@ -30,7 +30,7 @@ html {
 
 body {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1rem;
 }
 
 main {
@@ -211,6 +211,9 @@ button,
 
 // Some utilities inspired by Bootstrap, including the basics of the grid system.
 
+.d-none { display: none; }
+.d-block { display: block; }
+
 .text-left { text-align: left; }
 .text-center { text-align: center; }
 .text-right { text-align: right; }
@@ -263,11 +266,14 @@ button,
 }
 
 @each $breakpoint, $min-width in $breakpoints {
-  @for $i from 1 through 12 {
-    .col-#{$breakpoint}-#{$i} {
-      @media (min-width: $min-width) {
+  @media (min-width: $min-width) {
+    @for $i from 1 through 12 {
+      .col-#{$breakpoint}-#{$i} {
         width: $i / 12 * 100%;
       }
     }
+
+    .d-#{$breakpoint}-none { display: none; }
+    .d-#{$breakpoint}-block { display: block; }
   }
 }
