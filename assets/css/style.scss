@@ -7,38 +7,39 @@ $text-color: rgba(0, 0, 0, 0.87); // Black 87%
 $text-color-dark: #000000; // Black 100%
 $text-color-light: rgba(0, 0, 0, 0.54); // Black 54%
 $primary-color: #2e7d32; // Green 800
+$primary-color-light: #388e3c; // Green 700
 $accent-color: #f9a825; // Yellow 800
 
-// Inspired by Bootstrap
 $spacer: 32px;
-
-@mixin desktop {
-  @media (min-width: 768px) {
-    @content;
-  }
-}
+$breakpoints: (
+  sm: 576px,
+  md: 720px,
+);
 
 * {
   box-sizing: border-box;
 }
 
-html, body {
+html {
+  margin: 0;
   font-family: Roboto, sans-serif;
-  font-size: 20px;
   font-weight: 400;
   line-height: 1.5;
   color: $text-color;
+}
+
+body {
   margin: 0;
+  font-size: 1.25rem;
 }
 
 main {
   background-color: $background-color;
-  max-width: 920px;
-  margin: 0;
-  padding:$spacer;
-  @include desktop {
-    margin: 0 auto;
-    padding: $spacer;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: $spacer;
+  @media (min-width: map-get($breakpoints, "md")) {
+    padding: $spacer 2 * $spacer;
   }
 }
 
@@ -83,16 +84,54 @@ strong {
   color: $primary-color;
 }
 
-.mt-0 {
-  margin-top: 0 !important;
+a {
+  color: $primary-color;
+  &:hover,
+  &:active {
+    color: $primary-color-light;
+  }
+  &:visited {
+    color: $primary-color;
+  }
 }
 
-.mb-0 {
-  margin-bottom: 0 !important;
+input {
+  font: inherit;
+  line-height: 2em;
 }
 
-.mb-3 {
-  margin-bottom: $spacer !important;
+input[type="text"],
+input[type="email"] {
+  border: 1px solid #ccc;
+  padding: 0 0.25 * $spacer;
+  line-height: 2em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.125) inset;
+  width: 100%;
+}
+
+input[type="submit"],
+button,
+.button {
+  border: none;
+  padding: 0 0.5 * $spacer;
+  background-color: $primary-color;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+
+  &:hover,
+  &:focus {
+    background-color: $primary-color-light;
+  }
+
+  &:active {
+    top: 2px;
+    background-color: $primary-color;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  }
 }
 
 .large {
@@ -101,24 +140,13 @@ strong {
   color: $text-color-dark;
 }
 
-.logo {
-  float: right;
-  margin-left: $spacer;
-  margin-bottom: $spacer;
+.small {
+  font-size: 75%;
+  color: $text-color-light;
 }
 
 .color-primary {
   color: $primary-color;
-}
-
-.device-frame-wrapper {
-  position: relative;
-  width: 100%;
-  @include desktop {
-    width: 33%;
-    float: left;
-    margin-right: $spacer;
-  }
 }
 
 .device-frame {
@@ -176,6 +204,65 @@ strong {
   animation-iteration-count: infinite;
 }
 
-.clear-both {
-  clear: both;
+// Some utilities inspired by Bootstrap, including the basics of the grid system.
+
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
+
+.w-100 { width: 100% !important; }
+
+.mt-0 { margin-top: 0 !important; }
+.mb-0 { margin-bottom: 0 !important; }
+
+.mt-1 { margin-top: 0.25 * $spacer !important; }
+.mb-1 { margin-bottom: 0.25 * $spacer !important; }
+
+.mt-2 { margin-top: 0.5 * $spacer !important; }
+.mb-2 { margin-bottom: 0.5 * $spacer !important; }
+
+.mt-3 { margin-top: $spacer !important; }
+.mb-3 { margin-bottom: $spacer !important; }
+
+.row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-left: -0.5 * $spacer;
+  margin-right: -0.5 * $spacer;
+}
+
+.col {
+  flex-basis: 0;
+  flex-grow: 1;
+}
+
+.col-auto {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: auto;
+  width: auto;
+}
+
+[class^="col-"] {
+  position: relative;
+  padding-left: 0.5 * $spacer;
+  padding-right: 0.5 * $spacer;
+}
+
+@for $i from 1 through 12 {
+  .col-#{$i} {
+    width: $i / 12 * 100%;
+  }
+}
+
+@each $breakpoint, $min-width in $breakpoints {
+  @for $i from 1 through 12 {
+    .col-#{$breakpoint}-#{$i} {
+      @media (min-width: $min-width) {
+        width: $i / 12 * 100%;
+      }
+    }
+  }
 }
