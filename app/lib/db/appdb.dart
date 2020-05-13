@@ -9,6 +9,8 @@ import '../model/model.dart';
 class NotFoundException implements Exception {
   final dynamic what;
   NotFoundException(this.what);
+  @override
+  String toString() => '${super.toString()} (${what.toString()})';
 }
 
 class AppDb {
