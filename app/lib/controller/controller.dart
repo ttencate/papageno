@@ -6,31 +6,46 @@ import '../db/appdb.dart';
 import '../model/model.dart';
 import '../utils/random_utils.dart';
 
-Future<List<Species>> rankSpecies(AppDb appDb, LatLon location) async {
-  // Get region whose centroid is closest to our location.
-  //
-  // TODO: for sparsely sampled regions (e.g. the Russian steppes), take the sum
-  // of multiple nearby regions until we have some minimum number of species.
-  // Weigh them according to
-  // https://en.wikipedia.org/wiki/Inverse_distance_weighting.
-  final region = await appDb.closestRegionTo(location);
+Future<RankedSpecies> rankSpecies(AppDb appDb, LatLon location) async {
+  final regions = await appDb.regionsByDistanceTo(location);
 
-  final weights = region.weightBySpeciesId;
-  final speciesIds = weights.keys.toList();
-  speciesIds.sort((a, b) => weights[b].compareTo(weights[a]));
-
-  final rankedSpecies = <Species>[];
-  for (final speciesId in speciesIds) {
-    rankedSpecies.add(await appDb.species(speciesId));
+  // To deal with sparsely sampled regions (e.g. the Russian steppes), take the
+  // sum of several nearby regions until we have some minimum number of species.
+  // Then we weigh them according to a Gaussian function.
+  const minSpeciesCount = 50;
+  const minRegions = 3;
+  const sigmaKm = 10000.0 / 90.0; // Maximum edge length of one grid cell.
+  final weights = <int, double>{};
+  var usedRadiusKm = 0.0;
+  for (var i = 0; i < regions.length; i++) {
+    if (i >= minRegions && weights.length >= minSpeciesCount) {
+      break;
+    }
+    final region = regions[i];
+    final distanceKm = region.centroid.distanceInKmTo(location);
+    usedRadiusKm = max(usedRadiusKm, distanceKm);
+    final x = distanceKm / sigmaKm;
+    final weightFactor = exp(-0.5 * (x * x));
+    for (final entry in region.weightBySpeciesId.entries) {
+      weights.putIfAbsent(entry.key, () => 0);
+      weights[entry.key] += weightFactor * entry.value;
+    }
   }
 
-  return rankedSpecies;
+  final speciesIds = weights.keys.toList();
+  speciesIds.sort((a, b) => -weights[a].compareTo(weights[b]));
+  final species = <Species>[];
+  for (final speciesId in speciesIds) {
+    species.add(await appDb.species(speciesId));
+  }
+
+  return RankedSpecies(location, species.toBuiltList(), usedRadiusKm);
 }
 
-Future<Course> createCourse(LatLon location, List<Species> rankedSpecies) async {
+Future<Course> createCourse(LatLon location, RankedSpecies rankedSpecies) async {
   final lessons = <Lesson>[];
   final speciesInLesson = <Species>[];
-  for (final species in rankedSpecies) {
+  for (final species in rankedSpecies.speciesList) {
     speciesInLesson.add(species);
     if (speciesInLesson.length >= _numSpeciesInLesson(lessons.length)) {
       lessons.add(Lesson(lessons.length, BuiltList.of(speciesInLesson)));

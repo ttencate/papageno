@@ -61,22 +61,13 @@ class AppDb {
     return Image.fromMap(records[0]);
   }
 
-  Future<Region> closestRegionTo(LatLon pos) async {
+  Future<List<Region>> regionsByDistanceTo(LatLon pos) async {
     // SQLite does not have trigonometry functions, so we can't compute the
-    // great-circle distance in the database directly. But we can avoid parsing
-    // the big JSON initially.
-    final records = await _db.rawQuery('select region_id, centroid_lat, centroid_lon from regions');
-    var closestRegionId = -1;
-    var closestDistance = double.infinity;
-    for (final record in records) {
-      final centroid = LatLon(record['centroid_lat'] as double, record['centroid_lon'] as double);
-      var distance = centroid.distanceTo(pos);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestRegionId = record['region_id'] as int;
-      }
-    }
-    return region(closestRegionId);
+    // great-circle distance in the database directly.
+    final records = await _db.rawQuery('select * from regions');
+    final regions = records.map((record) => Region.fromMap(record)).toList();
+    regions.sort((a, b) => a.centroid.distanceInKmTo(pos).compareTo(b.centroid.distanceInKmTo(pos)));
+    return regions;
   }
 
   Future<Region> region(int regionId) async {

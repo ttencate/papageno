@@ -158,7 +158,7 @@ class LatLon {
 
   LatLon(this.lat, this.lon);
 
-  double distanceTo(LatLon other) {
+  double distanceInKmTo(LatLon other) {
     // https://en.wikipedia.org/wiki/Great-circle_distance#Formulae
     const earthRadius = 6371.0;
     final angle = acos(
@@ -191,6 +191,18 @@ class Region {
       regionId = map['region_id'] as int,
       centroid = LatLon(map['centroid_lat'] as double, map['centroid_lon'] as double),
       _weightBySpeciesId = Uint8List.fromList(map['weight_by_species_id'] as Uint8List); // Make a copy because the passed Uint8List is a view into a larger buffer.
+}
+
+@immutable
+class RankedSpecies {
+  LatLon location;
+  // Suffix "List" used for clarity because "species" is both singular and plural.
+  final BuiltList<Species> speciesList;
+  final double usedRadiusKm;
+
+  RankedSpecies(this.location, this.speciesList, this.usedRadiusKm);
+  
+  int get length => speciesList.length;
 }
 
 @immutable
