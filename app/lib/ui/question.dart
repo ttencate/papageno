@@ -14,7 +14,7 @@ import '../model/model.dart' as model;
 import '../utils/string_utils.dart';
 import 'player.dart';
 import 'revealing_image.dart';
-import 'settings.dart';
+import '../model/settings.dart';
 import 'strings.dart';
 
 class QuestionScreen extends StatefulWidget {
@@ -62,7 +62,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       Shadow(blurRadius: 3.0),
       Shadow(blurRadius: 6.0),
     ];
-    final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
+    final settings = Provider.of<Settings>(context);
     // TODO alternative layout for landscape orientation
     var questionScreen = Column(
       children: <Widget>[
@@ -100,13 +100,21 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     child: Column(
                       children: <Widget>[
                         Text(
-                          _question.answer.commonNameIn(primarySpeciesLanguageCode).capitalize(),
+                          _question.answer.commonNameIn(settings.primarySpeciesLanguageCode).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
                             shadows: textOnImageShadows,
                           ),
                         ),
-                        Text(
+                        if (settings.secondarySpeciesLanguageCode != null) Text(
+                          _question.answer.commonNameIn(settings.secondarySpeciesLanguageCode).capitalize(),
+                          style: theme.textTheme.headline6.copyWith(
+                            color: textOnImageColor,
+                            shadows: textOnImageShadows,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                        if (settings.showScientificName) Text(
                           _question.answer.scientificName.capitalize(),
                           style: theme.textTheme.caption.copyWith(
                             fontStyle: FontStyle.italic,

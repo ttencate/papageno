@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../model/model.dart';
+import 'menu_drawer.dart';
 import 'strings.dart';
 import 'question.dart';
 
@@ -28,6 +29,7 @@ class _QuizPageState extends State<QuizPage> {
         title: Text(Strings.of(context).questionIndex(widget.questionIndex + 1, widget.quiz.questions.length)),
         // TODO show some sort of progress bar
       ),
+      drawer: MenuDrawer(),
       body: QuestionScreen(
         key: ObjectKey(widget.currentQuestion),
         question: widget.currentQuestion,

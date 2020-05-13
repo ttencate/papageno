@@ -6,7 +6,8 @@ import 'package:provider/provider.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
 import '../controller/controller.dart';
-import 'settings.dart';
+import 'menu_drawer.dart';
+import '../model/settings.dart';
 import 'strings.dart';
 
 class CoursePage extends StatefulWidget {
@@ -26,6 +27,7 @@ class _CoursePageState extends State<CoursePage> {
       appBar: AppBar(
         title: Text(strings.courseTitle(strings.latLon(course.location))),
       ),
+      drawer: MenuDrawer(),
       body: Container(
         color: Colors.grey.shade200,
         child: ListView.builder(

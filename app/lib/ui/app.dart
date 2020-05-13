@@ -4,11 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:papageno/ui/course.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 
 import '../db/appdb.dart';
 import 'create_course.dart';
 import 'localization.dart';
-import 'settings.dart';
+import '../model/settings.dart';
+import 'settings_page.dart';
 import 'splash_screen.dart';
 import 'strings.dart';
 
@@ -49,8 +51,8 @@ class AppState extends State<App> {
       Locale('nl'): Strings_nl(),
     });
     return MultiProvider(
-      providers: <Provider>[
-        Provider<Settings>.value(value: _settings),
+      providers: <SingleChildWidget>[
+        ChangeNotifierProvider<Settings>.value(value: _settings),
         Provider<AppDb>.value(value: _appDb),
       ],
       child: MaterialApp(
@@ -79,6 +81,7 @@ class AppState extends State<App> {
           SplashScreen.route: (context) => SplashScreen(loadingFuture: _loadingFuture),
           CreateCoursePage.route: (context) => CreateCoursePage(),
           CoursePage.route: (context) => CoursePage(),
+          SettingsPage.route: (context) => SettingsPage(),
         },
         initialRoute: SplashScreen.route,
         localizationsDelegates: [

@@ -12,7 +12,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../controller/controller.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
-import 'settings.dart';
+import 'menu_drawer.dart';
+import '../model/settings.dart';
 import 'strings.dart';
 import 'zoombuttons_plugin_option.dart';
 
@@ -34,10 +35,15 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   Course _course;
 
   @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _appDb = Provider.of<AppDb>(context);
-    _mapController = MapController();
   }
 
   @override
@@ -49,6 +55,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
       appBar: AppBar(
         title: Text(strings.createCourseTitle),
       ),
+      drawer: MenuDrawer(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[

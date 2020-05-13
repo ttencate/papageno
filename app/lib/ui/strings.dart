@@ -11,6 +11,8 @@ abstract class Strings {
 
   String get loading;
 
+  String get settings;
+
   String get createCourseTitle;
   String get createCourseInstructions;
   String get courseSearchingSpecies;
@@ -33,7 +35,13 @@ abstract class Strings {
   String license(String name);
   String get ok;
 
+  String get speciesNameDisplay;
+  String get primarySpeciesNameLanguage;
+  String get secondarySpeciesNameLanguage;
+  String get showScientificName;
+
   String latLon(LatLon latLon);
+  String languageName(LanguageCode languageCode);
 }
 
 class Strings_en implements Strings {
@@ -42,6 +50,9 @@ class Strings_en implements Strings {
 
   @override
   String loading = 'Loading…';
+
+  @override
+  String settings = 'Settings';
 
   @override
   String createCourseTitle = 'Start new course';
@@ -83,9 +94,23 @@ class Strings_en implements Strings {
   @override
   String ok = 'OK';
 
+  @override
+  String speciesNameDisplay = 'Display of bird names';
+  @override
+  String primarySpeciesNameLanguage = 'Language';
+  @override
+  String secondarySpeciesNameLanguage = 'Second language';
+  @override
+  String showScientificName = 'Scientific ("Latin") name';
+
   // TODO make number formatting locale-sensitive (probably needs NumberFormat from intl package)
   @override
   String latLon(LatLon latLon) => '${latLon.lat.toStringAsFixed(3)}, ${latLon.lon.toStringAsFixed(3)}';
+  @override
+  String languageName(LanguageCode languageCode) {
+    // TODO implement properly
+    return languageCode == null || languageCode == LanguageCode.none ? '(None)' : languageCode.toString();
+  }
 }
 
 class Strings_nl implements Strings {
@@ -94,6 +119,9 @@ class Strings_nl implements Strings {
 
   @override
   String loading = 'Bezig met laden…';
+
+  @override
+  String settings = 'Instellingen';
 
   @override
   String createCourseTitle = 'Nieuwe cursus beginnen';
@@ -135,7 +163,21 @@ class Strings_nl implements Strings {
   @override
   String ok = 'OK';
 
+  @override
+  String speciesNameDisplay = 'Weergave van vogelnamen';
+  @override
+  String primarySpeciesNameLanguage = 'Taal';
+  @override
+  String secondarySpeciesNameLanguage = 'Tweede taal';
+  @override
+  String showScientificName = 'Wetenschappelijke ("latijnse") naam';
+
   // TODO make number formatting locale-sensitive (probably needs NumberFormat from intl package)
   @override
   String latLon(LatLon latLon) => '${latLon.lat.toStringAsFixed(3)}, ${latLon.lon.toStringAsFixed(3)}';
+  @override
+  String languageName(LanguageCode languageCode) {
+    // TODO implement properly
+    return languageCode == null || languageCode == LanguageCode.none ? '(Geen)' : languageCode.toString();
+  }
 }
