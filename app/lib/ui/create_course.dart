@@ -25,10 +25,12 @@ class CreateCoursePage extends StatefulWidget {
 
 class _CreateCoursePageState extends State<CreateCoursePage> {
 
+  static const _initialRadiusKm = 10000.0 / 90.0 * sqrt1_2;
+
   AppDb _appDb;
   MapController _mapController;
   LatLng _selectedLocation;
-  List<Species> _rankedSpecies;
+  RankedSpecies _rankedSpecies;
   Course _course;
 
   @override
@@ -106,7 +108,10 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                           ),
                           if (_rankedSpecies != null) Text(
                             // 20 species should be enough to always hit the ellipsis, and if not, no big deal.
-                            _rankedSpecies == null ? '' : _rankedSpecies.take(20).map((species) => species.commonNameIn(primarySpeciesLanguageCode)).join(', '),
+                            _rankedSpecies == null ? '' : _rankedSpecies.speciesList
+                                .take(20)
+                                .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
+                                .join(', '),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             style: TextStyle(fontWeight: FontWeight.w300),
@@ -140,7 +145,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   Widget _buildMap() {
     final theme = Theme.of(context);
     final circleColor = theme.primaryColor;
-    const circleRadius = 10000e3 / 90.0 * sqrt1_2; // Guaranteed to contain at least two centroids.
+    final circleRadiusKm = _rankedSpecies?.usedRadiusKm ?? _initialRadiusKm;
     return Stack(
       children: <Widget>[
         FlutterMap(
@@ -162,14 +167,25 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
               subdomains: ['a', 'b', 'c'],
               tileProvider: NonCachingNetworkTileProvider(),
             ),
-            if (_selectedLocation != null) CircleLayerOptions(
+            if (_rankedSpecies != null) CircleLayerOptions(
               circles: [
                 for (var f = 1.0; f > 0.0; f -= 0.25) CircleMarker(
-                  point: _selectedLocation,
+                  point: _latLonToLatLng(_rankedSpecies.location),
                   color: circleColor.withOpacity(0.25),
-                  radius: f * circleRadius,
+                  radius: f * circleRadiusKm * 1000.0,
                   useRadiusInMeter: true,
                 )
+              ],
+            ),
+            if (_selectedLocation != null) CircleLayerOptions(
+              circles: [
+                CircleMarker(
+                  point: _selectedLocation,
+                  color: circleColor.withOpacity(0.75),
+                  borderColor: Colors.white.withOpacity(0.75),
+                  borderStrokeWidth: 1.0,
+                  radius: 4.0,
+                ),
               ],
             ),
             ZoomButtonsPluginOption(
@@ -194,14 +210,6 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   }
 
   void _onMapTap(LatLng latLng) async {
-    const zoomRadius = 2.0;
-    _mapController.fitBounds(LatLngBounds.fromPoints(<LatLng>[
-      LatLng(latLng.latitude + zoomRadius, latLng.longitude),
-      LatLng(latLng.latitude - zoomRadius, latLng.longitude),
-      LatLng(latLng.latitude, latLng.longitude + zoomRadius),
-      LatLng(latLng.latitude, latLng.longitude - zoomRadius),
-    ]));
-
     setState(() {
       _selectedLocation = latLng;
       _rankedSpecies = null;
@@ -211,13 +219,36 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     final location = _latLngToLatLon(latLng);
     final rankedSpecies = await rankSpecies(_appDb, location);
     setState(() { _rankedSpecies = rankedSpecies; });
+    _zoomTo(latLng, 1.5 * _rankedSpecies.usedRadiusKm);
 
     final course = await createCourse(location, rankedSpecies);
     setState(() { _course = course; });
   }
 
+  void _zoomTo(LatLng latLng, double radiusKm) {
+    final radiusDegrees = radiusKm / 10000.0 * 90.0;
+    _mapController.fitBounds(LatLngBounds.fromPoints(<LatLng>[
+      _safeLatLng(latLng.latitude + radiusDegrees, latLng.longitude),
+      _safeLatLng(latLng.latitude - radiusDegrees, latLng.longitude),
+      _safeLatLng(latLng.latitude, latLng.longitude + radiusDegrees),
+      _safeLatLng(latLng.latitude, latLng.longitude - radiusDegrees),
+    ]));
+  }
+
+  static LatLng _safeLatLng(double lat, double lon) {
+    // We clamp, rather than wrap, because the map isn't wrapped either and we
+    // don't want to end up spanning the entire map.
+    lat = max(-90, min(90, lat));
+    lon = max(-180, min(180, lon));
+    return LatLng(lat, lon);
+  }
+
   static LatLon _latLngToLatLon(LatLng latLng) {
     return LatLon(latLng.latitude, latLng.longitude);
+  }
+
+  static LatLng _latLonToLatLng(LatLon latLon) {
+    return LatLng(latLon.lat, latLon.lon);
   }
 
   void _startCourse() {
