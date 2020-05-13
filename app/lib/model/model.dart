@@ -45,6 +45,7 @@ class LanguageCode {
   @override
   int get hashCode => languageCode.hashCode ^ countryCode.hashCode;
 
+  static const none = LanguageCode('', '');
   static const all = <LanguageCode>[
     LanguageCode('en'),
     LanguageCode('af'),
