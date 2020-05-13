@@ -195,7 +195,7 @@ class Region {
 
 @immutable
 class RankedSpecies {
-  LatLon location;
+  final LatLon location;
   // Suffix "List" used for clarity because "species" is both singular and plural.
   final BuiltList<Species> speciesList;
   final double usedRadiusKm;

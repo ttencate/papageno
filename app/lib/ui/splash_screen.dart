@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 import 'create_course.dart';
 import 'strings.dart';
 
 class SplashScreen extends StatefulWidget {
   static const route = '/splashScreen';
+  static const _minimumDuration = Duration(seconds: 3);
 
+  final Future<void> waitFuture = Future<void>.delayed(_minimumDuration);
   final Future<void> loadingFuture;
 
-  const SplashScreen({Key key, this.loadingFuture}) : super(key: key);
+  SplashScreen({Key key, this.loadingFuture}) : super(key: key);
 
   @override
   _SplashScreenState createState() => _SplashScreenState();
@@ -16,10 +19,15 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
+  bool _loading = true;
+
   @override
   void initState() {
     super.initState();
     widget.loadingFuture.then((_) {
+      setState(() { _loading = false; });
+    });
+    Future.wait(<Future<void>>[widget.loadingFuture, widget.waitFuture]).then((_) {
       Navigator.of(context).pushReplacementNamed(CreateCoursePage.route);
     });
   }
@@ -32,7 +40,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Image(
+            FadeInImage(
+              placeholder: MemoryImage(kTransparentImage),
               image: AssetImage('assets/logo.png'),
               width: 256.0,
               height: 256.0,
@@ -55,14 +64,22 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
             SizedBox(height: 32.0),
-            Text(
-              strings.loading,
-              style: TextStyle(
-                fontWeight: FontWeight.w300,
+            AnimatedOpacity(
+              opacity: _loading ? 1.0 : 0.0,
+              duration: Duration(milliseconds: 300),
+              child: Column(
+                children: <Widget>[
+                  Text(
+                    strings.loading,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                  SizedBox(height: 8.0),
+                  CircularProgressIndicator(),
+                ],
               ),
             ),
-            SizedBox(height: 8.0),
-            CircularProgressIndicator(),
           ],
         ),
       ),
