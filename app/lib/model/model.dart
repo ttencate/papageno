@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -172,15 +172,25 @@ class LatLon {
 class Region {
   final int regionId;
   final LatLon centroid;
-  final BuiltMap<int, int> weightBySpeciesId;
+  final Uint8List _weightBySpeciesId;
+
+  BuiltMap<int, int> get weightBySpeciesId => BuiltMap.build((builder) {
+    // The map is encoded as key,value,key,value,... where both keys and values
+    // are big-endian unsigned 16-bits integers. Decoding it on demand saves
+    // memory and time while getting Regions from the database, because the
+    // weight map is often not needed.
+    final bytes = _weightBySpeciesId.buffer.asByteData();
+    for (var i = 0; i < bytes.lengthInBytes; i += 4) {
+      final speciesId = bytes.getUint16(i, Endian.big);
+      final weight = bytes.getUint16(i + 2, Endian.big);
+      builder[speciesId] = weight;
+    }
+  });
 
   Region.fromMap(Map<String, dynamic> map) :
       regionId = map['region_id'] as int,
       centroid = LatLon(map['centroid_lat'] as double, map['centroid_lon'] as double),
-      weightBySpeciesId = BuiltMap<int, int>.build((builder) {
-        final json = jsonDecode(map['weight_by_species_id'] as String) as Map<String, dynamic>;
-        builder.addEntries(json.entries.map((e) => MapEntry<int, int>(int.parse(e.key), e.value as int)));
-      });
+      _weightBySpeciesId = Uint8List.fromList(map['weight_by_species_id'] as Uint8List); // Make a copy because the passed Uint8List is a view into a larger buffer.
 }
 
 @immutable

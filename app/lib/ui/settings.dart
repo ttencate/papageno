@@ -17,7 +17,7 @@ class Settings {
       return LanguageCode.fromString(_prefs.getString(primarySpeciesLanguageCodeKey));
     } catch (ex) {
       // TODO switch back to 'en' once we have a UI for changing it
-      return LanguageCode('nl');
+      return LanguageCode('en');
     }
   }
 
