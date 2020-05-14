@@ -11,11 +11,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
 import '../model/model.dart' as model;
+import '../model/settings.dart';
 import '../utils/string_utils.dart';
 import 'player.dart';
 import 'revealing_image.dart';
-import '../model/settings.dart';
-import 'strings.dart';
+import 'strings.g.dart';
 
 class QuestionScreen extends StatefulWidget {
   final model.Question question;
@@ -48,14 +48,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var instructions = '';
-    if (_choice != null) {
-      if (_question.isCorrect(_choice)) {
-        instructions = Strings.of(context).rightAnswerInstructions;
-      } else {
-        instructions = Strings.of(context).wrongAnswerInstructions;
-      }
-    }
+    final instructions = _choice == null ? '' : Strings.of(context).tapInstructions;
     final theme = Theme.of(context);
     final textOnImageColor = Colors.white;
     final textOnImageShadows = <Shadow>[

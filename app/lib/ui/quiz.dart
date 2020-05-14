@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../model/model.dart';
 import 'menu_drawer.dart';
-import 'strings.dart';
 import 'question.dart';
+import 'strings.g.dart';
 
 class QuizPage extends StatefulWidget {
   // TODO actually use this (+ route arguments) for navigation

@@ -12,7 +12,7 @@ import 'localization.dart';
 import '../model/settings.dart';
 import 'settings_page.dart';
 import 'splash_screen.dart';
-import 'strings.dart';
+import 'strings.g.dart';
 
 /// The root widget of the app.
 ///
@@ -46,7 +46,9 @@ class AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    final inheritanceDelegate = InheritanceDelegate({
+    final inheritanceDelegate = InheritanceDelegate<Strings>({
+      // Order is important: the first entry becomes the default locale.
+      // (Map literals are LinkedHashMaps, thus order-preserving.)
       Locale('en'): Strings_en(),
       Locale('nl'): Strings_nl(),
     });
@@ -56,7 +58,7 @@ class AppState extends State<App> {
         Provider<AppDb>.value(value: _appDb),
       ],
       child: MaterialApp(
-        onGenerateTitle: (BuildContext context) => Strings.of(context).appTitle,
+        onGenerateTitle: (BuildContext context) =>  Strings.of(context).appTitle,
         theme: ThemeData(
           brightness: Brightness.light,
           // Circle in icon: green 500 - green 900.

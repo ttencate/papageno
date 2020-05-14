@@ -12,9 +12,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../controller/controller.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
-import 'menu_drawer.dart';
 import '../model/settings.dart';
-import 'strings.dart';
+import 'menu_drawer.dart';
+import 'strings.g.dart';
 import 'zoombuttons_plugin_option.dart';
 
 class CreateCoursePage extends StatefulWidget {
@@ -81,7 +81,8 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
                       child: Text(
-                        strings.latLon(_latLngToLatLon(_selectedLocation)),
+                        // TODO convert lat/lon to string in a locale-dependent way
+                        _latLngToLatLon(_selectedLocation).toString(),
                         style: TextStyle(
                           color: Colors.black,
                           shadows: <Shadow>[

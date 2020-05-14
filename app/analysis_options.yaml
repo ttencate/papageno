@@ -5,3 +5,7 @@ analyzer:
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false
+
+linter:
+  rules:
+    - avoid_relative_lib_imports
