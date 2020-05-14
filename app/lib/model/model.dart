@@ -167,6 +167,10 @@ class LatLon {
         cos(lat.degToRad()) * cos(other.lat.degToRad()) * cos(lon.degToRad() - other.lon.degToRad()));
     return angle * earthRadius;
   }
+
+  @override
+  String toString([int fractionDigits = 3]) =>
+      '${lat.toStringAsFixed(fractionDigits)}, ${lon.toStringAsFixed(fractionDigits)}';
 }
 
 @immutable

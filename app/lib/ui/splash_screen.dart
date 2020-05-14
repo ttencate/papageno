@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 import 'create_course.dart';
-import 'strings.dart';
+import 'strings.g.dart';
 
 class SplashScreen extends StatefulWidget {
   static const route = '/splashScreen';

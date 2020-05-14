@@ -1,12 +1,11 @@
-import 'dart:ffi';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../model/model.dart';
 import '../model/settings.dart';
-import 'strings.dart';
+import 'strings.g.dart';
+import 'strings_extension.dart';
 
 class SettingsPage extends StatelessWidget {
   static const route = '/settings';

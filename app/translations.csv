@@ -1,0 +1,56 @@
+key,description,en,nl
+appTitle,Title of the app,Papageno,
+loading,Shown on the splash screen while data is being loaded,Loading…,Bezig met laden…
+settings,Menu item that opens settings screen,Settings,Instellingen
+createCourseTitle,Title of screen for creating a new course,Start new course,Nieuwe cursus beginnen
+createCourseInstructions,Instructions on the screen for creating a new course,"Tap the map to select an area. Your course will contain bird species from that area, ordered from common to rare.","Tik op de kaart om een regio te kiezen. De cursus bevat vogelsoorten in die regio, op volgorde van meer naar minder voorkomend."
+courseSearchingSpecies,Shown on the course creation screen while bird species are being looked up,Searching for bird species…,Vogelsoorten worden opgezocht…
+courseSpecies,Shown on the course creation screen above a list of bird names,Common birds in this area:,Veel voorkomende vogels in deze regio:
+createCourseButtonDisabled,Button text while button is disabled,Start course,Begin cursus
+createCourseButtonEnabled,Button text when enough species were found,Start course (#{speciesCount} birds),Begin cursus (#{speciesCount} vogels)
+courseTitle,"Title of a course, containing GPS location",Birds near ${location},Vogels in de omgeving van ${location}
+lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lessonNumber}
+startLesson,Button text for starting a lesson,Start,Start
+questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} of #{total}
+tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
+recordingCreator,Credit for audio recordists,Audio recording by ${name},Geluidsopname door ${name}
+imageCreator,Credit for photographers,Photo by ${name},Foto door ${name}
+unknownCreator,"Shown instead of author name if author is unknown, referring to the web page where their work was found","[unknown, see source page]","[onbekend, zie bronpagina]"
+source,"Referring to a URL where source material (audio, photo) was found",Source: ${url},Bron: ${url}
+license,"Referring to the name of a license, e.g. CC BY-SA",License: ${name},Licensie: ${name}
+ok,Text for a button,OK,OK
+speciesNameDisplay,Heading on the Settings screen,Display of bird names,Weergave van vogelnamen
+primarySpeciesNameLanguage,Setting for the language in which to display bird species names,First language (used for answers),Eerste taal (gebruikt voor antwoorden)
+secondarySpeciesNameLanguage,Setting for a second language in which to display bird species names,Second language,Tweede taal
+showScientificName,Toggle for showing the scientific name of bird species,"Show scientific (""Latin"") name","Toon wetenschappelijke (""latijnse"") naam"
+languageNone,Shown if no language has been configured,(none),(geen)
+language_en,Name of the English language,English,Engels
+language_af,Name of the Afrikaans language,Afrikaans,Afrikaans
+language_ca,Name of the Catalan language,Catalan,Catalaans
+language_zh_CN,"Name of the Chinese language using the simplified script",Chinese (simplified),Chinees (vereenvoudigd)
+language_zh_TW,"Name of the Chinese language using the traditional script",Chinese (traditional),Chinees (traditioneel)
+language_cs,Name of the Czech language,Czech,Tsjechisch
+language_da,Name of the Danish language,Danish,Deens
+language_nl,Name of the Dutch language,Dutch,Nederlands
+language_et,Name of the Estonian language,Estonian,Estisch
+language_fi,Name of the Finnish language,Finnish,Fins
+language_fr,Name of the French language,French,Frans
+language_de,Name of the German language,German,Duits
+language_hu,Name of the Hungarian language,Hungarian,Hongaars
+language_is,Name of the Icelandic language,Icelandic,IJslands
+language_id,Name of the Indonesian language,Indonesian,Indonesisch
+language_it,Name of the Italian language,Italian,Italiaans
+language_ja,Name of the Japanese language,Japanese,Japans
+language_lv,Name of the Latvian language,Latvian,Lets
+language_lt,Name of the Lithuanian language,Lithuanian,Litouws
+language_se,Name of the Northern Sami language,Northern Sami,Noord-Samisch
+language_no,Name of the Norwegian language (either Bokmål or Nynorsk),Norwegian,Noors
+language_pl,Name of the Polish language,Polish,Pools
+language_pt,Name of the Portuguese language,Portuguese,Portugees
+language_ru,Name of the Russian language,Russian,Russisch
+language_sk,Name of the Slovak language,Slovak,Slowaaks
+language_sl,Name of the Slovenian language,Slovenian,Sloveens
+language_es,Name of the Spanish language,Spanish,Spaans
+language_sv,Name of the Swedish language,Swedish,Zweeds
+language_th,Name of the Thai language,Thai,Thai
+language_uk,Name of the Ukrаiniаn language,Ukrаiniаn,Oekraïens

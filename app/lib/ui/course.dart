@@ -3,12 +3,13 @@ import 'package:flutter/rendering.dart';
 import 'package:papageno/ui/quiz.dart';
 import 'package:provider/provider.dart';
 
+import '../controller/controller.dart';
 import '../db/appdb.dart';
 import '../model/model.dart';
-import '../controller/controller.dart';
-import 'menu_drawer.dart';
 import '../model/settings.dart';
-import 'strings.dart';
+import '../utils/string_utils.dart';
+import 'menu_drawer.dart';
+import 'strings.g.dart';
 
 class CoursePage extends StatefulWidget {
   static const route = '/course';
@@ -25,7 +26,8 @@ class _CoursePageState extends State<CoursePage> {
     final course = ModalRoute.of(context).settings.arguments as Course;
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.courseTitle(strings.latLon(course.location))),
+        // TODO Convert lat/lon to string in a locale-dependent way
+        title: Text(strings.courseTitle(course.location.toString())),
       ),
       drawer: MenuDrawer(),
       body: Container(
@@ -77,7 +79,7 @@ class _CoursePageState extends State<CoursePage> {
                   children: lesson.species
                     .map((species) =>
                       Text(
-                        species.commonNameIn(settings.primarySpeciesLanguageCode),
+                        species.commonNameIn(settings.primarySpeciesLanguageCode).capitalize(),
                         style: theme.textTheme.bodyText2,
                       ),
                     )
