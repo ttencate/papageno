@@ -29,9 +29,9 @@ class SettingsPage extends StatelessWidget {
           ),
           ListTile(
             title: Text(strings.primarySpeciesNameLanguage),
-            subtitle: Text(strings.languageName(settings.primarySpeciesLanguageCode)),
+            subtitle: Text(strings.languageSettingName(settings.primarySpeciesLanguage)),
             onTap: () async {
-              final value = await showDialog<LanguageCode>(
+              final value = await showDialog<LanguageSetting>(
                 context: context,
                 builder: (context) => LanguagePicker(
                   title: strings.primarySpeciesNameLanguage,
@@ -39,15 +39,15 @@ class SettingsPage extends StatelessWidget {
                 ),
               );
               if (value != null) {
-                settings.primarySpeciesLanguageCode = value;
+                settings.primarySpeciesLanguage = value;
               }
             },
           ),
           ListTile(
             title: Text(strings.secondarySpeciesNameLanguage),
-            subtitle: Text(strings.languageName(settings.secondarySpeciesLanguageCode)),
+            subtitle: Text(strings.languageSettingName(settings.secondarySpeciesLanguage)),
             onTap: () async {
-              final value = await showDialog<LanguageCode>(
+              final value = await showDialog<LanguageSetting>(
                 context: context,
                 builder: (context) => LanguagePicker(
                   title: strings.secondarySpeciesNameLanguage,
@@ -55,7 +55,7 @@ class SettingsPage extends StatelessWidget {
                 ),
               );
               if (value != null) {
-                settings.secondarySpeciesLanguageCode = value;
+                settings.secondarySpeciesLanguage = value;
               }
             },
           ),
@@ -81,16 +81,19 @@ class LanguagePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
-    final languageCodes = LanguageCode.all.toList();
-    languageCodes.sort((a, b) => strings.languageName(a).compareTo(strings.languageName(b)));
+    final languageCodes = LanguageCode.allSupported
+        .map((languageCode) => LanguageSetting.languageCode(languageCode))
+        .toList();
+    languageCodes.sort((a, b) => strings.languageSettingName(a).compareTo(strings.languageSettingName(b)));
+    languageCodes.insert(0, LanguageSetting.system);
     if (allowNone) {
-      languageCodes.insert(0, LanguageCode.none);
+      languageCodes.insert(0, LanguageSetting.none);
     }
     return SimpleDialog(
       title: Text(title),
       children: <Widget>[
         for (final languageCode in languageCodes) SimpleDialogOption(
-          child: Text(strings.languageName(languageCode)),
+          child: Text(strings.languageSettingName(languageCode)),
           onPressed: () {
             Navigator.of(context).pop(languageCode);
           },

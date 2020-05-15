@@ -13,7 +13,8 @@ import '../utils/angle_utils.dart';
 /// This is used only for translations of bird species names, and is entirely
 /// separate from the rest of the app's localization.
 ///
-/// TODO Looks like Flutter has https://api.flutter.dev/flutter/dart-ui/Locale-class.html already.
+/// We don't use Flutter's [Locale] class, which is similar, because we need
+/// the flexibility to specify the special values `system` and `none`.
 @immutable
 class LanguageCode {
   final String languageCode;
@@ -21,12 +22,14 @@ class LanguageCode {
 
   const LanguageCode(this.languageCode, [this.countryCode = '']);
 
-  LanguageCode.fromString(String string) :
-      languageCode = string.split('_')[0],
-      countryCode = string.contains('_') ? string.split('_')[1] : ''
-  {
+  factory LanguageCode.fromString(String string) {
+    final parts = string.split('_');
+    assert(parts.length <= 2);
+    final languageCode = parts[0];
+    final countryCode = parts.length >= 2 ? parts[1] : '';
     assert(languageCode.length == 2);
     assert(countryCode.isEmpty || countryCode.length == 2);
+    return LanguageCode(languageCode, countryCode);
   }
 
   @override
@@ -45,8 +48,8 @@ class LanguageCode {
   @override
   int get hashCode => languageCode.hashCode ^ countryCode.hashCode;
 
-  static const none = LanguageCode('', '');
-  static const all = <LanguageCode>[
+  /// All languages that we support for bird species names.
+  static const allSupported = <LanguageCode>[
     LanguageCode('en'),
     LanguageCode('af'),
     LanguageCode('ca'),
@@ -79,6 +82,8 @@ class LanguageCode {
     LanguageCode('th'),
     LanguageCode('uk'),
   ];
+  /// Used if a language was requested that is not supported.
+  static const fallback = LanguageCode('en');
 }
 
 @immutable
@@ -88,7 +93,7 @@ class Species {
   final BuiltMap<LanguageCode, String> commonNames;
 
   Species(this.speciesId, this.scientificName, this.commonNames) :
-        assert(LanguageCode.all.every((language) => commonNames.containsKey(language)));
+        assert(LanguageCode.allSupported.every((language) => commonNames.containsKey(language)));
 
   Species.fromMap(Map<String, dynamic> map) :
       speciesId = map['species_id'] as int,
@@ -100,9 +105,12 @@ class Species {
         });
 
   String commonNameIn(LanguageCode language) {
+    if (language == null) {
+      return '';
+    }
     final commonName = commonNames[language];
     if (commonName == null || commonName.isEmpty) {
-      return scientificName;
+      return '(${scientificName})';
     }
     return commonName;
   }

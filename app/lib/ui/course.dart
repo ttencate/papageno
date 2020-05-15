@@ -44,6 +44,7 @@ class _CoursePageState extends State<CoursePage> {
     final theme = Theme.of(context);
     final strings = Strings.of(context);
     final settings = Provider.of<Settings>(context);
+    final locale = WidgetsBinding.instance.window.locale;
     return Card(
       key: ObjectKey(lesson.index),
       // We need IntrinsicHeight here because the inner Row has CrossAxisAlignment.stretch,
@@ -79,7 +80,7 @@ class _CoursePageState extends State<CoursePage> {
                   children: lesson.species
                     .map((species) =>
                       Text(
-                        species.commonNameIn(settings.primarySpeciesLanguageCode).capitalize(),
+                        species.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)).capitalize(),
                         style: theme.textTheme.bodyText2,
                       ),
                     )
