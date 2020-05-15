@@ -24,16 +24,19 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(Strings.of(context).questionIndex(widget.questionIndex + 1, widget.quiz.questions.length)),
-        // TODO show some sort of progress bar
-      ),
-      drawer: MenuDrawer(),
-      body: QuestionScreen(
-        key: ObjectKey(widget.currentQuestion),
-        question: widget.currentQuestion,
-        onProceed: _showNextQuestion
+    return WillPopScope(
+      onWillPop: _willPop,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(Strings.of(context).questionIndex(widget.questionIndex + 1, widget.quiz.questions.length)),
+          // TODO show some sort of progress bar
+        ),
+        drawer: MenuDrawer(),
+        body: QuestionScreen(
+          key: ObjectKey(widget.currentQuestion),
+          question: widget.currentQuestion,
+          onProceed: _showNextQuestion
+        ),
       ),
     );
   }
@@ -63,5 +66,27 @@ class _QuizPageState extends State<QuizPage> {
       },
     );
     Navigator.of(context).pushReplacement(route);
+  }
+
+  Future<bool> _willPop() async {
+    final strings = Strings.of(context);
+    final abortQuiz = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(strings.abortQuizTitle),
+        content: Text(strings.abortQuizContent),
+        actions: <Widget>[
+          FlatButton(
+            child: Text(strings.no.toUpperCase()),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          FlatButton(
+            child: Text(strings.yes.toUpperCase()),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+    return abortQuiz ?? false;
   }
 }
