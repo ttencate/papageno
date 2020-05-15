@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import '../model/model.dart';
 
 /// Audio player widget with seek bar and play/pause button.
-// TODO: Pause when app goes to background.
 // TODO: Sometimes hot reload causes double playback.
 class Player extends StatefulWidget {
   final Recording recording;
@@ -20,11 +19,12 @@ class Player extends StatefulWidget {
   _PlayerState createState() => _PlayerState();
 }
 
-class _PlayerState extends State<Player> {
+class _PlayerState extends State<Player> with WidgetsBindingObserver {
   AudioPlayer _audioPlayer;
   AudioCache _audioCache;
   bool _loaded = false;
   AudioPlayerState _state = AudioPlayerState.STOPPED;
+  bool _pausedDueToLifecycleState = false;
   Duration _duration = Duration();
   Duration _position = Duration();
   StreamSubscription<AudioPlayerState> _playerStateSubscription;
@@ -51,14 +51,19 @@ class _PlayerState extends State<Player> {
 
     _audioCache = AudioCache(fixedPlayer: _audioPlayer, prefix: 'sounds/');
     _audioCache.play(_recording.fileName).then((_) {
+      _pausedDueToLifecycleState = false;
       setState(() {
         _loaded = true;
       });
     });
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
     _audioCache.clearCache();
 
     _playerStateSubscription.cancel();
@@ -67,6 +72,25 @@ class _PlayerState extends State<Player> {
     _audioPlayer.release();
 
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        if (_audioPlayer != null && _audioPlayer.state == AudioPlayerState.PLAYING) {
+          _audioPlayer.pause();
+          _pausedDueToLifecycleState = true;
+        }
+        break;
+      case AppLifecycleState.resumed:
+        if (_audioPlayer != null && _audioPlayer.state == AudioPlayerState.PAUSED && _pausedDueToLifecycleState) {
+          _audioPlayer.resume();
+        }
+        break;
+    }
   }
 
   @override
@@ -96,6 +120,7 @@ class _PlayerState extends State<Player> {
     } else {
       _audioPlayer.pause();
     }
+    _pausedDueToLifecycleState = false;
   }
 
   void _seek(double position) {
