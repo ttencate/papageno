@@ -55,8 +55,10 @@ abstract class Strings {
   String get secondarySpeciesNameLanguage;
   /// Toggle for showing the scientific name of bird species
   String get showScientificName;
-  /// Shown if no language has been configured
+  /// Shown in language picker if no language has been configured
   String get languageNone;
+  /// Shown in language picker for the language used by the operating system
+  String get languageSystem;
   /// Name of the English language
   String get language_en;
   /// Name of the Afrikaans language
@@ -147,6 +149,7 @@ abstract class Strings {
       case 'secondarySpeciesNameLanguage': return secondarySpeciesNameLanguage;
       case 'showScientificName': return showScientificName;
       case 'languageNone': return languageNone;
+      case 'languageSystem': return languageSystem;
       case 'language_en': return language_en;
       case 'language_af': return language_af;
       case 'language_ca': return language_ca;
@@ -207,7 +210,8 @@ class Strings_en extends Strings {
   @override String get primarySpeciesNameLanguage => 'First language (used for answers)';
   @override String get secondarySpeciesNameLanguage => 'Second language';
   @override String get showScientificName => 'Show scientific ("Latin") name';
-  @override String get languageNone => '(none)';
+  @override String get languageNone => 'None';
+  @override String get languageSystem => 'Operating system language';
   @override String get language_en => 'English';
   @override String get language_af => 'Afrikaans';
   @override String get language_ca => 'Catalan';
@@ -252,7 +256,7 @@ class Strings_nl extends Strings_en {
   @override String courseTitle(String location) => <String>['Vogels in de omgeving van ', location].join();
   @override String lessonTitle(int lessonNumber) => <String>['Hoofdstuk ', lessonNumber.toString()].join();
   @override String get startLesson => 'Start';
-  @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' of ', total.toString()].join();
+  @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
   @override String recordingCreator(String name) => <String>['Geluidsopname door ', name].join();
   @override String imageCreator(String name) => <String>['Foto door ', name].join();
@@ -264,7 +268,8 @@ class Strings_nl extends Strings_en {
   @override String get primarySpeciesNameLanguage => 'Eerste taal (gebruikt voor antwoorden)';
   @override String get secondarySpeciesNameLanguage => 'Tweede taal';
   @override String get showScientificName => 'Toon wetenschappelijke ("latijnse") naam';
-  @override String get languageNone => '(geen)';
+  @override String get languageNone => 'Geen';
+  @override String get languageSystem => 'Taal van besturingssysteem';
   @override String get language_en => 'Engels';
   @override String get language_af => 'Afrikaans';
   @override String get language_ca => 'Catalaans';

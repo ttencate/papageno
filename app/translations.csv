@@ -11,7 +11,7 @@ createCourseButtonEnabled,Button text when enough species were found,Start cours
 courseTitle,"Title of a course, containing GPS location",Birds near ${location},Vogels in de omgeving van ${location}
 lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lessonNumber}
 startLesson,Button text for starting a lesson,Start,Start
-questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} of #{total}
+questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
 recordingCreator,Credit for audio recordists,Audio recording by ${name},Geluidsopname door ${name}
 imageCreator,Credit for photographers,Photo by ${name},Foto door ${name}
@@ -23,7 +23,8 @@ speciesNameDisplay,Heading on the Settings screen,Display of bird names,Weergave
 primarySpeciesNameLanguage,Setting for the language in which to display bird species names,First language (used for answers),Eerste taal (gebruikt voor antwoorden)
 secondarySpeciesNameLanguage,Setting for a second language in which to display bird species names,Second language,Tweede taal
 showScientificName,Toggle for showing the scientific name of bird species,"Show scientific (""Latin"") name","Toon wetenschappelijke (""latijnse"") naam"
-languageNone,Shown if no language has been configured,(none),(geen)
+languageNone,Shown in language picker if no language has been configured,None,Geen
+languageSystem,Shown in language picker for the language used by the operating system,Operating system language,Taal van besturingssysteem
 language_en,Name of the English language,English,Engels
 language_af,Name of the Afrikaans language,Afrikaans,Afrikaans
 language_ca,Name of the Catalan language,Catalan,Catalaans

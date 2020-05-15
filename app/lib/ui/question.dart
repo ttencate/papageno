@@ -48,6 +48,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = WidgetsBinding.instance.window.locale;
     final instructions = _choice == null ? '' : Strings.of(context).tapInstructions;
     final theme = Theme.of(context);
     final textOnImageColor = Colors.white;
@@ -93,14 +94,14 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     child: Column(
                       children: <Widget>[
                         Text(
-                          _question.answer.commonNameIn(settings.primarySpeciesLanguageCode).capitalize(),
+                          _question.answer.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
                             shadows: textOnImageShadows,
                           ),
                         ),
-                        if (settings.secondarySpeciesLanguageCode != null) Text(
-                          _question.answer.commonNameIn(settings.secondarySpeciesLanguageCode).capitalize(),
+                        if (settings.secondarySpeciesLanguage != null) Text(
+                          _question.answer.commonNameIn(settings.secondarySpeciesLanguage.resolve(locale)).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
                             shadows: textOnImageShadows,
@@ -172,7 +173,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 
   Widget _buildChoice(Species species) {
-    final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
+    final settings = Provider.of<Settings>(context);
+    final locale = WidgetsBinding.instance.window.locale;
     Color color;
     Icon icon;
     if (_choice != null) {
@@ -198,7 +200,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       child: ListTile(
         dense: true,
         title: Text(
-          species.commonNameIn(primarySpeciesLanguageCode).capitalize(),
+          species.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)).capitalize(),
           textScaleFactor: 1.5,
         ),
         trailing: icon,

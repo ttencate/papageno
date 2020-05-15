@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:ui';
 import 'dart:math' hide log;
 
 import 'package:flutter/gestures.dart';
@@ -50,7 +51,8 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final strings = Strings.of(context);
-    final primarySpeciesLanguageCode = Provider.of<Settings>(context).primarySpeciesLanguageCode;
+    final locale = WidgetsBinding.instance.window.locale;
+    final settings = Provider.of<Settings>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.createCourseTitle),
@@ -118,7 +120,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                             // 20 species should be enough to always hit the ellipsis, and if not, no big deal.
                             _rankedSpecies == null ? '' : _rankedSpecies.speciesList
                                 .take(20)
-                                .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
+                                .map((species) => species.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)))
                                 .join(', '),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
