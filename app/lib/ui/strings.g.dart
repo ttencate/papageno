@@ -35,6 +35,10 @@ abstract class Strings {
   String questionIndex(int current, int total);
   /// Shown at the bottom of the screen when ready to continue to the next question
   String get tapInstructions;
+  /// Title of dialog asking to abort the current quiz
+  String get abortQuizTitle;
+  /// Text of dialog asking to abort the current quiz
+  String get abortQuizContent;
   /// Credit for audio recordists
   String recordingCreator(String name);
   /// Credit for photographers
@@ -47,6 +51,10 @@ abstract class Strings {
   String license(String name);
   /// Text for a button
   String get ok;
+  /// Text for confirmation button
+  String get yes;
+  /// Text for rejection button
+  String get no;
   /// Heading on the Settings screen
   String get speciesNameDisplay;
   /// Setting for the language in which to display bird species names
@@ -138,12 +146,16 @@ abstract class Strings {
       case 'startLesson': return startLesson;
       case 'questionIndex': return questionIndex;
       case 'tapInstructions': return tapInstructions;
+      case 'abortQuizTitle': return abortQuizTitle;
+      case 'abortQuizContent': return abortQuizContent;
       case 'recordingCreator': return recordingCreator;
       case 'imageCreator': return imageCreator;
       case 'unknownCreator': return unknownCreator;
       case 'source': return source;
       case 'license': return license;
       case 'ok': return ok;
+      case 'yes': return yes;
+      case 'no': return no;
       case 'speciesNameDisplay': return speciesNameDisplay;
       case 'primarySpeciesNameLanguage': return primarySpeciesNameLanguage;
       case 'secondarySpeciesNameLanguage': return secondarySpeciesNameLanguage;
@@ -200,12 +212,16 @@ class Strings_en extends Strings {
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Question ', current.toString(), ' of ', total.toString()].join();
   @override String get tapInstructions => 'Tap anywhere to continue';
+  @override String get abortQuizTitle => 'Abort quiz?';
+  @override String get abortQuizContent => 'This will end the current quiz without storing results. Are you sure?';
   @override String recordingCreator(String name) => <String>['Audio recording by ', name].join();
   @override String imageCreator(String name) => <String>['Photo by ', name].join();
   @override String get unknownCreator => '[unknown, see source page]';
   @override String source(String url) => <String>['Source: ', url].join();
   @override String license(String name) => <String>['License: ', name].join();
   @override String get ok => 'OK';
+  @override String get yes => 'Yes';
+  @override String get no => 'No';
   @override String get speciesNameDisplay => 'Display of bird names';
   @override String get primarySpeciesNameLanguage => 'First language (used for answers)';
   @override String get secondarySpeciesNameLanguage => 'Second language';
@@ -258,12 +274,16 @@ class Strings_nl extends Strings_en {
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
+  @override String get abortQuizTitle => 'Toets beëindigen?';
+  @override String get abortQuizContent => 'Hiermee wordt de huidige toets beëindigd zonder resultaten op te slaan. Weet je het zeker?';
   @override String recordingCreator(String name) => <String>['Geluidsopname door ', name].join();
   @override String imageCreator(String name) => <String>['Foto door ', name].join();
   @override String get unknownCreator => '[onbekend, zie bronpagina]';
   @override String source(String url) => <String>['Bron: ', url].join();
   @override String license(String name) => <String>['Licensie: ', name].join();
   @override String get ok => 'OK';
+  @override String get yes => 'Ja';
+  @override String get no => 'Nee';
   @override String get speciesNameDisplay => 'Weergave van vogelnamen';
   @override String get primarySpeciesNameLanguage => 'Eerste taal (gebruikt voor antwoorden)';
   @override String get secondarySpeciesNameLanguage => 'Tweede taal';

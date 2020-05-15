@@ -13,12 +13,16 @@ lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lesso
 startLesson,Button text for starting a lesson,Start,Start
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
+abortQuizTitle,Title of dialog asking to abort the current quiz,Abort quiz?,Toets beëindigen?
+abortQuizContent,Text of dialog asking to abort the current quiz,This will end the current quiz without storing results. Are you sure?,Hiermee wordt de huidige toets beëindigd zonder resultaten op te slaan. Weet je het zeker?
 recordingCreator,Credit for audio recordists,Audio recording by ${name},Geluidsopname door ${name}
 imageCreator,Credit for photographers,Photo by ${name},Foto door ${name}
 unknownCreator,"Shown instead of author name if author is unknown, referring to the web page where their work was found","[unknown, see source page]","[onbekend, zie bronpagina]"
 source,"Referring to a URL where source material (audio, photo) was found",Source: ${url},Bron: ${url}
 license,"Referring to the name of a license, e.g. CC BY-SA",License: ${name},Licensie: ${name}
 ok,Text for a button,OK,OK
+yes,Text for confirmation button,Yes,Ja
+no,Text for rejection button,No,Nee
 speciesNameDisplay,Heading on the Settings screen,Display of bird names,Weergave van vogelnamen
 primarySpeciesNameLanguage,Setting for the language in which to display bird species names,First language (used for answers),Eerste taal (gebruikt voor antwoorden)
 secondarySpeciesNameLanguage,Setting for a second language in which to display bird species names,Second language,Tweede taal
