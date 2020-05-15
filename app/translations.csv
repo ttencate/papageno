@@ -3,7 +3,9 @@ appTitle,Title of the app,Papageno,
 loading,Shown on the splash screen while data is being loaded,Loading…,Bezig met laden…
 settings,Menu item that opens settings screen,Settings,Instellingen
 createCourseTitle,Title of screen for creating a new course,Start new course,Nieuwe cursus beginnen
-createCourseInstructions,Instructions on the screen for creating a new course,"Tap the map to select an area. Your course will contain bird species from that area, ordered from common to rare.","Tik op de kaart om een regio te kiezen. De cursus bevat vogelsoorten in die regio, op volgorde van meer naar minder voorkomend."
+createCourseInstructions,Instructions on the screen for creating a new course,"Choose a location. Your course will contain birds from that area, ordered from common to rare.","Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend."
+createCourseTapMap,Instructions on the screen for creating a new course,Or tap the map to select another location.,Of tik op de kaart om een andere locatie te kiezen.
+useCurrentLocationButton,Text for button to use current GPS location for creating a course,Use current location,Gebruik huidige locatie
 courseSearchingSpecies,Shown on the course creation screen while bird species are being looked up,Searching for bird species…,Vogelsoorten worden opgezocht…
 courseSpecies,Shown on the course creation screen above a list of bird names,Common birds in this area:,Veel voorkomende vogels in deze regio:
 createCourseButtonDisabled,Button text while button is disabled,Start course,Begin cursus

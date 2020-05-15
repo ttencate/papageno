@@ -17,6 +17,10 @@ abstract class Strings {
   String get createCourseTitle;
   /// Instructions on the screen for creating a new course
   String get createCourseInstructions;
+  /// Instructions on the screen for creating a new course
+  String get createCourseTapMap;
+  /// Text for button to use current GPS location for creating a course
+  String get useCurrentLocationButton;
   /// Shown on the course creation screen while bird species are being looked up
   String get courseSearchingSpecies;
   /// Shown on the course creation screen above a list of bird names
@@ -137,6 +141,8 @@ abstract class Strings {
       case 'settings': return settings;
       case 'createCourseTitle': return createCourseTitle;
       case 'createCourseInstructions': return createCourseInstructions;
+      case 'createCourseTapMap': return createCourseTapMap;
+      case 'useCurrentLocationButton': return useCurrentLocationButton;
       case 'courseSearchingSpecies': return courseSearchingSpecies;
       case 'courseSpecies': return courseSpecies;
       case 'createCourseButtonDisabled': return createCourseButtonDisabled;
@@ -202,7 +208,9 @@ class Strings_en extends Strings {
   @override String get loading => 'Loading…';
   @override String get settings => 'Settings';
   @override String get createCourseTitle => 'Start new course';
-  @override String get createCourseInstructions => 'Tap the map to select an area. Your course will contain bird species from that area, ordered from common to rare.';
+  @override String get createCourseInstructions => 'Choose a location. Your course will contain birds from that area, ordered from common to rare.';
+  @override String get createCourseTapMap => 'Or tap the map to select a location manually.';
+  @override String get useCurrentLocationButton => 'Use current location';
   @override String get courseSearchingSpecies => 'Searching for bird species…';
   @override String get courseSpecies => 'Common birds in this area:';
   @override String get createCourseButtonDisabled => 'Start course';
@@ -264,7 +272,9 @@ class Strings_nl extends Strings_en {
   @override String get loading => 'Bezig met laden…';
   @override String get settings => 'Instellingen';
   @override String get createCourseTitle => 'Nieuwe cursus beginnen';
-  @override String get createCourseInstructions => 'Tik op de kaart om een regio te kiezen. De cursus bevat vogelsoorten in die regio, op volgorde van meer naar minder voorkomend.';
+  @override String get createCourseInstructions => 'Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend.';
+  @override String get createCourseTapMap => 'Of tik op de kaart om zelf een locatie te kiezen.';
+  @override String get useCurrentLocationButton => 'Gebruik huidige locatie';
   @override String get courseSearchingSpecies => 'Vogelsoorten worden opgezocht…';
   @override String get courseSpecies => 'Veel voorkomende vogels in deze regio:';
   @override String get createCourseButtonDisabled => 'Begin cursus';
