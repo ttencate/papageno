@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
+import 'package:location/location.dart';
 import 'package:papageno/ui/course.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,6 +31,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   static const _initialRadiusKm = 10000.0 / 90.0 * sqrt1_2;
 
   AppDb _appDb;
+  bool _searchingLocation = false;
   MapController _mapController;
   LatLng _selectedLocation;
   RankedSpecies _rankedSpecies;
@@ -59,11 +61,33 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
       ),
       drawer: MenuDrawer(),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Padding(
             padding: EdgeInsets.all(16.0),
-            child: Text(strings.createCourseInstructions),
+            child: Column(
+              children: <Widget>[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(strings.createCourseInstructions),
+                ),
+                SizedBox(height: 8.0),
+                RaisedButton(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Text(strings.useCurrentLocationButton.toUpperCase()),
+                      if (_searchingLocation) CircularProgressIndicator(),
+                    ],
+                  ),
+                  onPressed: _searchingLocation ? null : _useCurrentLocation,
+                ),
+                SizedBox(height: 8.0),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(strings.createCourseTapMap),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: Stack(
@@ -219,7 +243,40 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     );
   }
 
+  void _useCurrentLocation() async {
+    if (_searchingLocation) {
+      return;
+    }
+    setState(() { _searchingLocation = true; });
+    try {
+      final location = Location();
+      var serviceEnabled = await location.serviceEnabled();
+      if (!serviceEnabled) {
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          return;
+        }
+      }
+      await location.changeSettings(accuracy: LocationAccuracy.low);
+      var permissionGranted = await location.hasPermission();
+      if (permissionGranted == PermissionStatus.denied) {
+        permissionGranted = await location.requestPermission();
+        if (permissionGranted != PermissionStatus.granted) {
+          return;
+        }
+      }
+      final locationData = await location.getLocation();
+      _selectLocation(LatLng(locationData.latitude, locationData.longitude));
+    } finally {
+      setState(() {_searchingLocation = false;});
+    }
+  }
+
   void _onMapTap(LatLng latLng) async {
+    await _selectLocation(latLng);
+  }
+
+  void _selectLocation(LatLng latLng) async {
     setState(() {
       _selectedLocation = latLng;
       _rankedSpecies = null;
