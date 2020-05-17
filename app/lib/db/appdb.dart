@@ -22,16 +22,18 @@ class AppDb {
   static Future<AppDb> open() async {
     // https://github.com/tekartik/sqflite/blob/master/sqflite/doc/opening_asset_db.md
     final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, 'app.db');
-    await deleteDatabase(path);
     try {
-      await Directory(dirname(path)).create(recursive: true);
+      await Directory(databasesPath).create(recursive: true);
     } catch (_) {}
-    // TODO stream rather than loading it all into RAM at once
+
+    // We'd like to stream this, rather than loading it all into RAM at once.
+    // But there seems no way to stream data from an AssetBundle.
+    final path = join(databasesPath, 'app.db');
     final data = await rootBundle.load(join('assets', 'app.db'));
     final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     await File(path).writeAsBytes(bytes, flush: true);
-    final db = await openDatabase(path, readOnly: true);
+
+    final db = await openReadOnlyDatabase(path);
     return AppDb._fromDatabase(db);
   }
 

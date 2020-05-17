@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import '../db/appdb.dart';
+import '../db/userdb.dart';
 import 'create_course.dart';
 import 'localization.dart';
 import '../model/settings.dart';
@@ -28,6 +29,7 @@ class AppState extends State<App> {
 
   Settings _settings;
   AppDb _appDb;
+  UserDb _userDb;
   Future<void> _loadingFuture;
 
   @override
@@ -41,11 +43,23 @@ class AppState extends State<App> {
       AppDb.open().then((appDb) {
         setState(() { _appDb = appDb; });
       }),
+      UserDb.open().then((userDb) {
+        setState(() { _userDb = userDb; });
+      }),
     ]);
   }
 
   @override
+  void dispose() {
+    if (_userDb != null) {
+      _userDb.close();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // TODO autogenerate this as a const in the Strings class
     final inheritanceDelegate = InheritanceDelegate<Strings>({
       // Order is important: the first entry becomes the default locale.
       // (Map literals are LinkedHashMaps, thus order-preserving.)
@@ -56,6 +70,7 @@ class AppState extends State<App> {
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<Settings>.value(value: _settings),
         Provider<AppDb>.value(value: _appDb),
+        Provider<UserDb>.value(value: _userDb),
       ],
       child: MaterialApp(
         onGenerateTitle: (BuildContext context) =>  Strings.of(context).appTitle,
