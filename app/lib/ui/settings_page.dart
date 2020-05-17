@@ -29,7 +29,7 @@ class SettingsPage extends StatelessWidget {
           ),
           ListTile(
             title: Text(strings.primarySpeciesNameLanguage),
-            subtitle: Text(strings.languageSettingName(settings.primarySpeciesLanguage)),
+            subtitle: Text(strings.languageSettingName(settings.primarySpeciesLanguage.value)),
             onTap: () async {
               final value = await showDialog<LanguageSetting>(
                 context: context,
@@ -39,13 +39,13 @@ class SettingsPage extends StatelessWidget {
                 ),
               );
               if (value != null) {
-                settings.primarySpeciesLanguage = value;
+                settings.primarySpeciesLanguage.set(value);
               }
             },
           ),
           ListTile(
             title: Text(strings.secondarySpeciesNameLanguage),
-            subtitle: Text(strings.languageSettingName(settings.secondarySpeciesLanguage)),
+            subtitle: Text(strings.languageSettingName(settings.secondarySpeciesLanguage.value)),
             onTap: () async {
               final value = await showDialog<LanguageSetting>(
                 context: context,
@@ -55,15 +55,15 @@ class SettingsPage extends StatelessWidget {
                 ),
               );
               if (value != null) {
-                settings.secondarySpeciesLanguage = value;
+                settings.secondarySpeciesLanguage.set(value);
               }
             },
           ),
           CheckboxListTile(
             title: Text(strings.showScientificName),
-            value: settings.showScientificName,
+            value: settings.showScientificName.value,
             onChanged: (value) {
-              settings.showScientificName = value;
+              settings.showScientificName.set(value);
             },
           ),
         ],

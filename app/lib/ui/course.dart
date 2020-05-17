@@ -80,7 +80,7 @@ class _CoursePageState extends State<CoursePage> {
                   children: lesson.species
                     .map((species) =>
                       Text(
-                        species.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)).capitalize(),
+                        species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
                         style: theme.textTheme.bodyText2,
                       ),
                     )

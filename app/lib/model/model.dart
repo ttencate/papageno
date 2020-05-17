@@ -218,6 +218,20 @@ class RankedSpecies {
   int get length => speciesList.length;
 }
 
+/// A [Profile] represents a single user of the app.
+/// Pretty much all other data (courses, settings, ...) is scoped to a single profile.
+@immutable
+class Profile {
+  final int profileId;
+  final String name;
+
+  Profile(this.profileId, this.name);
+
+  Profile.fromMap(Map<String, dynamic> map) :
+      profileId = map['profile_id'] as int,
+      name = map['name'] as String;
+}
+
 @immutable
 class Course {
   final LatLon location;

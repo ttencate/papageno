@@ -94,21 +94,21 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     child: Column(
                       children: <Widget>[
                         Text(
-                          _question.answer.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)).capitalize(),
+                          _question.answer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
                             shadows: textOnImageShadows,
                           ),
                         ),
                         if (settings.secondarySpeciesLanguage != null) Text(
-                          _question.answer.commonNameIn(settings.secondarySpeciesLanguage.resolve(locale)).capitalize(),
+                          _question.answer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
                             shadows: textOnImageShadows,
                             fontWeight: FontWeight.normal,
                           ),
                         ),
-                        if (settings.showScientificName) Text(
+                        if (settings.showScientificName.value) Text(
                           _question.answer.scientificName.capitalize(),
                           style: theme.textTheme.caption.copyWith(
                             fontStyle: FontStyle.italic,
@@ -200,7 +200,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       child: ListTile(
         dense: true,
         title: Text(
-          species.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)).capitalize(),
+          species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
           textScaleFactor: 1.5,
         ),
         trailing: icon,
