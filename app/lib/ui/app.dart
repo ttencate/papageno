@@ -8,9 +8,9 @@ import 'package:provider/single_child_widget.dart';
 
 import '../db/appdb.dart';
 import '../db/userdb.dart';
+import '../model/settings.dart';
 import 'create_course.dart';
 import 'localization.dart';
-import '../model/settings.dart';
 import 'settings_page.dart';
 import 'splash_screen.dart';
 import 'strings.g.dart';
@@ -36,17 +36,20 @@ class AppState extends State<App> {
   void initState() {
     super.initState();
     // TODO handle exceptions here!
-    _loadingFuture = Future.wait([
-      Settings.create().then((settings) {
-        setState(() { _settings = settings; });
-      }),
-      AppDb.open().then((appDb) {
-        setState(() { _appDb = appDb; });
-      }),
-      UserDb.open().then((userDb) {
-        setState(() { _userDb = userDb; });
-      }),
-    ]);
+    _loadingFuture = () async {
+      // All these are I/O-heavy, so it does not seem necessary to try and do them in parallel.
+      final appDb = await AppDb.open();
+      setState(() { _appDb = appDb; });
+      final userDb = await UserDb.open();
+      setState(() { _userDb = userDb; });
+
+      // XXX When we start supporting multiple profiles, these objects will be pushed down
+      // to lower widgets.
+      final profiles = await userDb.getProfiles();
+      final profile = profiles.isEmpty ? await userDb.createProfile(null) : profiles.first;
+      final settings = await Settings.create(userDb, profile);
+      setState(() { _settings = settings; });
+    }();
   }
 
   @override

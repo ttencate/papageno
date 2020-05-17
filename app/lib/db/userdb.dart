@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../model/model.dart';
+
 class UserDb {
   static const _latestVersion = 1;
 
@@ -72,5 +74,37 @@ class UserDb {
         foreign key (profile_id) references profiles(profile_id) on delete cascade
       )
     ''');
+  }
+
+  Future<List<Profile>> getProfiles() async {
+    final records = await _db.rawQuery('select * from profiles order by profile_id');
+    return records.map((record) => Profile.fromMap(record)).toList();
+  }
+
+  Future<Profile> getProfile(int profileId) async {
+    final records = await _db.rawQuery('select * from profiles where profile_id = ?', <dynamic>[profileId]);
+    return Profile.fromMap(records.single);
+  }
+
+  Future<Profile> createProfile(String name) async {
+    final profileId = await _db.rawInsert('insert into profiles (name) values (?)', <dynamic>[name]);
+    return await getProfile(profileId);
+  }
+
+  Future<String> getSetting(int profileId, String name, [String defaultValue]) async {
+    final records = await _db.rawQuery(
+        'select value from settings where profile_id = ? and name = ?',
+        <dynamic>[profileId, name]);
+    if (records.isEmpty) {
+      return defaultValue;
+    } else {
+      return records.single['value'] as String;
+    }
+  }
+
+  Future<void> setSetting(int profileId, String name, String value) async {
+    await _db.execute(
+        'insert or replace into settings (profile_id, name, value) values (?, ?, ?)',
+        <dynamic>[profileId, name, value]);
   }
 }

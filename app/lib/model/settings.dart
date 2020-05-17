@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:papageno/db/userdb.dart';
 import 'package:papageno/model/model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Algebraic data type containing one of:
 /// - a [LanguageCode]
@@ -17,11 +17,23 @@ abstract class LanguageSetting {
   static const system = SystemLanguageSetting._internal();
   static const none = NoneLanguageSetting._internal();
 
-  factory LanguageSetting.fromString(String string) {
+  factory LanguageSetting.fromString(String string, [LanguageSetting defaultValue]) {
+    if (string == null) {
+      return defaultValue;
+    }
     switch (string) {
-      case SystemLanguageSetting._stringValue: return system;
-      case NoneLanguageSetting._stringValue: return none;
-      default: return LanguageCodeLanguageSetting._internal(LanguageCode.fromString(string));
+      case SystemLanguageSetting._stringValue:
+        return system;
+      case NoneLanguageSetting._stringValue:
+        return none;
+      default:
+        LanguageCode languageCode;
+        try {
+          languageCode = LanguageCode.fromString(string);
+        } catch (ex) {
+          return defaultValue;
+        }
+        return LanguageCodeLanguageSetting._internal(languageCode);
     }
   }
 }
@@ -95,56 +107,75 @@ class NoneLanguageSetting implements LanguageSetting {
   String toString() => _stringValue;
 }
 
-// TODO settings should be stored in UserDb because they are profile-dependent
 class Settings with ChangeNotifier {
-  final SharedPreferences _prefs;
 
-  Settings._internal(this._prefs);
+  final Setting<LanguageSetting> primarySpeciesLanguage =
+      Setting.language('primarySpeciesLanguage', LanguageSetting.system);
+  final Setting<LanguageSetting> secondarySpeciesLanguage =
+      Setting.language('secondarySpeciesLanguage', LanguageSetting.none);
+  final Setting<bool> showScientificName =
+      Setting.boolean('showScientificName', false);
 
-  static Future<Settings> create() async {
-    return Settings._internal(await SharedPreferences.getInstance());
+  final UserDb _userDb;
+  final int _profileId;
+
+  static Future<Settings> create(UserDb userDb, Profile profile) async {
+    final settings = Settings._internal(userDb, profile.profileId);
+    await settings._init();
+    return settings;
   }
 
-  static const primarySpeciesLanguageKey = 'primarySpeciesLanguage';
-  static const secondarySpeciesLanguageKey = 'secondarySpeciesLanguage';
-  static const showScientificNameKey = 'showScientificName';
+  Settings._internal(this._userDb, this._profileId);
 
-  LanguageSetting get primarySpeciesLanguage {
-    try {
-      return LanguageSetting.fromString(_prefs.getString(primarySpeciesLanguageKey));
-    } catch (ex) {
-      return LanguageSetting.system;
+  Future<void> _init() async {
+    await primarySpeciesLanguage._init(this);
+    await secondarySpeciesLanguage._init(this);
+    await showScientificName._init(this);
+  }
+
+  void _notifyListeners() {
+    notifyListeners();
+  }
+}
+
+class Setting<T> {
+  final String _key;
+  final T Function(String string) _parse;
+  final String Function(T value) _serialize;
+  final T _defaultValue;
+
+  Settings _settings;
+  T _value;
+
+  Setting._create(this._key, this._parse, this._serialize, this._defaultValue) {
+    _value = _defaultValue;
+  }
+
+  static Setting<LanguageSetting> language(String key, LanguageSetting defaultValue) =>
+    Setting._create(key, (s) => LanguageSetting.fromString(s), (v) => v.toString(), defaultValue);
+
+  static Setting<bool> boolean(String key, bool defaultValue) =>
+    Setting._create(key, (s) => s == '1', (v) => v ? '1' : '0', defaultValue);
+
+  Future<void> _init(Settings settings) async {
+    _settings = settings;
+    var string = await settings._userDb.getSetting(settings._profileId, _key);
+    _value = _defaultValue;
+    if (string != null) {
+      try {
+        _value = _parse(string);
+        // ignore: empty_catches
+      } catch (ignored) {}
     }
   }
 
-  set primarySpeciesLanguage(LanguageSetting languageSetting) {
-    _prefs.setString(primarySpeciesLanguageKey, languageSetting.toString());
-    notifyListeners();
+  T get value {
+    return _value;
   }
 
-  LanguageSetting get secondarySpeciesLanguage {
-    try {
-      return LanguageSetting.fromString(_prefs.getString(secondarySpeciesLanguageKey));
-    } catch (ex) {
-      return LanguageSetting.none;
-    }
-  }
-
-  set secondarySpeciesLanguage(LanguageSetting languageSetting) {
-    _prefs.setString(secondarySpeciesLanguageKey, languageSetting.toString());
-    notifyListeners();
-  }
-
-  bool get showScientificName {
-    try {
-      return _prefs.getBool(showScientificNameKey);
-    } catch (ex) {
-      return false;
-    }
-  }
-
-  set showScientificName(bool value) {
-    _prefs.setBool(showScientificNameKey, value);
-    notifyListeners();
+  void set(T value) {
+    _value = value;
+    _settings._userDb.setSetting(_settings._profileId, _key, _serialize(value)); // Future not awaited!
+    _settings._notifyListeners();
   }
 }

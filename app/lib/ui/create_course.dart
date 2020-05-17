@@ -144,7 +144,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                             // 20 species should be enough to always hit the ellipsis, and if not, no big deal.
                             _rankedSpecies == null ? '' : _rankedSpecies.speciesList
                                 .take(20)
-                                .map((species) => species.commonNameIn(settings.primarySpeciesLanguage.resolve(locale)))
+                                .map((species) => species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)))
                                 .join(', '),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
