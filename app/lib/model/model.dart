@@ -4,8 +4,7 @@ import 'dart:typed_data';
 import 'package:built_collection/built_collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:meta/meta.dart';
-
-import '../utils/angle_utils.dart';
+import 'package:papageno/utils/angle_utils.dart';
 
 /// An ISO-639-1 two-letter language code with an optional ISO-3166-1 country
 /// code.

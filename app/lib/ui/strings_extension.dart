@@ -1,5 +1,5 @@
-import '../model/settings.dart';
-import 'strings.g.dart';
+import 'package:papageno/model/settings.dart';
+import 'package:papageno/ui/strings.g.dart';
 
 extension StringsExtension on Strings {
   String languageSettingName(LanguageSetting languageSetting) {

@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:papageno/ui/course.dart';
+import 'package:papageno/db/appdb.dart';
+import 'package:papageno/db/userdb.dart';
+import 'package:papageno/model/settings.dart';
+import 'package:papageno/ui/course_page.dart';
+import 'package:papageno/ui/create_course.dart';
+import 'package:papageno/ui/localization.dart';
+import 'package:papageno/ui/settings_page.dart';
+import 'package:papageno/ui/splash_screen.dart';
+import 'package:papageno/ui/strings.g.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
-
-import '../db/appdb.dart';
-import '../db/userdb.dart';
-import '../model/settings.dart';
-import 'create_course.dart';
-import 'localization.dart';
-import 'settings_page.dart';
-import 'splash_screen.dart';
-import 'strings.g.dart';
 
 /// The root widget of the app.
 ///

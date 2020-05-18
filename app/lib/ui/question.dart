@@ -8,14 +8,14 @@ import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../db/appdb.dart';
-import '../model/model.dart';
-import '../model/model.dart' as model;
-import '../model/settings.dart';
-import '../utils/string_utils.dart';
-import 'player.dart';
-import 'revealing_image.dart';
-import 'strings.g.dart';
+import 'package:papageno/db/appdb.dart';
+import 'package:papageno/model/model.dart';
+import 'package:papageno/model/model.dart' as model;
+import 'package:papageno/model/settings.dart';
+import 'package:papageno/utils/string_utils.dart';
+import 'package:papageno/ui/player.dart';
+import 'package:papageno/ui/revealing_image.dart';
+import 'package:papageno/ui/strings.g.dart';
 
 class QuestionScreen extends StatefulWidget {
   final model.Question question;
