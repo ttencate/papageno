@@ -15,6 +15,14 @@ lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lesso
 startLesson,Button text for starting a lesson,Start,Start
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
+quizResultsTitle,Title of screen with quiz results,Quiz results,Toetsuitslag
+quizScore,Text introducing a percentage showing how well the user scored on a quiz,Score:,Score:
+quizScoreDetails,Text showing how well the user scored on a quiz,Correctly identified #{correct} out of #{total} birds,#{correct} van #{total} vogels juist geïdentificeerd
+strongPoints,Text introducing birds that the user is good at,Strong points,Sterke punten
+weakPoints,Text introducing birds that the user is not good at,Weak points,Zwakke punten
+confusionText,Text describing a single incorrect answer,Took ${correct} to be ${wrong},Dacht dat een ${correct} een ${wrong} was
+retryQuizButton,Text on button that retries this quiz once more,Have another go,Nog eens proberen
+backButton,Text on button that goes back to the previous screen,Back,Terug
 abortQuizTitle,Title of dialog asking to abort the current quiz,Abort quiz?,Toets beëindigen?
 abortQuizContent,Text of dialog asking to abort the current quiz,This will end the current quiz without storing results. Are you sure?,Hiermee wordt de huidige toets beëindigd zonder resultaten op te slaan. Weet je het zeker?
 recordingCreator,Credit for audio recordists,Audio recording by ${name},Geluidsopname door ${name}

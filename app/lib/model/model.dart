@@ -255,23 +255,60 @@ class Lesson {
   int get number => index + 1;
 }
 
-@immutable
 class Quiz {
   final BuiltList<Question> questions;
+  int _currentQuestionIndex = 0;
 
   Quiz(this.questions);
+
+  int get questionCount => questions.length;
+
+  bool get isComplete => _currentQuestionIndex >= questionCount;
+
+  int get currentQuestionNumber => _currentQuestionIndex + 1;
+
+  Question get currentQuestion => isComplete ? null : questions[_currentQuestionIndex];
+
+  void proceedToNextQuestion() {
+    assert(!isComplete);
+    _currentQuestionIndex++;
+  }
+
+  int get correctAnswerCount => questions.where((question) => question.isCorrect == true).length;
+
+  int get scorePercent => correctAnswerCount * 100 ~/ questionCount;
+
+  Set<Species> get fullyCorrectSpecies =>
+      questions
+      .map((question) => question.correctAnswer)
+      .toSet()
+      ..removeAll(incorrectQuestions.map((question) => question.correctAnswer))
+      ..removeAll(incorrectQuestions.map((question) => question.givenAnswer));
+
+  List<Question> get correctQuestions => questions.where((question) => question.isCorrect == true).toList();
+  List<Question> get incorrectQuestions => questions.where((question) => question.isCorrect == false).toList();
 }
 
-@immutable
 class Question {
   final Recording recording;
   final List<Species> choices;
-  final Species answer;
+  final Species correctAnswer;
+  Species _givenAnswer;
 
-  Question(this.recording, this.choices, this.answer) :
+  Question(this.recording, this.choices, this.correctAnswer) :
         assert(recording != null),
         assert(choices.isNotEmpty),
-        assert(choices.contains(answer));
+        assert(choices.contains(correctAnswer));
 
-  bool isCorrect(Species species) => species == answer;
+  bool get isAnswered => _givenAnswer != null;
+
+  bool get isCorrect => isAnswered ? _givenAnswer == correctAnswer : null;
+
+  Species get givenAnswer => _givenAnswer;
+
+  void answerWith(Species answer) {
+    assert(_givenAnswer == null);
+    assert(answer != null);
+    _givenAnswer = answer;
+  }
 }
