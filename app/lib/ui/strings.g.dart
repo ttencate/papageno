@@ -39,6 +39,22 @@ abstract class Strings {
   String questionIndex(int current, int total);
   /// Shown at the bottom of the screen when ready to continue to the next question
   String get tapInstructions;
+  /// Title of screen with quiz results
+  String get quizResultsTitle;
+  /// Text introducing a percentage showing how well the user scored on a quiz
+  String get quizScore;
+  /// Text showing how well the user scored on a quiz
+  String quizScoreDetails(int correct, int total);
+  /// Text introducing birds that the user is good at
+  String get strongPoints;
+  /// Text introducing birds that the user is not good at
+  String get weakPoints;
+  /// Text describing a single incorrect answer
+  String confusionText(String correct, String wrong);
+  /// Text on button that retries this quiz once more
+  String get retryQuizButton;
+  /// Text on button that goes back to the previous screen
+  String get backButton;
   /// Title of dialog asking to abort the current quiz
   String get abortQuizTitle;
   /// Text of dialog asking to abort the current quiz
@@ -152,6 +168,14 @@ abstract class Strings {
       case 'startLesson': return startLesson;
       case 'questionIndex': return questionIndex;
       case 'tapInstructions': return tapInstructions;
+      case 'quizResultsTitle': return quizResultsTitle;
+      case 'quizScore': return quizScore;
+      case 'quizScoreDetails': return quizScoreDetails;
+      case 'strongPoints': return strongPoints;
+      case 'weakPoints': return weakPoints;
+      case 'confusionText': return confusionText;
+      case 'retryQuizButton': return retryQuizButton;
+      case 'backButton': return backButton;
       case 'abortQuizTitle': return abortQuizTitle;
       case 'abortQuizContent': return abortQuizContent;
       case 'recordingCreator': return recordingCreator;
@@ -209,7 +233,7 @@ class Strings_en extends Strings {
   @override String get settings => 'Settings';
   @override String get createCourseTitle => 'Start new course';
   @override String get createCourseInstructions => 'Choose a location. Your course will contain birds from that area, ordered from common to rare.';
-  @override String get createCourseTapMap => 'Or tap the map to select a location manually.';
+  @override String get createCourseTapMap => 'Or tap the map to select another location.';
   @override String get useCurrentLocationButton => 'Use current location';
   @override String get courseSearchingSpecies => 'Searching for bird species…';
   @override String get courseSpecies => 'Common birds in this area:';
@@ -220,6 +244,14 @@ class Strings_en extends Strings {
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Question ', current.toString(), ' of ', total.toString()].join();
   @override String get tapInstructions => 'Tap anywhere to continue';
+  @override String get quizResultsTitle => 'Quiz results';
+  @override String get quizScore => 'Score:';
+  @override String quizScoreDetails(int correct, int total) => <String>['Correctly identified ', correct.toString(), ' out of ', total.toString(), ' birds'].join();
+  @override String get strongPoints => 'Strong points';
+  @override String get weakPoints => 'Weak points';
+  @override String confusionText(String correct, String wrong) => <String>['Took ', correct, ' to be ', wrong].join();
+  @override String get retryQuizButton => 'Have another go';
+  @override String get backButton => 'Back';
   @override String get abortQuizTitle => 'Abort quiz?';
   @override String get abortQuizContent => 'This will end the current quiz without storing results. Are you sure?';
   @override String recordingCreator(String name) => <String>['Audio recording by ', name].join();
@@ -273,7 +305,7 @@ class Strings_nl extends Strings_en {
   @override String get settings => 'Instellingen';
   @override String get createCourseTitle => 'Nieuwe cursus beginnen';
   @override String get createCourseInstructions => 'Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend.';
-  @override String get createCourseTapMap => 'Of tik op de kaart om zelf een locatie te kiezen.';
+  @override String get createCourseTapMap => 'Of tik op de kaart om een andere locatie te kiezen.';
   @override String get useCurrentLocationButton => 'Gebruik huidige locatie';
   @override String get courseSearchingSpecies => 'Vogelsoorten worden opgezocht…';
   @override String get courseSpecies => 'Veel voorkomende vogels in deze regio:';
@@ -284,6 +316,14 @@ class Strings_nl extends Strings_en {
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
+  @override String get quizResultsTitle => 'Toetsuitslag';
+  @override String get quizScore => 'Score:';
+  @override String quizScoreDetails(int correct, int total) => <String>[correct.toString(), ' van ', total.toString(), ' vogels juist geïdentificeerd'].join();
+  @override String get strongPoints => 'Sterke punten';
+  @override String get weakPoints => 'Zwakke punten';
+  @override String confusionText(String correct, String wrong) => <String>['Dacht dat een ', correct, ' een ', wrong, ' was'].join();
+  @override String get retryQuizButton => 'Nog eens proberen';
+  @override String get backButton => 'Terug';
   @override String get abortQuizTitle => 'Toets beëindigen?';
   @override String get abortQuizContent => 'Hiermee wordt de huidige toets beëindigd zonder resultaten op te slaan. Weet je het zeker?';
   @override String recordingCreator(String name) => <String>['Geluidsopname door ', name].join();

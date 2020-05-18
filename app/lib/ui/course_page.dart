@@ -97,7 +97,12 @@ class _CoursePageState extends State<CoursePage> {
     final appDb = Provider.of<AppDb>(context, listen: false);
     final quiz = await createQuiz(appDb, course, lesson);
     await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (context) => QuizPage(quiz)
+      builder: (context) => QuizPage(
+        quiz,
+        onRetry: () {
+          _startQuiz(course, lesson);
+        },
+      )
     ));
   }
 }

@@ -32,14 +32,13 @@ class QuestionScreen extends StatefulWidget {
 class _QuestionScreenState extends State<QuestionScreen> {
 
   Question get _question => widget.question;
-  Species _choice;
   model.Image _image;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final appDb = Provider.of<AppDb>(context);
-    appDb.imageForOrNull(_question.answer).then((image) {
+    appDb.imageForOrNull(_question.correctAnswer).then((image) {
       if (image != null) {
         setState(() { _image = image; });
       }
@@ -49,7 +48,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
   @override
   Widget build(BuildContext context) {
     final locale = WidgetsBinding.instance.window.locale;
-    final instructions = _choice == null ? '' : Strings.of(context).tapInstructions;
+    final instructions = _question.isAnswered ? Strings.of(context).tapInstructions : '';
     final theme = Theme.of(context);
     final textOnImageColor = Colors.white;
     final textOnImageShadows = <Shadow>[
@@ -94,14 +93,14 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     child: Column(
                       children: <Widget>[
                         Text(
-                          _question.answer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                          _question.correctAnswer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
                             shadows: textOnImageShadows,
                           ),
                         ),
                         if (settings.secondarySpeciesLanguage != null) Text(
-                          _question.answer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                          _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
                             shadows: textOnImageShadows,
@@ -109,7 +108,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                           ),
                         ),
                         if (settings.showScientificName.value) Text(
-                          _question.answer.scientificName.capitalize(),
+                          _question.correctAnswer.scientificName.capitalize(),
                           style: theme.textTheme.caption.copyWith(
                             fontStyle: FontStyle.italic,
                             color: textOnImageColor,
@@ -134,7 +133,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                 ),
               ],
             ),
-            revealed: _choice != null,
+            revealed: _question.isAnswered,
           ),
         ),
         Player(
@@ -152,7 +151,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
           child: Center(
               child: AnimatedOpacity(
                 key: GlobalObjectKey(_question),
-                opacity: _choice == null ? 0.0 : 1.0,
+                opacity: _question.isAnswered ? 1.0 : 0.0,
                 duration: Duration(seconds: 3),
                 // TODO DelayedCurve is just a quick and dirty way to delay the start of the animation, but I'm sure there's a better way.
                 curve: _DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
@@ -162,7 +161,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         )
       ],
     );
-    if (_choice == null) {
+    if (!_question.isAnswered) {
       return questionScreen;
     } else {
       return GestureDetector(
@@ -176,14 +175,14 @@ class _QuestionScreenState extends State<QuestionScreen> {
     final settings = Provider.of<Settings>(context);
     final locale = WidgetsBinding.instance.window.locale;
     Color color;
-    Icon icon;
-    if (_choice != null) {
-      if (_question.isCorrect(species)) {
+    AnswerIcon icon;
+    if (_question.isAnswered) {
+      if (species == _question.correctAnswer) {
         color = Colors.green.shade200;
-        icon = Icon(Icons.check_circle, color: Colors.green.shade800);
-      } else if (species == _choice) {
+        icon = AnswerIcon(correct: true);
+      } else if (species == _question.givenAnswer) {
         color = Colors.red.shade200;
-        icon = Icon(Icons.cancel, color: Colors.red.shade800);
+        icon = AnswerIcon(correct: false);
       }
     }
     return Container(
@@ -204,16 +203,17 @@ class _QuestionScreenState extends State<QuestionScreen> {
           textScaleFactor: 1.5,
         ),
         trailing: icon,
-        onTap: _choice == null ? () { _choose(species); } : null,
+        onTap: _question.isAnswered ? null : () { _choose(species); },
       ),
     );
   }
 
   void _choose(Species species) {
-    assert(_choice == null);
-    setState(() {
-      _choice = species;
-    });
+    if (!_question.isAnswered) {
+      setState(() {
+        _question.answerWith(species);
+      });
+    }
   }
 
   void _showAttribution() {
@@ -224,6 +224,21 @@ class _QuestionScreenState extends State<QuestionScreen> {
         image: _image,
       ),
     );
+  }
+}
+
+class AnswerIcon extends StatelessWidget {
+  final bool correct;
+
+  const AnswerIcon({Key key, this.correct}) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    if (correct) {
+      return Icon(Icons.check_circle, color: Colors.green.shade800);
+    } else {
+      return Icon(Icons.cancel, color: Colors.red.shade800);
+    }
   }
 }
 

@@ -51,6 +51,8 @@ Future<Course> createCourse(LatLon location, RankedSpecies rankedSpecies) async 
       speciesInLesson.clear();
     }
   }
+  // The last few species are omitted. This is on purpose; a lesson with just 1 new species would be silly.
+  // Since we ensure that there are at least 50 species, this doesn't really matter.
 
   return Course(location, BuiltList.of(lessons));
 }

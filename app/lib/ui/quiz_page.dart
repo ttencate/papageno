@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:papageno/model/model.dart';
 import 'package:papageno/ui/menu_drawer.dart';
 import 'package:papageno/ui/question.dart';
+import 'package:papageno/ui/quiz_result.dart';
 import 'package:papageno/ui/strings.g.dart';
 
 class QuizPage extends StatefulWidget {
   // TODO actually use this (+ route arguments) for navigation
   static const route = '/quiz';
 
-  QuizPage(this.quiz, {this.questionIndex = 0});
-
   final Quiz quiz;
-  final int questionIndex;
+  final void Function() onRetry;
 
-  Question get currentQuestion => quiz.questions[questionIndex];
+  QuizPage(this.quiz, {this.onRetry});
 
   @override
   State<StatefulWidget> createState() => _QuizPageState();
@@ -21,50 +20,56 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
 
+  Quiz get quiz => widget.quiz;
+
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _willPop,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(Strings.of(context).questionIndex(widget.questionIndex + 1, widget.quiz.questions.length)),
-          // TODO show some sort of progress bar
+    final strings = Strings.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          !quiz.isComplete ?
+          strings.questionIndex(quiz.currentQuestionNumber, quiz.questionCount) :
+          strings.quizResultsTitle
         ),
-        drawer: MenuDrawer(),
-        body: QuestionScreen(
-          key: ObjectKey(widget.currentQuestion),
-          question: widget.currentQuestion,
-          onProceed: _showNextQuestion
-        ),
+        // TODO show some sort of progress bar
       ),
+      drawer: MenuDrawer(),
+      body:
+        !quiz.isComplete ?
+        WillPopScope(
+          onWillPop: _willPop,
+          child: QuestionScreen(
+            key: ObjectKey(quiz.currentQuestion),
+            question: quiz.currentQuestion,
+            onProceed: _showNextQuestion,
+          ),
+        ) :
+        QuizResult(
+          quiz: quiz,
+          onRetry: _retry,
+          onBack: _back,
+        ),
     );
   }
 
   void _showNextQuestion() {
-    final nextQuestionIndex = widget.questionIndex + 1;
-    if (nextQuestionIndex >= widget.quiz.questions.length) {
-      Navigator.of(context).pop();
-      return;
+    if (!quiz.isComplete) {
+      setState(() {
+        quiz.proceedToNextQuestion();
+      });
     }
+  }
 
-    // TODO this only slides the new question in; also slide the old one out
-    final route = PageRouteBuilder<void>(
-      pageBuilder: (context, animation, secondaryAnimation) => QuizPage(
-        widget.quiz,
-        questionIndex: nextQuestionIndex,
-      ),
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        var tween = Tween(begin: Offset(1.0, 0.0), end: Offset.zero)
-            .chain(CurveTween(curve: Curves.easeInOut));
-        var offsetAnimation = animation.drive(tween);
-        return SlideTransition(
-          position: offsetAnimation,
-          textDirection: Directionality.of(context),
-          child: child,
-        );
-      },
-    );
-    Navigator.of(context).pushReplacement(route);
+  void _retry() async {
+    await Navigator.of(context).pop();
+    if (widget.onRetry != null) {
+      widget.onRetry();
+    }
+  }
+
+  void _back() {
+    Navigator.of(context).pop();
   }
 
   Future<bool> _willPop() async {
