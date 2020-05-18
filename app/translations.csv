@@ -10,7 +10,7 @@ courseSearchingSpecies,Shown on the course creation screen while bird species ar
 courseSpecies,Shown on the course creation screen above a list of bird names,Common birds in this area:,Veel voorkomende vogels in deze regio:
 createCourseButtonDisabled,Button text while button is disabled,Start course,Begin cursus
 createCourseButtonEnabled,Button text when enough species were found,Start course (#{speciesCount} birds),Begin cursus (#{speciesCount} vogels)
-courseTitle,"Title of a course, containing GPS location",Birds near ${location},Vogels in de omgeving van ${location}
+courseTitle,"Title of a course, containing GPS location; keep short",Birds near ${location},Vogels rondom ${location}
 lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lessonNumber}
 startLesson,Button text for starting a lesson,Start,Start
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
