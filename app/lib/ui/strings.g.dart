@@ -29,7 +29,7 @@ abstract class Strings {
   String get createCourseButtonDisabled;
   /// Button text when enough species were found
   String createCourseButtonEnabled(int speciesCount);
-  /// Title of a course, containing GPS location
+  /// Title of a course, containing GPS location; keep short
   String courseTitle(String location);
   /// Title of a numbered lesson
   String lessonTitle(int lessonNumber);
@@ -311,7 +311,7 @@ class Strings_nl extends Strings_en {
   @override String get courseSpecies => 'Veel voorkomende vogels in deze regio:';
   @override String get createCourseButtonDisabled => 'Begin cursus';
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Begin cursus (', speciesCount.toString(), ' vogels)'].join();
-  @override String courseTitle(String location) => <String>['Vogels in de omgeving van ', location].join();
+  @override String courseTitle(String location) => <String>['Vogels rondom ', location].join();
   @override String lessonTitle(int lessonNumber) => <String>['Hoofdstuk ', lessonNumber.toString()].join();
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();

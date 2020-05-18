@@ -265,6 +265,7 @@ class Quiz {
 
   bool get isComplete => _currentQuestionIndex >= questionCount;
 
+  int get currentQuestionIndex => _currentQuestionIndex;
   int get currentQuestionNumber => _currentQuestionIndex + 1;
 
   Question get currentQuestion => isComplete ? null : questions[_currentQuestionIndex];
