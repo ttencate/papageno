@@ -187,16 +187,20 @@ class Region {
   final LatLon centroid;
   final Uint8List _weightBySpeciesId;
 
-  BuiltMap<int, int> get weightBySpeciesId => BuiltMap.build((builder) {
+  BuiltMap<int, double> get weightBySpeciesId => BuiltMap.build((builder) {
     // The map is encoded as key,value,key,value,... where both keys and values
     // are big-endian unsigned 16-bits integers. Decoding it on demand saves
     // memory and time while getting Regions from the database, because the
     // weight map is often not needed.
     final bytes = _weightBySpeciesId.buffer.asByteData();
+    var totalWeight = 0.0;
+    for (var i = 0; i < bytes.lengthInBytes; i += 4) {
+      totalWeight += bytes.getUint16(i + 2, Endian.big);
+    }
     for (var i = 0; i < bytes.lengthInBytes; i += 4) {
       final speciesId = bytes.getUint16(i, Endian.big);
-      final weight = bytes.getUint16(i + 2, Endian.big);
-      builder[speciesId] = weight;
+      final weight = bytes.getUint16(i + 2, Endian.big).toDouble();
+      builder[speciesId] = weight / totalWeight;
     }
   });
 
