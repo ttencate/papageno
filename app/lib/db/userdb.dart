@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:papageno/model/model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-
-import '../model/model.dart';
 
 class UserDb {
   static const _latestVersion = 1;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'ui/app.dart';
+import 'package:papageno/ui/app.dart';
 
 void main() {
   // Forcing portrait mode until we implement landscape layouts (https://github.com/ttencate/papageno/issues/16)

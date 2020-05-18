@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:papageno/ui/create_course.dart';
+import 'package:papageno/ui/strings.g.dart';
 import 'package:transparent_image/transparent_image.dart';
-
-import 'create_course.dart';
-import 'strings.g.dart';
 
 class SplashScreen extends StatefulWidget {
   static const route = '/splashScreen';

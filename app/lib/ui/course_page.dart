@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:papageno/ui/quiz.dart';
+import 'package:papageno/controller/controller.dart';
+import 'package:papageno/db/appdb.dart';
+import 'package:papageno/model/model.dart';
+import 'package:papageno/model/settings.dart';
+import 'package:papageno/ui/menu_drawer.dart';
+import 'package:papageno/ui/quiz_page.dart';
+import 'package:papageno/ui/strings.g.dart';
+import 'package:papageno/utils/string_utils.dart';
 import 'package:provider/provider.dart';
-
-import '../controller/controller.dart';
-import '../db/appdb.dart';
-import '../model/model.dart';
-import '../model/settings.dart';
-import '../utils/string_utils.dart';
-import 'menu_drawer.dart';
-import 'strings.g.dart';
 
 class CoursePage extends StatefulWidget {
   static const route = '/course';

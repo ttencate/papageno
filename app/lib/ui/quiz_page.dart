@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../model/model.dart';
-import 'menu_drawer.dart';
-import 'question.dart';
-import 'strings.g.dart';
+import 'package:papageno/model/model.dart';
+import 'package:papageno/ui/menu_drawer.dart';
+import 'package:papageno/ui/question.dart';
+import 'package:papageno/ui/strings.g.dart';
 
 class QuizPage extends StatefulWidget {
   // TODO actually use this (+ route arguments) for navigation

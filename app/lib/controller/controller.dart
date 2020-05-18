@@ -1,10 +1,9 @@
 import 'dart:math';
 
 import 'package:built_collection/built_collection.dart';
-
-import '../db/appdb.dart';
-import '../model/model.dart';
-import '../utils/random_utils.dart';
+import 'package:papageno/db/appdb.dart';
+import 'package:papageno/model/model.dart';
+import 'package:papageno/utils/random_utils.dart';
 
 Future<RankedSpecies> rankSpecies(AppDb appDb, LatLon location) async {
   final regions = await appDb.regionsByDistanceTo(location);

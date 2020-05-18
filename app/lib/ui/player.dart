@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-
-import '../model/model.dart';
+import 'package:papageno/model/model.dart';
 
 /// Audio player widget with seek bar and play/pause button.
 // TODO: Sometimes hot reload causes double playback.
