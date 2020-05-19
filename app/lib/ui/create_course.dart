@@ -12,7 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:papageno/controller/controller.dart';
-import 'package:papageno/db/appdb.dart';
+import 'package:papageno/db/app_db.dart';
 import 'package:papageno/model/model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/ui/menu_drawer.dart';

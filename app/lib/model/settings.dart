@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:papageno/db/userdb.dart';
+import 'package:papageno/db/user_db.dart';
 import 'package:papageno/model/model.dart';
 
 /// Algebraic data type containing one of:

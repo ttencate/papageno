@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:papageno/controller/controller.dart';
-import 'package:papageno/db/appdb.dart';
+import 'package:papageno/db/app_db.dart';
 import 'package:papageno/model/model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/ui/menu_drawer.dart';

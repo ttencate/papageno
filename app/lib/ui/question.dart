@@ -8,7 +8,7 @@ import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:papageno/db/appdb.dart';
+import 'package:papageno/db/app_db.dart';
 import 'package:papageno/model/model.dart';
 import 'package:papageno/model/model.dart' as model;
 import 'package:papageno/model/settings.dart';
