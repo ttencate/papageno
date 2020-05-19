@@ -1,9 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:papageno/screens/course_page.dart';
 import 'package:papageno/screens/create_course_page.dart';
 import 'package:papageno/screens/settings_page.dart';
-import 'package:papageno/screens/splash_screen_page.dart';
-
-import 'package:flutter/material.dart';
 
 abstract class Routes {
   static const createCourse = '/createCourse';
