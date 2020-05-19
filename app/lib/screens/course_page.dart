@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:papageno/controller/controller.dart';
-import 'package:papageno/db/app_db.dart';
-import 'package:papageno/model/settings.dart';
+import 'package:papageno/services/app_db.dart';
+import 'package:papageno/services/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:papageno/screens/quiz_page.dart';

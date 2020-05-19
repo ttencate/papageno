@@ -3,13 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
-import 'package:papageno/db/app_db.dart';
+import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/app_model.dart' as model show Image; // Avoid conflict with Flutter's Image class.
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/attribution_dialog.dart';
-import 'package:papageno/common/strings.g.dart';
+import 'package:papageno/services/app_db.dart';
+import 'package:papageno/services/settings.dart';
 import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
