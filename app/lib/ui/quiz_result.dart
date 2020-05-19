@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:papageno/model/model.dart';
 import 'package:papageno/model/settings.dart';
+import 'package:papageno/model/user_model.dart';
 import 'package:papageno/ui/question.dart';
 import 'package:papageno/ui/strings.g.dart';
 import 'package:papageno/utils/iterable_utils.dart';

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:papageno/model/model.dart';
+import 'package:papageno/model/app_model.dart';
 
 /// Audio player widget with seek bar and play/pause button.
 class Player extends StatefulWidget {
