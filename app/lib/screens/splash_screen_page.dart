@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:papageno/common/strings.g.dart';
-import 'package:provider/provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 class SplashScreenPage extends StatefulWidget {
