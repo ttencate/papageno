@@ -65,7 +65,7 @@ import 'package:meta/meta.dart';
 
 void main() {
   const inputFileName = 'translations.csv';
-  const outputFileName = 'lib/ui/strings.g.dart';
+  const outputFileName = 'lib/strings.g.dart';
   const baseName = 'Strings';
 
   stderr.writeln('Loading ${inputFileName}...');

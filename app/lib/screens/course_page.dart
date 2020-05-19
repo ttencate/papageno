@@ -4,15 +4,13 @@ import 'package:papageno/controller/controller.dart';
 import 'package:papageno/db/app_db.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
-import 'package:papageno/ui/menu_drawer.dart';
-import 'package:papageno/ui/quiz_page.dart';
-import 'package:papageno/ui/strings.g.dart';
+import 'package:papageno/widgets/menu_drawer.dart';
+import 'package:papageno/screens/quiz_page.dart';
+import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:provider/provider.dart';
 
 class CoursePage extends StatefulWidget {
-  static const route = '/course';
-
   @override
   _CoursePageState createState() => _CoursePageState();
 }
