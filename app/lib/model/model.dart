@@ -12,8 +12,8 @@ import 'package:papageno/utils/angle_utils.dart';
 /// This is used only for translations of bird species names, and is entirely
 /// separate from the rest of the app's localization.
 ///
-/// We don't use Flutter's [Locale] class, which is similar, because we need
-/// the flexibility to specify the special values `system` and `none`.
+/// We don't use Flutter's [Locale] class, which is similar, because it does
+/// more checking than we need to, which might come to bite us later.
 @immutable
 class LanguageCode {
   final String languageCode;
