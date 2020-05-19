@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:papageno/model/app_model.dart';
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/common/strings.g.dart';
+import 'package:papageno/model/app_model.dart';
+import 'package:papageno/services/settings.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatelessWidget {

@@ -4,10 +4,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/theme.dart';
-import 'package:papageno/db/app_db.dart';
-import 'package:papageno/db/user_db.dart';
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/screens/splash_screen_page.dart';
+import 'package:papageno/services/app_db.dart';
+import 'package:papageno/services/settings.dart';
+import 'package:papageno/services/user_db.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
