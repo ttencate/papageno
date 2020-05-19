@@ -7,13 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
 import 'package:location/location.dart';
+import 'package:papageno/model/user_model.dart';
 import 'package:papageno/ui/course_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:papageno/controller/controller.dart';
 import 'package:papageno/db/app_db.dart';
-import 'package:papageno/model/model.dart';
+import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/ui/menu_drawer.dart';
 import 'package:papageno/ui/strings.g.dart';

@@ -4,13 +4,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
+import 'package:papageno/model/user_model.dart';
 import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:papageno/db/app_db.dart';
-import 'package:papageno/model/model.dart';
-import 'package:papageno/model/model.dart' as model;
+import 'package:papageno/model/app_model.dart';
+import 'package:papageno/model/app_model.dart' as model show Image; // Avoid conflict with Flutter's Image class.
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/ui/player.dart';
@@ -18,7 +19,7 @@ import 'package:papageno/ui/revealing_image.dart';
 import 'package:papageno/ui/strings.g.dart';
 
 class QuestionScreen extends StatefulWidget {
-  final model.Question question;
+  final Question question;
   final Function() onProceed;
 
   QuestionScreen({Key key, @required this.question, this.onProceed}) :

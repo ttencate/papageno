@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:papageno/model/model.dart';
+import 'package:papageno/model/user_model.dart';
 import 'package:papageno/ui/menu_drawer.dart';
 import 'package:papageno/ui/question.dart';
 import 'package:papageno/ui/quiz_result.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:papageno/model/model.dart';
+import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/ui/strings.g.dart';
 import 'package:papageno/ui/strings_extension.dart';
