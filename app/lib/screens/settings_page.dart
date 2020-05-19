@@ -2,13 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
-import 'package:papageno/ui/strings.g.dart';
-import 'package:papageno/ui/strings_extension.dart';
+import 'package:papageno/common/strings.g.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatelessWidget {
-  static const route = '/settings';
-
   @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
@@ -99,5 +96,18 @@ class LanguagePicker extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+extension StringsExtension on Strings {
+  String languageSettingName(LanguageSetting languageSetting) {
+    if (languageSetting == LanguageSetting.system) {
+      return languageSystem;
+    }
+    if (languageSetting == LanguageSetting.none) {
+      return languageNone;
+    }
+    final dynamic languageName = this['language_${languageSetting.toString()}'];
+    return languageName is String ? languageName : '?';
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:papageno/ui/strings.g.dart';
+import 'package:papageno/common/strings.g.dart';
 
 class MenuDrawer extends StatelessWidget {
   @override

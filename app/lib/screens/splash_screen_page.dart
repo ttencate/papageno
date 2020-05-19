@@ -1,34 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:papageno/ui/create_course.dart';
-import 'package:papageno/ui/strings.g.dart';
+import 'package:papageno/common/strings.g.dart';
+import 'package:provider/provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 
-class SplashScreen extends StatefulWidget {
-  static const route = '/splashScreen';
-  static const _minimumDuration = Duration(seconds: 3);
+class SplashScreenPage extends StatefulWidget {
 
-  final Future<void> waitFuture = Future<void>.delayed(_minimumDuration);
   final Future<void> loadingFuture;
+  final void Function() onDismissed;
 
-  SplashScreen({Key key, this.loadingFuture}) : super(key: key);
+  const SplashScreenPage({Key key, @required this.loadingFuture, @required this.onDismissed}) : super(key: key);
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  _SplashScreenPageState createState() => _SplashScreenPageState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenPageState extends State<SplashScreenPage> {
+  static const _minimumSplashScreenDuration = Duration(seconds: 3);
 
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    widget.loadingFuture.then((_) {
-      setState(() { _loading = false; });
-    });
-    Future.wait(<Future<void>>[widget.loadingFuture, widget.waitFuture]).then((_) {
-      Navigator.of(context).pushReplacementNamed(CreateCoursePage.route);
-    });
+    _init();
+  }
+
+  void _init() async {
+    final waitFuture = Future<void>.delayed(_minimumSplashScreenDuration);
+    await widget.loadingFuture;
+    setState(() { _loading = false; });
+    await waitFuture;
+    widget.onDismissed();
   }
 
   @override
