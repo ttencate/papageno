@@ -48,7 +48,7 @@ class Species(Base):
     '''
     __tablename__ = 'species'
 
-    species_id = Column(Integer, primary_key=True, index=True, nullable=False, autoincrement=True)
+    species_id = Column(Integer, primary_key=True, index=True, nullable=False)
     scientific_name = Column(String, unique=True, index=True, nullable=False)
     scientific_name_clements = Column(String, index=True)
 

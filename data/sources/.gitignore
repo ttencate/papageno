@@ -2,3 +2,6 @@
 # https://www.gbif.org/occurrence/download?dataset_key=4fa7b334-ce0d-4e88-aaae-2e0c138d049e
 # and place it (or a symlink to it) here.
 eod_occurrences.zip
+
+# LibreOffice lock files
+.~lock.*#
