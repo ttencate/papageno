@@ -14,7 +14,7 @@ class Image(Base):
     '''
     __tablename__ = 'images'
 
-    species_id = Column(Integer, primary_key=True, index=True, nullable=False, autoincrement=True)
+    species_id = Column(Integer, primary_key=True, index=True, nullable=False)
     source_page_url = Column(String)
     image_file_url = Column(String)
     image_width = Column(Integer)

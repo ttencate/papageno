@@ -114,8 +114,10 @@ class Comparison:
         '''
         Yields each row as a dict, except header rows.
         '''
-        for row in self._worksheet.iter_rows(min_row=2, values_only=True):
-            yield dict(zip(self.fields, row))
+        for number, row in enumerate(self._worksheet.iter_rows(min_row=2, values_only=True)):
+            d = dict(zip(self.fields, row))
+            d['_number'] = number + 2 # 1-based, and we skipped one at the top.
+            yield d
 
 
 def add_args(parser):
@@ -140,12 +142,15 @@ def main(args, session):
     ioc_field = [f for f in comparison.fields if 'ioc world bird list' in f.lower()][0]
     clements_field = [f for f in comparison.fields if 'clements checklist of birds of the world' in f.lower()][0]
 
+    ioc_to_species_id = {}
     ioc_to_clements = {}
     for row in comparison.rows():
         ioc = (row[ioc_field] or '').strip()
         clements = (row[clements_field] or '').strip()
-        if ioc and clements:
-            ioc_to_clements[ioc] = clements
+        if ioc:
+            ioc_to_species_id[ioc] = row['_number']
+            if clements:
+                ioc_to_clements[ioc] = clements
 
     multiling = Multiling(args.ioc_multiling_file)
     logging.info(f'Found column headings: {multiling.fields}')
@@ -171,7 +176,7 @@ def main(args, session):
         else:
             scientific_name = row['Scientific Name']
             species = Species(
-                species_id=None,
+                species_id=ioc_to_species_id[scientific_name],
                 scientific_name=scientific_name,
                 scientific_name_clements=ioc_to_clements.get(scientific_name, None))
             session.add(species)
