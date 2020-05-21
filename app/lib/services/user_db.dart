@@ -141,7 +141,12 @@ class UserDb {
   }
 
   Future<void> insertCourse(Course course) async {
-    await _db.insert('courses', _courseToMap(course));
+    final courseId = await _db.insert('courses', _courseToMap(course));
+    course.courseId = courseId;
+  }
+
+  Future<void> deleteCourse(Course course) async {
+    await _db.delete('courses', where: 'course_id = ?', whereArgs: <dynamic>[course.courseId]);
   }
 
   /// Returns all courses in the profile.
@@ -155,6 +160,7 @@ class UserDb {
   }
 
   Map<String, dynamic> _courseToMap(Course course) => <String, dynamic>{
+    'course_id': course.courseId,
     'profile_id': course.profileId,
     'location_lat': course.location.lat,
     'location_lon': course.location.lon,
@@ -179,6 +185,7 @@ class UserDb {
       ));
     }
     return Course(
+      courseId: map['course_id'] as int,
       profileId: map['profile_id'] as int,
       location: LatLon(map['location_lat'] as double, map['location_lon'] as double),
       lessons: lessons.toBuiltList(),
