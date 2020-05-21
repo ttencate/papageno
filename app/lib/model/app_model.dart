@@ -115,10 +115,13 @@ class Species {
   }
 
   @override
-  String toString() => scientificName;
+  bool operator ==(Object other) => other is Species && other.speciesId == speciesId;
 
   @override
   int get hashCode => speciesId.hashCode;
+
+  @override
+  String toString() => scientificName;
 }
 
 @immutable

@@ -11,7 +11,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class UserDb {
-  static const _latestVersion = 2;
+  static const _latestVersion = 3;
 
   final AppDb _appDb;
   final Database _db;
@@ -60,6 +60,7 @@ class UserDb {
     switch (version) {
       case 1: return _upgradeToVersion1(txn);
       case 2: return _upgradeToVersion2(txn);
+      case 3: return _upgradeToVersion3(txn);
       default: return Future.value();
     }
   }
@@ -96,6 +97,25 @@ class UserDb {
         lessons text,
         foreign key (profile_id) references profiles(profile_id) on delete cascade
       )
+    ''');
+  }
+
+  /// Adds questions table.
+  static Future<void> _upgradeToVersion3(Transaction txn) async {
+    await txn.execute('''
+      create table questions (
+        profile_id integer not null,
+        course_id integer,
+        recording_id string,
+        choices text,
+        correct_species_id integer,
+        given_species_id integer,
+        answer_timestamp double,
+        foreign key (profile_id) references profiles(profile_id) on delete cascade
+      )
+    ''');
+    await txn.execute('''
+      create index questions_profile_id on questions(profile_id)
     ''');
   }
 
@@ -159,6 +179,34 @@ class UserDb {
     return await Future.wait(records.map(_courseFromMap));
   }
 
+  Future<void> insertQuestion(int profileId, int courseId, Question question) async {
+    await _db.insert('questions', _questionToMap(profileId, courseId, question));
+  }
+
+  Future<Knowledge> knowledge(int profileId) async {
+    final records = await _db.rawQuery('''
+      select
+        correct_species_id as species_id,
+        sum(case when given_species_id = correct_species_id then 1 else 0 end) as correct_answer_count,
+        count(*) as total_answer_count
+      from questions
+      where profile_id = ? and correct_species_id is not null
+      group by species_id
+    ''', <dynamic>[profileId]);
+    final bySpecies = <Species, SpeciesKnowledge>{};
+    for (final record in records) {
+      final species = await _appDb.speciesOrNull(record['species_id'] as int);
+      if (species == null) {
+        continue;
+      }
+      bySpecies[species] = SpeciesKnowledge(
+        correctAnswerCount: record['correct_answer_count'] as int,
+        totalAnswerCount: record['total_answer_count'] as int,
+      );
+    }
+    return Knowledge(bySpecies);
+  }
+
   Map<String, dynamic> _courseToMap(Course course) => <String, dynamic>{
     'course_id': course.courseId,
     'profile_id': course.profileId,
@@ -190,5 +238,17 @@ class UserDb {
       location: LatLon(map['location_lat'] as double, map['location_lon'] as double),
       lessons: lessons.toBuiltList(),
     );
+  }
+
+  Map<String, dynamic> _questionToMap(int profileId, int courseId, Question question) {
+    return <String, dynamic>{
+      'profile_id': profileId,
+      'course_id': courseId,
+      'recording_id': question.recording.recordingId,
+      'choices': json.encode(question.choices.map((species) => species.speciesId).toList()),
+      'correct_species_id': question.correctAnswer.speciesId,
+      'given_species_id': question.givenAnswer?.speciesId,
+      'answer_timestamp': question.answerTimestamp?.millisecondsSinceEpoch,
+    };
   }
 }
