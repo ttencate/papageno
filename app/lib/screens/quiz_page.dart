@@ -11,6 +11,7 @@ import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/attribution_dialog.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/settings.dart';
+import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
@@ -73,6 +74,7 @@ class _QuizPageState extends State<QuizPage> {
             QuestionScreen(
               key: ObjectKey(quiz.questions[index]),
               question: quiz.questions[index],
+              onAnswer: _storeAnswer,
               onProceed: _showNextQuestion,
             ) :
             QuizResult(
@@ -83,6 +85,11 @@ class _QuizPageState extends State<QuizPage> {
         ),
       ),
     );
+  }
+  
+  Future<void> _storeAnswer(Question question) async {
+    final userDb = Provider.of<UserDb>(context, listen: false);
+    await userDb.insertQuestion(widget.profile.profileId, widget.course.courseId, question);
   }
 
   Future<void> _showNextQuestion() async {
@@ -135,9 +142,10 @@ class _QuizPageState extends State<QuizPage> {
 
 class QuestionScreen extends StatefulWidget {
   final Question question;
-  final Function() onProceed;
+  final void Function(Question) onAnswer;
+  final void Function() onProceed;
 
-  QuestionScreen({Key key, @required this.question, this.onProceed}) :
+  QuestionScreen({Key key, @required this.question, this.onAnswer, this.onProceed}) :
         assert(question != null),
         super(key: key);
 
@@ -329,6 +337,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
       setState(() {
         _question.answerWith(species);
       });
+      if (widget.onAnswer != null) {
+        widget.onAnswer(_question);
+      }
     }
   }
 

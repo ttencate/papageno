@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 import 'package:papageno/model/app_model.dart';
@@ -88,6 +90,8 @@ class Question {
   final Recording recording;
   final List<Species> choices;
   final Species correctAnswer;
+
+  DateTime _answerTimestamp;
   Species _givenAnswer;
 
   Question(this.recording, this.choices, this.correctAnswer) :
@@ -101,9 +105,48 @@ class Question {
 
   Species get givenAnswer => _givenAnswer;
 
+  DateTime get answerTimestamp => _answerTimestamp;
+
   void answerWith(Species answer) {
     assert(_givenAnswer == null);
     assert(answer != null);
     _givenAnswer = answer;
+    _answerTimestamp = DateTime.now();
   }
+}
+
+/// Represents how much the user knows about each species.
+@immutable
+class Knowledge {
+  final Map<Species, SpeciesKnowledge> _ofSpecies;
+
+  Knowledge(this._ofSpecies);
+
+  SpeciesKnowledge ofSpecies(Species species) {
+    return _ofSpecies[species] ?? SpeciesKnowledge.none;
+  }
+
+  double lessonProgressPercent(Lesson lesson) {
+    return lesson.species.map((species) => ofSpecies(species).scorePercent).fold(100.0, (a, b) => min(a, b));
+  }
+
+  @override
+  String toString() => _ofSpecies.toString();
+}
+
+@immutable
+class SpeciesKnowledge {
+  static const int _minAnswerCountForFullScore = 4;
+
+  static final none = SpeciesKnowledge(correctAnswerCount: 0, totalAnswerCount: 0);
+
+  final int correctAnswerCount;
+  final int totalAnswerCount;
+
+  SpeciesKnowledge({@required this.correctAnswerCount, @required this.totalAnswerCount});
+
+  double get scorePercent => 100.0 * correctAnswerCount.toDouble() / max(totalAnswerCount, _minAnswerCountForFullScore).toDouble();
+
+  @override
+  String toString() => '${correctAnswerCount}/${totalAnswerCount} (${scorePercent.round()}%)';
 }
