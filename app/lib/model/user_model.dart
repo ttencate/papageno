@@ -31,14 +31,38 @@ class Profile {
 }
 
 class Course {
+  static const minProgressPercentToUnlockNextLesson = 60;
+
   int courseId;
   final int profileId;
   final LatLon location;
   final BuiltList<Lesson> lessons;
+  int _unlockedLessonCount; // At least 1.
 
-  Course({this.courseId, this.profileId, this.location, this.lessons});
+  Course({this.courseId, this.profileId, this.location, this.lessons, int unlockedLessonCount}) :
+    _unlockedLessonCount = max(1, unlockedLessonCount ?? 1);
+
+  int get lessonCount => lessons.length;
 
   int get speciesCount => lessons.map((lesson) => lesson.species.length).fold(0, (a, b) => a + b);
+
+  int get unlockedLessonCount => _unlockedLessonCount;
+
+  Lesson get lastUnlockedLesson => lessons[_unlockedLessonCount - 1];
+  BuiltList<Lesson> get unlockedLessons => lessons.sublist(0, _unlockedLessonCount);
+  BuiltList<Lesson> get lockedLessons => lessons.sublist(_unlockedLessonCount);
+
+  bool unlockLessons(Knowledge knowledge) {
+    final prevUnlockedLessonCount = _unlockedLessonCount;
+    print('Prev: ${prevUnlockedLessonCount}');
+    while (_unlockedLessonCount < lessonCount) {
+      if (lastUnlockedLesson.progressPercent(knowledge) < minProgressPercentToUnlockNextLesson) {
+        break;
+      }
+      _unlockedLessonCount++;
+    }
+    return _unlockedLessonCount != prevUnlockedLessonCount;
+  }
 }
 
 @immutable
@@ -49,6 +73,10 @@ class Lesson {
   Lesson({this.index, this.species});
 
   int get number => index + 1;
+
+  double progressPercent(Knowledge knowledge) {
+    return species.map((species) => knowledge.ofSpecies(species).scorePercent).fold(100.0, (a, b) => min(a, b));
+  }
 }
 
 class Quiz {
@@ -124,10 +152,6 @@ class Knowledge {
 
   SpeciesKnowledge ofSpecies(Species species) {
     return _ofSpecies[species] ?? SpeciesKnowledge.none;
-  }
-
-  double lessonProgressPercent(Lesson lesson) {
-    return lesson.species.map((species) => ofSpecies(species).scorePercent).fold(100.0, (a, b) => min(a, b));
   }
 
   @override
