@@ -11,7 +11,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class UserDb {
-  static const _latestVersion = 3;
+  static const _latestVersion = 4;
 
   final AppDb _appDb;
   final Database _db;
@@ -61,6 +61,7 @@ class UserDb {
       case 1: return _upgradeToVersion1(txn);
       case 2: return _upgradeToVersion2(txn);
       case 3: return _upgradeToVersion3(txn);
+      case 4: return _upgradeToVersion4(txn);
       default: return Future.value();
     }
   }
@@ -119,6 +120,13 @@ class UserDb {
     ''');
   }
 
+  /// Adds unlocked_lesson_count to courses table.
+  static Future<void> _upgradeToVersion4(Transaction txn) async {
+    await txn.execute('''
+      alter table courses add column unlocked_lesson_count integer
+    ''');
+  }
+
   Future<List<Profile>> getProfiles() async {
     final records = await _db.query(
         'profiles',
@@ -166,7 +174,18 @@ class UserDb {
   }
 
   Future<void> deleteCourse(Course course) async {
-    await _db.delete('courses', where: 'course_id = ?', whereArgs: <dynamic>[course.courseId]);
+    await _db.delete(
+        'courses',
+        where: 'course_id = ?',
+        whereArgs: <dynamic>[course.courseId]);
+  }
+
+  Future<void> updateCourseUnlockedLessons(Course course) async {
+    await _db.update(
+        'courses',
+        <String, dynamic>{'unlocked_lesson_count': course.unlockedLessonCount},
+        where: 'course_id = ?',
+        whereArgs: <dynamic>[course.courseId]);
   }
 
   /// Returns all courses in the profile.
@@ -218,6 +237,7 @@ class UserDb {
         's': lesson.species.map((species) => species.speciesId).toList(),
       }).toList()
     ),
+    'unlocked_lesson_count': course.unlockedLessonCount,
   };
 
   Future<Course> _courseFromMap(Map<String, dynamic> map) async {
@@ -237,6 +257,7 @@ class UserDb {
       profileId: map['profile_id'] as int,
       location: LatLon(map['location_lat'] as double, map['location_lon'] as double),
       lessons: lessons.toBuiltList(),
+      unlockedLessonCount: map['unlocked_lesson_count'] as int,
     );
   }
 

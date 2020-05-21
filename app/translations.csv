@@ -18,6 +18,7 @@ courseTitle,"Title of a course, containing GPS location; keep short",Birds near 
 lessonCount,Number of lessons in a course,"#{lessonCount} chapters, #{speciesCount} birds","#{lessonCount} hoofdstukken, #{speciesCount} vogels"
 lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lessonNumber}
 lessonProgress,Text below lesson title showing how well the lesson has been learned,Progress: #{progressPercent}%,Voortgang: #{progressPercent}%
+unlockExplanation,Text explaining why subsequent lessons are locked,Reach a progress of #{progressPercent}% to unlock the next chapter!,Bereik een voortgang van #{progressPercent}% om het volgende hoofdstuk te ontgrendelen!
 startLesson,Button text for starting a lesson,Start,Start
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
