@@ -7,19 +7,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
 import 'package:location/location.dart';
-import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/controller/controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/settings.dart';
+import 'package:papageno/services/user_db.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:papageno/widgets/zoombuttons_plugin_option.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CreateCoursePage extends StatefulWidget {
+  final Profile profile;
+
+  const CreateCoursePage(this.profile);
+
   @override
   State<StatefulWidget> createState() => _CreateCoursePageState();
 }
@@ -29,6 +33,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   static const _initialRadiusKm = 10000.0 / 90.0 * sqrt1_2;
 
   AppDb _appDb;
+
   bool _searchingLocation = false;
   MapController _mapController;
   LatLng _selectedLocation;
@@ -57,7 +62,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
       appBar: AppBar(
         title: Text(strings.createCourseTitle),
       ),
-      drawer: MenuDrawer(),
+      drawer: MenuDrawer(profile: widget.profile),
       body: Column(
         children: <Widget>[
           Padding(
@@ -166,7 +171,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
               ),
               onPressed: _course == null ?
               null :
-              _startCourse,
+              _createCourse,
             ),
           ),
         ],
@@ -286,7 +291,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     setState(() { _rankedSpecies = rankedSpecies; });
     _zoomTo(latLng, 1.5 * _rankedSpecies.usedRadiusKm);
 
-    final course = await createCourse(location, rankedSpecies);
+    final course = await createCourse(widget.profile.profileId, location, rankedSpecies);
     setState(() { _course = course; });
   }
 
@@ -316,9 +321,11 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     return LatLng(latLon.lat, latLon.lon);
   }
 
-  void _startCourse() {
+  void _createCourse() async {
     assert(_course != null);
-    Navigator.of(context).pushNamed(Routes.course, arguments: _course);
+    final userDb = Provider.of<UserDb>(context, listen: false);
+    await userDb.insertCourse(_course);
+    Navigator.of(context).pop(_course);
   }
 }
 

@@ -42,20 +42,20 @@ Future<RankedSpecies> rankSpecies(AppDb appDb, LatLon location) async {
   return RankedSpecies(location, species.toBuiltList(), usedRadiusKm);
 }
 
-Future<Course> createCourse(LatLon location, RankedSpecies rankedSpecies) async {
+Future<Course> createCourse(int profileId, LatLon location, RankedSpecies rankedSpecies) async {
   final lessons = <Lesson>[];
   final speciesInLesson = <Species>[];
   for (final species in rankedSpecies.speciesList) {
     speciesInLesson.add(species);
     if (speciesInLesson.length >= _numSpeciesInLesson(lessons.length)) {
-      lessons.add(Lesson(lessons.length, BuiltList.of(speciesInLesson)));
+      lessons.add(Lesson(index: lessons.length, species: BuiltList.of(speciesInLesson)));
       speciesInLesson.clear();
     }
   }
   // The last few species are omitted. This is on purpose; a lesson with just 1 new species would be silly.
   // Since we ensure that there are at least 50 species, this doesn't really matter.
 
-  return Course(location, BuiltList.of(lessons));
+  return Course(profileId: profileId, location: location, lessons: BuiltList.of(lessons));
 }
 
 int _numSpeciesInLesson(int index) {

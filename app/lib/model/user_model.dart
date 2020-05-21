@@ -30,10 +30,11 @@ class Profile {
 
 @immutable
 class Course {
+  final int profileId;
   final LatLon location;
   final BuiltList<Lesson> lessons;
 
-  Course(this.location, this.lessons);
+  Course({this.profileId, this.location, this.lessons});
 
   int get speciesCount => lessons.map((lesson) => lesson.species.length).fold(0, (a, b) => a + b);
 }
@@ -43,7 +44,7 @@ class Lesson {
   final int index;
   final BuiltList<Species> species;
 
-  Lesson(this.index, this.species);
+  Lesson({this.index, this.species});
 
   int get number => index + 1;
 }

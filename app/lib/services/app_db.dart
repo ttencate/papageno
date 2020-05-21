@@ -42,11 +42,19 @@ class AppDb {
   }
 
   Future<Species> species(int speciesId) async {
-    final records = await _db.rawQuery('select * from species where species_id = ?', <dynamic>[speciesId]);
-    if (records.isEmpty) {
+    final species = speciesOrNull(speciesId);
+    if (species == null) {
       throw NotFoundException(speciesId);
     }
-    return Species.fromMap(records[0]);
+    return species;
+  }
+
+  Future<Species> speciesOrNull(int speciesId) async {
+    final records = await _db.rawQuery('select * from species where species_id = ?', <dynamic>[speciesId]);
+    if (records.isEmpty) {
+      return null;
+    }
+    return Species.fromMap(records.single);
   }
 
   Future<List<Recording>> recordingsFor(Species species) async {

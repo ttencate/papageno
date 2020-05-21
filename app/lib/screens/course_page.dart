@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:papageno/common/routes.dart';
+import 'package:papageno/common/strings.g.dart';
+import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/controller/controller.dart';
+import 'package:papageno/model/user_model.dart';
+import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/settings.dart';
-import 'package:papageno/model/user_model.dart';
-import 'package:papageno/widgets/menu_drawer.dart';
-import 'package:papageno/screens/quiz_page.dart';
-import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/utils/string_utils.dart';
+import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:provider/provider.dart';
 
 class CoursePage extends StatefulWidget {
+  final Profile profile;
+  final Course course;
+
+  const CoursePage(this.profile, this.course);
+
   @override
   _CoursePageState createState() => _CoursePageState();
 }
@@ -18,15 +25,13 @@ class CoursePage extends StatefulWidget {
 class _CoursePageState extends State<CoursePage> {
   @override
   Widget build(BuildContext context) {
-    // final appDb = Provider.of<AppDb>(context);
     final strings = Strings.of(context);
-    final course = ModalRoute.of(context).settings.arguments as Course;
+    final course = widget.course;
     return Scaffold(
       appBar: AppBar(
-        // TODO Convert lat/lon to string in a locale-dependent way
-        title: Text(strings.courseTitle(course.location.toString())),
+        title: Text(strings.courseName(course)),
       ),
-      drawer: MenuDrawer(),
+      drawer: MenuDrawer(profile: widget.profile, course: widget.course),
       body: Container(
         color: Colors.grey.shade200,
         child: ListView.builder(
@@ -94,13 +99,9 @@ class _CoursePageState extends State<CoursePage> {
   void _startQuiz(Course course, Lesson lesson) async {
     final appDb = Provider.of<AppDb>(context, listen: false);
     final quiz = await createQuiz(appDb, course, lesson);
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (context) => QuizPage(
-        quiz,
-        onRetry: () {
-          _startQuiz(course, lesson);
-        },
-      )
-    ));
+    final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, widget.course, quiz));
+    if (quizPageResult is QuizPageResult && quizPageResult.restart) {
+      _startQuiz(course, lesson);
+    }
   }
 }

@@ -19,8 +19,14 @@ abstract class Strings {
   String get appTitle;
   /// Shown on the splash screen while data is being loaded
   String get loading;
+  /// Menu item that opens course selection screen
+  String get switchCourse;
   /// Menu item that opens settings screen
   String get settings;
+  /// Title of screen listing all courses in a profile
+  String get courses;
+  /// Button to start course creation
+  String get startCreatingCourseButton;
   /// Title of screen for creating a new course
   String get createCourseTitle;
   /// Instructions on the screen for creating a new course
@@ -39,6 +45,8 @@ abstract class Strings {
   String createCourseButtonEnabled(int speciesCount);
   /// Title of a course, containing GPS location; keep short
   String courseTitle(String location);
+  /// Number of lessons in a course
+  String lessonCount(int lessonCount, int speciesCount);
   /// Title of a numbered lesson
   String lessonTitle(int lessonNumber);
   /// Button text for starting a lesson
@@ -162,7 +170,10 @@ abstract class Strings {
     switch (key) {
       case 'appTitle': return appTitle;
       case 'loading': return loading;
+      case 'switchCourse': return switchCourse;
       case 'settings': return settings;
+      case 'courses': return courses;
+      case 'startCreatingCourseButton': return startCreatingCourseButton;
       case 'createCourseTitle': return createCourseTitle;
       case 'createCourseInstructions': return createCourseInstructions;
       case 'createCourseTapMap': return createCourseTapMap;
@@ -172,6 +183,7 @@ abstract class Strings {
       case 'createCourseButtonDisabled': return createCourseButtonDisabled;
       case 'createCourseButtonEnabled': return createCourseButtonEnabled;
       case 'courseTitle': return courseTitle;
+      case 'lessonCount': return lessonCount;
       case 'lessonTitle': return lessonTitle;
       case 'startLesson': return startLesson;
       case 'questionIndex': return questionIndex;
@@ -253,7 +265,10 @@ class _StringsLocalizationsDelegate extends LocalizationsDelegate<Strings> {
 class _Strings_en extends Strings {
   @override String get appTitle => 'Papageno';
   @override String get loading => 'Loading…';
+  @override String get switchCourse => 'Switch course';
   @override String get settings => 'Settings';
+  @override String get courses => 'Courses';
+  @override String get startCreatingCourseButton => 'Start new course';
   @override String get createCourseTitle => 'Start new course';
   @override String get createCourseInstructions => 'Choose a location. Your course will contain birds from that area, ordered from common to rare.';
   @override String get createCourseTapMap => 'Or tap the map to select another location.';
@@ -263,6 +278,7 @@ class _Strings_en extends Strings {
   @override String get createCourseButtonDisabled => 'Start course';
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Start course (', speciesCount.toString(), ' birds)'].join();
   @override String courseTitle(String location) => <String>['Birds near ', location].join();
+  @override String lessonCount(int lessonCount, int speciesCount) => <String>[lessonCount.toString(), ' chapters, ', speciesCount.toString(), ' birds'].join();
   @override String lessonTitle(int lessonNumber) => <String>['Chapter ', lessonNumber.toString()].join();
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Question ', current.toString(), ' of ', total.toString()].join();
@@ -326,7 +342,10 @@ class _Strings_en extends Strings {
 /// Translations for language code "nl".
 class _Strings_nl extends _Strings_en {
   @override String get loading => 'Bezig met laden…';
+  @override String get switchCourse => 'Cursus kiezen';
   @override String get settings => 'Instellingen';
+  @override String get courses => 'Cursussen';
+  @override String get startCreatingCourseButton => 'Nieuwe cursus beginnen';
   @override String get createCourseTitle => 'Nieuwe cursus beginnen';
   @override String get createCourseInstructions => 'Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend.';
   @override String get createCourseTapMap => 'Of tik op de kaart om een andere locatie te kiezen.';
@@ -336,6 +355,7 @@ class _Strings_nl extends _Strings_en {
   @override String get createCourseButtonDisabled => 'Begin cursus';
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Begin cursus (', speciesCount.toString(), ' vogels)'].join();
   @override String courseTitle(String location) => <String>['Vogels rondom ', location].join();
+  @override String lessonCount(int lessonCount, int speciesCount) => <String>[lessonCount.toString(), ' hoofdstukken, ', speciesCount.toString(), ' vogels'].join();
   @override String lessonTitle(int lessonNumber) => <String>['Hoofdstuk ', lessonNumber.toString()].join();
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();

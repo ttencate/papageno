@@ -1,7 +1,10 @@
 key,description,en,nl
 appTitle,Title of the app,Papageno,
 loading,Shown on the splash screen while data is being loaded,Loading…,Bezig met laden…
+switchCourse,Menu item that opens course selection screen,Switch course,Cursus kiezen
 settings,Menu item that opens settings screen,Settings,Instellingen
+courses,Title of screen listing all courses in a profile,Courses,Cursussen
+startCreatingCourseButton,Button to start course creation,Start new course,Nieuwe cursus beginnen
 createCourseTitle,Title of screen for creating a new course,Start new course,Nieuwe cursus beginnen
 createCourseInstructions,Instructions on the screen for creating a new course,"Choose a location. Your course will contain birds from that area, ordered from common to rare.","Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend."
 createCourseTapMap,Instructions on the screen for creating a new course,Or tap the map to select another location.,Of tik op de kaart om een andere locatie te kiezen.
@@ -11,6 +14,7 @@ courseSpecies,Shown on the course creation screen above a list of bird names,Com
 createCourseButtonDisabled,Button text while button is disabled,Start course,Begin cursus
 createCourseButtonEnabled,Button text when enough species were found,Start course (#{speciesCount} birds),Begin cursus (#{speciesCount} vogels)
 courseTitle,"Title of a course, containing GPS location; keep short",Birds near ${location},Vogels rondom ${location}
+lessonCount,Number of lessons in a course,"#{lessonCount} chapters, #{speciesCount} birds","#{lessonCount} hoofdstukken, #{speciesCount} vogels"
 lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lessonNumber}
 startLesson,Button text for starting a lesson,Start,Start
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
@@ -18,14 +19,18 @@ import 'package:papageno/widgets/revealing_image.dart';
 import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
 
+class QuizPageResult {
+  final bool restart;
+
+  QuizPageResult({@required this.restart});
+}
+
 class QuizPage extends StatefulWidget {
-  // TODO actually use this (+ route arguments) for navigation
-  static const route = '/quiz';
-
+  final Profile profile;
+  final Course course;
   final Quiz quiz;
-  final void Function() onRetry;
 
-  QuizPage(this.quiz, {this.onRetry});
+  QuizPage(this.profile, this.course, this.quiz);
 
   @override
   State<StatefulWidget> createState() => _QuizPageState();
@@ -57,7 +62,7 @@ class _QuizPageState extends State<QuizPage> {
           ),
           // TODO show some sort of progress bar
         ),
-        drawer: MenuDrawer(),
+        drawer: MenuDrawer(profile: widget.profile, course: widget.course),
         body: PageView.builder(
           controller: _pageController,
           scrollDirection: Axis.horizontal,
@@ -72,7 +77,7 @@ class _QuizPageState extends State<QuizPage> {
             ) :
             QuizResult(
               quiz: quiz,
-              onRetry: _retry,
+              onRetry: _restart,
               onBack: _back,
             ),
         ),
@@ -93,15 +98,12 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  void _retry() async {
-    await Navigator.of(context).pop();
-    if (widget.onRetry != null) {
-      widget.onRetry();
-    }
+  void _restart() async {
+    await Navigator.of(context).pop(QuizPageResult(restart: true));
   }
 
   void _back() {
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(QuizPageResult(restart: false));
   }
 
   Future<bool> _willPop() async {
