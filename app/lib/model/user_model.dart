@@ -28,13 +28,13 @@ class Profile {
         name = map['name'] as String;
 }
 
-@immutable
 class Course {
+  int courseId;
   final int profileId;
   final LatLon location;
   final BuiltList<Lesson> lessons;
 
-  Course({this.profileId, this.location, this.lessons});
+  Course({this.courseId, this.profileId, this.location, this.lessons});
 
   int get speciesCount => lessons.map((lesson) => lesson.species.length).fold(0, (a, b) => a + b);
 }

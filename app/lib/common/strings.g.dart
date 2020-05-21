@@ -27,6 +27,8 @@ abstract class Strings {
   String get courses;
   /// Button to start course creation
   String get startCreatingCourseButton;
+  /// Text asking to delete a course
+  String deleteCourseConfirmation(String courseTitle);
   /// Title of screen for creating a new course
   String get createCourseTitle;
   /// Instructions on the screen for creating a new course
@@ -174,6 +176,7 @@ abstract class Strings {
       case 'settings': return settings;
       case 'courses': return courses;
       case 'startCreatingCourseButton': return startCreatingCourseButton;
+      case 'deleteCourseConfirmation': return deleteCourseConfirmation;
       case 'createCourseTitle': return createCourseTitle;
       case 'createCourseInstructions': return createCourseInstructions;
       case 'createCourseTapMap': return createCourseTapMap;
@@ -269,6 +272,7 @@ class _Strings_en extends Strings {
   @override String get settings => 'Settings';
   @override String get courses => 'Courses';
   @override String get startCreatingCourseButton => 'Start new course';
+  @override String deleteCourseConfirmation(String courseTitle) => <String>['The course "', courseTitle, '" will be deleted. This cannot be undone. Are you sure?'].join();
   @override String get createCourseTitle => 'Start new course';
   @override String get createCourseInstructions => 'Choose a location. Your course will contain birds from that area, ordered from common to rare.';
   @override String get createCourseTapMap => 'Or tap the map to select another location.';
@@ -346,6 +350,7 @@ class _Strings_nl extends _Strings_en {
   @override String get settings => 'Instellingen';
   @override String get courses => 'Cursussen';
   @override String get startCreatingCourseButton => 'Nieuwe cursus beginnen';
+  @override String deleteCourseConfirmation(String courseTitle) => <String>['De cursus "', courseTitle, '" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
   @override String get createCourseTitle => 'Nieuwe cursus beginnen';
   @override String get createCourseInstructions => 'Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend.';
   @override String get createCourseTapMap => 'Of tik op de kaart om een andere locatie te kiezen.';

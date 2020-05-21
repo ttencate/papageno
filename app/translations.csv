@@ -5,6 +5,7 @@ switchCourse,Menu item that opens course selection screen,Switch course,Cursus k
 settings,Menu item that opens settings screen,Settings,Instellingen
 courses,Title of screen listing all courses in a profile,Courses,Cursussen
 startCreatingCourseButton,Button to start course creation,Start new course,Nieuwe cursus beginnen
+deleteCourseConfirmation,Text asking to delete a course,"The course ""${courseTitle}"" will be deleted. This cannot be undone. Are you sure?","De cursus ""${courseTitle}"" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
 createCourseTitle,Title of screen for creating a new course,Start new course,Nieuwe cursus beginnen
 createCourseInstructions,Instructions on the screen for creating a new course,"Choose a location. Your course will contain birds from that area, ordered from common to rare.","Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend."
 createCourseTapMap,Instructions on the screen for creating a new course,Or tap the map to select another location.,Of tik op de kaart om een andere locatie te kiezen.

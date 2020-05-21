@@ -56,6 +56,10 @@ class _CoursesPageState extends State<CoursesPage> {
                       title: Text(strings.courseName(course)),
                       subtitle: Text(strings.lessonCount(course.lessons.length, course.speciesCount)),
                       onTap: () { _openCourse(course); },
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () { _maybeDeleteCourse(course); },
+                      ),
                     ),
                   ]).toList(),
                 ) :
@@ -84,5 +88,29 @@ class _CoursesPageState extends State<CoursesPage> {
 
   void _openCourse(Course course) {
     Navigator.of(context).push(CourseRoute(widget.profile, course));
+  }
+
+  Future<void> _maybeDeleteCourse(Course course) async {
+    final strings = Strings.of(context);
+    final reallyDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        content: Text(strings.deleteCourseConfirmation(strings.courseName(course))),
+        actions: <Widget>[
+          FlatButton(
+            child: Text(strings.no.toUpperCase()),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          FlatButton(
+            child: Text(strings.yes.toUpperCase()),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    ) ?? false;
+    if (reallyDelete) {
+      await _userDb.deleteCourse(course);
+      await _loadCourses();
+    }
   }
 }
