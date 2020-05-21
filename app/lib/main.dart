@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/theme.dart';
+import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/splash_screen_page.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/settings.dart';
@@ -38,6 +39,7 @@ class AppState extends State<App> {
   Settings _settings;
   AppDb _appDb;
   UserDb _userDb;
+  Profile _profile;
 
   @override
   void initState() {
@@ -47,13 +49,15 @@ class AppState extends State<App> {
       // All these are I/O-heavy, so it does not seem necessary to try and do them in parallel.
       final appDb = await AppDb.open();
       setState(() { _appDb = appDb; });
-      final userDb = await UserDb.open();
+      final userDb = await UserDb.open(appDb: _appDb);
       setState(() { _userDb = userDb; });
 
       // When we start supporting multiple profiles, these objects will be pushed down
       // to lower widgets.
       final profiles = await userDb.getProfiles();
       final profile = profiles.isEmpty ? await userDb.createProfile(null) : profiles.first;
+      setState(() { _profile = profile; });
+
       final settings = await Settings.create(userDb, profile);
       setState(() { _settings = settings; });
     }();
@@ -71,17 +75,17 @@ class AppState extends State<App> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: <SingleChildWidget>[
-        ChangeNotifierProvider<Settings>.value(value: _settings),
+        ChangeNotifierProvider<Settings>.value(value: _settings), // TODO stop providing globally, get from Profile somehow
         Provider<AppDb>.value(value: _appDb),
         Provider<UserDb>.value(value: _userDb),
+        Provider<Profile>.value(value: _profile),
       ],
       child: MaterialApp(
         onGenerateTitle: (BuildContext context) => Strings.of(context).appTitle,
         theme: appTheme,
-        routes: appRoutes,
         home: Builder(builder: (context) => SplashScreenPage(
           loadingFuture: _loadingFuture,
-          onDismissed: () => Navigator.of(context).pushReplacementNamed(Routes.createCourse),
+          onDismissed: () => Navigator.of(context).pushReplacement(CoursesRoute(_profile)),
         )),
         localizationsDelegates: [
           Strings.delegate,
