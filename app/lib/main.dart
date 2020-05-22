@@ -85,7 +85,7 @@ class AppState extends State<App> {
         theme: appTheme,
         home: Builder(builder: (context) => SplashScreenPage(
           loadingFuture: _loadingFuture,
-          onDismissed: () => Navigator.of(context).pushReplacement(CoursesRoute(_profile)),
+          onDismissed: () => Navigator.of(context).pushReplacement(CoursesRoute(_profile, proceedAutomatically: true)),
         )),
         localizationsDelegates: [
           Strings.delegate,
