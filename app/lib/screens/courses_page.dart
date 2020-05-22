@@ -11,8 +11,9 @@ import 'package:provider/provider.dart';
 
 class CoursesPage extends StatefulWidget {
   final Profile profile;
+  final bool proceedAutomatically;
 
-  const CoursesPage(this.profile);
+  const CoursesPage(this.profile, {this.proceedAutomatically = false});
 
   @override
   _CoursesPageState createState() => _CoursesPageState();
@@ -22,6 +23,13 @@ class _CoursesPageState extends State<CoursesPage> {
   UserDb _userDb;
 
   Future<List<Course>> _courses;
+  bool _proceedAutomatically;
+
+  @override
+  void initState() {
+    super.initState();
+    _proceedAutomatically = widget.proceedAutomatically;
+  }
 
   @override
   void didChangeDependencies() {
@@ -32,7 +40,15 @@ class _CoursesPageState extends State<CoursesPage> {
 
   Future<void> _loadCourses() async {
     setState(() { _courses = _userDb.courses(widget.profile.profileId); });
-    await _courses;
+    final courses = await _courses;
+    if (_proceedAutomatically) {
+      _proceedAutomatically = false;
+      if (courses.isEmpty) {
+        Navigator.of(context).push(CreateCourseRoute(widget.profile)); // ignore: unawaited_futures
+      } else if (courses.length == 1) {
+        Navigator.of(context).push(CourseRoute(widget.profile, courses.single)); // ignore: unawaited_futures
+      }
+    }
   }
 
   @override

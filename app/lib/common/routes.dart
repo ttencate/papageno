@@ -11,8 +11,8 @@ import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/screens/settings_page.dart';
 
 class CoursesRoute extends MaterialPageRoute<void> {
-  CoursesRoute(Profile profile) :
-      super(builder: (context) => CoursesPage(profile));
+  CoursesRoute(Profile profile, {bool proceedAutomatically = false}) :
+      super(builder: (context) => CoursesPage(profile, proceedAutomatically: proceedAutomatically));
 }
 
 class CreateCourseRoute extends MaterialPageRoute<Course> {
