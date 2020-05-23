@@ -100,6 +100,7 @@ class AppState extends State<App> {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: Strings.supportedLocales,
+        debugShowCheckedModeBanner: false,
       ),
     );
   }
