@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:package_info/package_info.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/theme.dart';
@@ -36,6 +37,7 @@ class AppState extends State<App> {
 
   Future<void> _loadingFuture;
 
+  PackageInfo _packageInfo;
   Settings _settings;
   AppDb _appDb;
   UserDb _userDb;
@@ -46,6 +48,9 @@ class AppState extends State<App> {
     super.initState();
     // TODO handle exceptions here!
     _loadingFuture = () async {
+      final packageInfo = await PackageInfo.fromPlatform();
+      setState(() { _packageInfo = packageInfo; });
+
       // All these are I/O-heavy, so it does not seem necessary to try and do them in parallel.
       final appDb = await AppDb.open();
       setState(() { _appDb = appDb; });
@@ -75,13 +80,14 @@ class AppState extends State<App> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: <SingleChildWidget>[
+        Provider<PackageInfo>.value(value: _packageInfo),
         ChangeNotifierProvider<Settings>.value(value: _settings), // TODO stop providing globally, get from Profile somehow
         Provider<AppDb>.value(value: _appDb),
         Provider<UserDb>.value(value: _userDb),
         Provider<Profile>.value(value: _profile),
       ],
       child: MaterialApp(
-        onGenerateTitle: (BuildContext context) => Strings.of(context).appTitle,
+        onGenerateTitle: (BuildContext context) => Strings.of(context).appTitleShort,
         theme: appTheme,
         home: Builder(builder: (context) => SplashScreenPage(
           loadingFuture: _loadingFuture,

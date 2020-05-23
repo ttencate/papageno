@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:papageno/model/user_model.dart';
+import 'package:papageno/screens/about_page.dart';
 import 'package:papageno/screens/course_page.dart';
 import 'package:papageno/screens/courses_page.dart';
 import 'package:papageno/screens/create_course_page.dart';
@@ -33,4 +34,9 @@ class QuizRoute extends MaterialPageRoute<QuizPageResult> {
 class SettingsRoute extends MaterialPageRoute<void> {
   SettingsRoute() :
       super(builder: (context) => SettingsPage());
+}
+
+class AboutRoute extends MaterialPageRoute<void> {
+  AboutRoute() :
+      super(builder: (context) => AboutPage());
 }

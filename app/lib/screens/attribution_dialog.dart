@@ -1,11 +1,9 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/app_model.dart' as model show Image;
 import 'package:papageno/common/strings.g.dart';
-import 'package:url_launcher/url_launcher.dart'; // Avoid conflict with Flutter's Image class.
+import 'package:papageno/utils/url_utils.dart';// Avoid conflict with Flutter's Image class.
 
 class AttributionDialog extends StatelessWidget {
 
@@ -33,7 +31,7 @@ class AttributionDialog extends StatelessWidget {
               ),
               _LinkTile(
                 text: strings.source,
-                linkText: _prettyUrl(recording.sourceUrl),
+                linkText: prettyUrl(recording.sourceUrl),
                 url: recording.sourceUrl,
               ),
               _LinkTile(
@@ -50,7 +48,7 @@ class AttributionDialog extends StatelessWidget {
               ),
               _LinkTile(
                 text: strings.source,
-                linkText: _prettyUrl(image.sourceUrl),
+                linkText: prettyUrl(image.sourceUrl),
                 url: image.sourceUrl,
               ),
               _LinkTile(
@@ -75,8 +73,6 @@ class AttributionDialog extends StatelessWidget {
       attribution != null && attribution.isNotEmpty ?
       attribution :
       Strings.of(context).unknownCreator;
-
-  String _prettyUrl(String url) => url.replaceFirst(RegExp('^https?://'), '');
 }
 
 class _LinkTile extends StatelessWidget {
@@ -116,15 +112,7 @@ class _LinkTile extends StatelessWidget {
             ]
         ),
       ),
-      onTap: url == null ? null : () { _openUrl(url); },
+      onTap: url == null ? null : () { openUrl(url); },
     );
-  }
-
-  void _openUrl(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      log('Could not launch URL ${url}');
-    }
   }
 }

@@ -1,8 +1,13 @@
 key,description,en,nl
-appTitle,Title of the app,Papageno,
+appTitleShort,Title of the app,Papageno,
+appSubtitle,Subtitle of the app,Birdsong Tutor,
+appTitleFull,Title of the app,Papageno: Birdsong Tutor,
+appVersion,Version of the app,Version ${versionNumber},Versie ${versionNumber}
+appCopyright,Copyright line,"Copyright © 2020, Thomas ten Cate",
 loading,Shown on the splash screen while data is being loaded,Loading…,Bezig met laden…
 switchCourse,Menu item that opens course selection screen,Switch course,Cursus kiezen
-settings,Menu item that opens settings screen,Settings,Instellingen
+settings,Menu item that opens Settings screen,Settings,Instellingen
+about,Menu item that opens About screen,About Papageno,Over Papageno
 courses,Title of screen listing all courses in a profile,Courses,Cursussen
 startCreatingCourseButton,Button to start course creation,Start new course,Nieuwe cursus beginnen
 deleteCourseConfirmation,Text asking to delete a course,"The course ""${courseTitle}"" will be deleted. This cannot be undone. Are you sure?","De cursus ""${courseTitle}"" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
@@ -76,3 +81,24 @@ language_es,Name of the Spanish language,Spanish,Spaans
 language_sv,Name of the Swedish language,Swedish,Zweeds
 language_th,Name of the Thai language,Thai,Thai
 language_uk,Name of the Ukrаiniаn language,Ukrаiniаn,Oekraïens
+aboutTitle,Title of the About screen,About Papageno,Over Papageno
+contributorsHeading,Heading in About screen,Contributors,Medewerkers
+applicationLicenseHeading,Heading in About screen,Application license,Applicatie-licensie
+mediaLicensesHeading,Heading in About screen,Media licenses,Media-licensies
+dataLicensesHeading,Heading in About screen,Data licenses,Data-licensies
+softwareLicensesHeading,Heading in About screen,Software licenses,Software-licensies
+thomasTenCateName,Name in About screen,Thomas ten Cate,
+thomasTenCateRole,Role in About screen,"Concept, design, development","Concept, ontwerp, ontwikkeling"
+thomasTenCateUrl,URL in About screen,https://frozenfractal.com,
+gplLicenseName,Legalese; do not translate,GNU General Public License,
+gplLicenseVersion,Legalese; do not translate,"Version 3, 29 June 2009",
+gplLicenseBlurb,Legalese; do not translate,"This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.",
+viewSoftwareLicenses,Text of link button,View software licenses,Bekijk softwarelicensies
+appSourceLink,Link to source code on GitHub,Source code available on GitHub,Broncode beschikbaar op GitHub
+appSourceUrl,URL to source code on GitHub,https://github.com/ttencate/papageno,
+xenoCantoSource,Text in About screen,Audio recordings sourced from xeno-canto,Geluidsopnames verkregen via xeno-canto
+recordingsLicensesText,Button text in About screen,View licenses for all recordings,Bekijk licensies voor opnames
+wikimediaCommonsSource,Text in About screen,Photos sourced from Wikimedia Commons,Foto's verkregen via Wikimedia Commons
+imagesLicensesText,Button text in About screen,View licenses for all photos,Bekijk licensies voor alle foto's

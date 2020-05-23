@@ -36,6 +36,11 @@ class MenuDrawer extends StatelessWidget {
             title: Text(strings.settings),
             onTap: () { _openSettings(context); },
           ),
+          ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text(strings.about),
+            onTap: () { _openAbout(context); },
+          ),
         ],
       ),
     );
@@ -51,5 +56,11 @@ class MenuDrawer extends StatelessWidget {
     Navigator.of(context)
         ..pop()
         ..push(SettingsRoute());
+  }
+
+  void _openAbout(BuildContext context) {
+    Navigator.of(context)
+        ..pop()
+        ..push(AboutRoute());
   }
 }
