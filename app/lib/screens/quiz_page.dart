@@ -223,7 +223,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                             shadows: textOnImageShadows,
                           ),
                         ),
-                        if (settings.secondarySpeciesLanguage != null) Text(
+                        if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) Text(
                           _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
                           style: theme.textTheme.headline6.copyWith(
                             color: textOnImageColor,
