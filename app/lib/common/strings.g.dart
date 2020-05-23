@@ -16,13 +16,23 @@ abstract class Strings {
   /// Returns a concrete Strings implementation based on the current locale derived from the context.
   static Strings of(BuildContext context) => Localizations.of<Strings>(context, Strings);
   /// Title of the app
-  String get appTitle;
+  String get appTitleShort;
+  /// Subtitle of the app
+  String get appSubtitle;
+  /// Title of the app
+  String get appTitleFull;
+  /// Version of the app
+  String appVersion(String versionNumber);
+  /// Copyright line
+  String get appCopyright;
   /// Shown on the splash screen while data is being loaded
   String get loading;
   /// Menu item that opens course selection screen
   String get switchCourse;
-  /// Menu item that opens settings screen
+  /// Menu item that opens Settings screen
   String get settings;
+  /// Menu item that opens About screen
+  String get about;
   /// Title of screen listing all courses in a profile
   String get courses;
   /// Button to start course creation
@@ -169,15 +179,58 @@ abstract class Strings {
   String get language_th;
   /// Name of the Ukrаiniаn language
   String get language_uk;
+  /// Title of the About screen
+  String get aboutTitle;
+  /// Heading in About screen
+  String get contributorsHeading;
+  /// Heading in About screen
+  String get applicationLicenseHeading;
+  /// Heading in About screen
+  String get mediaLicensesHeading;
+  /// Heading in About screen
+  String get dataLicensesHeading;
+  /// Heading in About screen
+  String get softwareLicensesHeading;
+  /// Name in About screen
+  String get thomasTenCateName;
+  /// Role in About screen
+  String get thomasTenCateRole;
+  /// URL in About screen
+  String get thomasTenCateUrl;
+  /// Legalese; do not translate
+  String get gplLicenseName;
+  /// Legalese; do not translate
+  String get gplLicenseVersion;
+  /// Legalese; do not translate
+  String get gplLicenseBlurb;
+  /// Text of link button
+  String get viewSoftwareLicenses;
+  /// Link to source code on GitHub
+  String get appSourceLink;
+  /// URL to source code on GitHub
+  String get appSourceUrl;
+  /// Text in About screen
+  String get xenoCantoSource;
+  /// Button text in About screen
+  String get recordingsLicensesText;
+  /// Text in About screen
+  String get wikimediaCommonsSource;
+  /// Button text in About screen
+  String get imagesLicensesText;
   /// Returns the translation for the given key.
   /// For translations without arguments, returns a `String`.
   /// For translations with arguments, returns a `String Function(...)`.Returns `null` if the key was not found.
   dynamic operator [](String key){
     switch (key) {
-      case 'appTitle': return appTitle;
+      case 'appTitleShort': return appTitleShort;
+      case 'appSubtitle': return appSubtitle;
+      case 'appTitleFull': return appTitleFull;
+      case 'appVersion': return appVersion;
+      case 'appCopyright': return appCopyright;
       case 'loading': return loading;
       case 'switchCourse': return switchCourse;
       case 'settings': return settings;
+      case 'about': return about;
       case 'courses': return courses;
       case 'startCreatingCourseButton': return startCreatingCourseButton;
       case 'deleteCourseConfirmation': return deleteCourseConfirmation;
@@ -251,6 +304,25 @@ abstract class Strings {
       case 'language_sv': return language_sv;
       case 'language_th': return language_th;
       case 'language_uk': return language_uk;
+      case 'aboutTitle': return aboutTitle;
+      case 'contributorsHeading': return contributorsHeading;
+      case 'applicationLicenseHeading': return applicationLicenseHeading;
+      case 'mediaLicensesHeading': return mediaLicensesHeading;
+      case 'dataLicensesHeading': return dataLicensesHeading;
+      case 'softwareLicensesHeading': return softwareLicensesHeading;
+      case 'thomasTenCateName': return thomasTenCateName;
+      case 'thomasTenCateRole': return thomasTenCateRole;
+      case 'thomasTenCateUrl': return thomasTenCateUrl;
+      case 'gplLicenseName': return gplLicenseName;
+      case 'gplLicenseVersion': return gplLicenseVersion;
+      case 'gplLicenseBlurb': return gplLicenseBlurb;
+      case 'viewSoftwareLicenses': return viewSoftwareLicenses;
+      case 'appSourceLink': return appSourceLink;
+      case 'appSourceUrl': return appSourceUrl;
+      case 'xenoCantoSource': return xenoCantoSource;
+      case 'recordingsLicensesText': return recordingsLicensesText;
+      case 'wikimediaCommonsSource': return wikimediaCommonsSource;
+      case 'imagesLicensesText': return imagesLicensesText;
     }
     return null;
   }
@@ -272,10 +344,15 @@ class _StringsLocalizationsDelegate extends LocalizationsDelegate<Strings> {
 
 /// Translations for language code "en".
 class _Strings_en extends Strings {
-  @override String get appTitle => 'Papageno';
+  @override String get appTitleShort => 'Papageno';
+  @override String get appSubtitle => 'Birdsong Tutor';
+  @override String get appTitleFull => 'Papageno: Birdsong Tutor';
+  @override String appVersion(String versionNumber) => <String>['Version ', versionNumber].join();
+  @override String get appCopyright => 'Copyright © 2020, Thomas ten Cate';
   @override String get loading => 'Loading…';
   @override String get switchCourse => 'Switch course';
   @override String get settings => 'Settings';
+  @override String get about => 'About Papageno';
   @override String get courses => 'Courses';
   @override String get startCreatingCourseButton => 'Start new course';
   @override String deleteCourseConfirmation(String courseTitle) => <String>['The course "', courseTitle, '" will be deleted. This cannot be undone. Are you sure?'].join();
@@ -349,13 +426,34 @@ class _Strings_en extends Strings {
   @override String get language_sv => 'Swedish';
   @override String get language_th => 'Thai';
   @override String get language_uk => 'Ukrаiniаn';
+  @override String get aboutTitle => 'About Papageno';
+  @override String get contributorsHeading => 'Contributors';
+  @override String get applicationLicenseHeading => 'Application license';
+  @override String get mediaLicensesHeading => 'Media licenses';
+  @override String get dataLicensesHeading => 'Data licenses';
+  @override String get softwareLicensesHeading => 'Software licenses';
+  @override String get thomasTenCateName => 'Thomas ten Cate';
+  @override String get thomasTenCateRole => 'Concept, design, development';
+  @override String get thomasTenCateUrl => 'https://frozenfractal.com';
+  @override String get gplLicenseName => 'GNU General Public License';
+  @override String get gplLicenseVersion => 'Version 3, 29 June 2009';
+  @override String get gplLicenseBlurb => 'This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.';
+  @override String get viewSoftwareLicenses => 'View software licenses';
+  @override String get appSourceLink => 'Source code available on GitHub';
+  @override String get appSourceUrl => 'https://github.com/ttencate/papageno';
+  @override String get xenoCantoSource => 'Audio recordings sourced from xeno-canto';
+  @override String get recordingsLicensesText => 'View licenses for all recordings';
+  @override String get wikimediaCommonsSource => 'Photos sourced from Wikimedia Commons';
+  @override String get imagesLicensesText => 'View licenses for all photos';
 }
 
 /// Translations for language code "nl".
 class _Strings_nl extends _Strings_en {
+  @override String appVersion(String versionNumber) => <String>['Versie ', versionNumber].join();
   @override String get loading => 'Bezig met laden…';
   @override String get switchCourse => 'Cursus kiezen';
   @override String get settings => 'Instellingen';
+  @override String get about => 'Over Papageno';
   @override String get courses => 'Cursussen';
   @override String get startCreatingCourseButton => 'Nieuwe cursus beginnen';
   @override String deleteCourseConfirmation(String courseTitle) => <String>['De cursus "', courseTitle, '" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
@@ -429,4 +527,17 @@ class _Strings_nl extends _Strings_en {
   @override String get language_sv => 'Zweeds';
   @override String get language_th => 'Thai';
   @override String get language_uk => 'Oekraïens';
+  @override String get aboutTitle => 'Over Papageno';
+  @override String get contributorsHeading => 'Medewerkers';
+  @override String get applicationLicenseHeading => 'Applicatie-licensie';
+  @override String get mediaLicensesHeading => 'Media-licensies';
+  @override String get dataLicensesHeading => 'Data-licensies';
+  @override String get softwareLicensesHeading => 'Software-licensies';
+  @override String get thomasTenCateRole => 'Concept, ontwerp, ontwikkeling';
+  @override String get viewSoftwareLicenses => 'Bekijk softwarelicensies';
+  @override String get appSourceLink => 'Broncode beschikbaar op GitHub';
+  @override String get xenoCantoSource => 'Geluidsopnames verkregen via xeno-canto';
+  @override String get recordingsLicensesText => 'Bekijk licensies voor opnames';
+  @override String get wikimediaCommonsSource => 'Foto\'s verkregen via Wikimedia Commons';
+  @override String get imagesLicensesText => 'Bekijk licensies voor alle foto\'s';
 }

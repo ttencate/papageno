@@ -124,15 +124,31 @@ class Species {
   String toString() => scientificName;
 }
 
+/// Common interface for media items (recordings, images) for which we can show attribution and license details.
+abstract class Attributable {
+  String get nameForAttribution;
+  String get sourceUrl;
+  String get attribution;
+  String get licenseName;
+  String get licenseUrl;
+}
+
 @immutable
-class Recording {
+class Recording implements Attributable {
   final String recordingId;
   final int speciesId;
   final String fileName;
+  @override
   final String sourceUrl;
+  @override
   final String licenseName;
+  @override
   final String licenseUrl;
+  @override
   final String attribution;
+
+  @override
+  String get nameForAttribution => recordingId.replaceFirst('xc:', 'XC');
 
   Recording.fromMap(Map<String, dynamic> map) :
       recordingId = map['recording_id'] as String,
@@ -145,13 +161,20 @@ class Recording {
 }
 
 @immutable
-class Image {
+class Image implements Attributable {
   final int speciesId;
   final String fileName;
+  @override
   final String sourceUrl;
+  @override
   final String licenseName;
+  @override
   final String licenseUrl;
+  @override
   final String attribution;
+
+  @override
+  String get nameForAttribution => fileName.replaceAll('.webp', '').replaceAll('_', ' ');
 
   Image.fromMap(Map<String, dynamic> map) :
       speciesId = map['species_id'] as int,

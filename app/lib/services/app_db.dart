@@ -37,7 +37,7 @@ class AppDb {
   }
 
   Future<List<int>> allSpeciesIds() async {
-    final records = await _db.rawQuery('select species_id from species');
+    final records = await _db.rawQuery('select species_id from species order by species_id');
     return records.map((r) => r['species_id'] as int).toList();
   }
 
@@ -57,9 +57,19 @@ class AppDb {
     return Species.fromMap(records.single);
   }
 
-  Future<List<Recording>> recordingsFor(Species species) async {
-    final records = await _db.rawQuery('select * from recordings where species_id = ?', <dynamic>[species.speciesId]);
+  Future<List<Recording>> allRecordings() async {
+    final records = await _db.rawQuery('select * from recordings order by recording_id');
     return records.map((r) => Recording.fromMap(r)).toList();
+  }
+
+  Future<List<Recording>> recordingsFor(Species species) async {
+    final records = await _db.rawQuery('select * from recordings where species_id = ? order by recording_id', <dynamic>[species.speciesId]);
+    return records.map((r) => Recording.fromMap(r)).toList();
+  }
+
+  Future<List<Image>> allImages() async {
+    final records = await _db.rawQuery('select * from images order by species_id');
+    return records.map((r) => Image.fromMap(r)).toList();
   }
 
   Future<Image> imageForOrNull(Species species) async {
@@ -67,13 +77,13 @@ class AppDb {
     if (records.isEmpty) {
       return null;
     }
-    return Image.fromMap(records[0]);
+    return Image.fromMap(records.single);
   }
 
   Future<List<Region>> regionsByDistanceTo(LatLon pos) async {
     // SQLite does not have trigonometry functions, so we can't compute the
     // great-circle distance in the database directly.
-    final records = await _db.rawQuery('select * from regions');
+    final records = await _db.rawQuery('select * from regions order by region_id');
     final regions = records.map((record) => Region.fromMap(record)).toList();
     regions.sort((a, b) => a.centroid.distanceInKmTo(pos).compareTo(b.centroid.distanceInKmTo(pos)));
     return regions;
@@ -84,6 +94,6 @@ class AppDb {
     if (records.isEmpty) {
       throw NotFoundException(regionId);
     }
-    return Region.fromMap(records[0]);
+    return Region.fromMap(records.single);
   }
 }

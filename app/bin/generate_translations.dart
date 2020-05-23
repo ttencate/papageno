@@ -387,6 +387,7 @@ const _escapeMap = {
   '\b': r'\b',
   '\t': r'\t',
   '\v': r'\v',
+  "'": r"\'",
   '\x7F': r'\x7F', // delete
 };
 

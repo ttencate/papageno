@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:package_info/package_info.dart';
 import 'package:papageno/common/strings.g.dart';
+import 'package:provider/provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 class SplashScreenPage extends StatefulWidget {
@@ -35,6 +37,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
   @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
+    final packageInfo = Provider.of<PackageInfo>(context);
     return Scaffold(
       body: Center(
         child: Column(
@@ -48,7 +51,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
             ),
             SizedBox(height: 32.0),
             Text(
-              'Papageno',
+              strings.appTitleShort,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 40.0,
@@ -56,11 +59,19 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
               ),
             ),
             Text(
-              'Birdsong Tutor'.toUpperCase(),
+              strings.appSubtitle.toUpperCase(),
               style: TextStyle(
                 fontWeight: FontWeight.w300,
                 fontSize: 16.0,
                 letterSpacing: 3.6,
+              ),
+            ),
+            SizedBox(height: 8.0),
+            Text(
+              packageInfo != null ? strings.appVersion(packageInfo.version) : '',
+              style: TextStyle(
+                fontWeight: FontWeight.w300,
+                fontSize: 16.0,
               ),
             ),
             SizedBox(height: 32.0),
