@@ -24,3 +24,11 @@ To drop into an SQLite shell running on the device (only works for debug builds
 of the app):
 
     $ adb shell -t run-as com.frozenfractal.papageno sqlite3 databases/user.db
+
+Releasing
+---------
+
+### Android
+
+Signing configuration should be present in `android/key.properties` as per
+[the Flutter deployment guide](https://flutter.dev/docs/deployment/android#reference-the-keystore-from-the-app).
