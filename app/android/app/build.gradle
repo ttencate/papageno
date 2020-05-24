@@ -38,6 +38,10 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
+    // Include asset packs for Dynamic Asset Delivery.
+    // https://developer.android.com/guide/app-bundle/asset-delivery/build-native-java
+    assetPacks = [":all_species"]
+
     lintOptions {
         disable 'InvalidPackage'
     }
@@ -72,6 +76,9 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    // Google Play Core library, needed for Dynamic Asset Delivery:
+    // https://developer.android.com/guide/app-bundle/asset-delivery/build-native-java
+    implementation 'com.google.android.play:core:1.7.3'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'

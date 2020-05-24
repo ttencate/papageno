@@ -6,7 +6,10 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        // Upgraded from 3.5.0 that Flutter gave us by default, to 4.0.0-rc01
+        // because this is needed for Dynamic Asset Delivery:
+        // https://developer.android.com/guide/app-bundle/asset-delivery/build-native-java
+        classpath 'com.android.tools.build:gradle:4.0.0-rc01'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }

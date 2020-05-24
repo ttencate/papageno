@@ -1,5 +1,9 @@
 include ':app'
 
+// Asset packs for Dynamic Asset Delivery.
+// https://developer.android.com/guide/app-bundle/asset-delivery/build-native-java
+include ':all_species'
+
 def flutterProjectRoot = rootProject.projectDir.parentFile.toPath()
 
 def plugins = new Properties()

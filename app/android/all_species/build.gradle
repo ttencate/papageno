@@ -1,0 +1,18 @@
+// Build file for asset pack to be used with Dynamic Asset Delivery.
+// https://developer.android.com/guide/app-bundle/asset-delivery/build-native-java
+//
+// This pack contains sounds and images for all species in the app. In the
+// future, we could split it up later and download parts of it on demand,
+// depending on the species requested by the user.
+
+apply plugin: 'com.android.asset-pack'
+
+assetPack {
+    // Must match directory name. Asset pack names must start with a letter and
+    // can only contain letters, numbers, and underscores.
+    packName = "all_species"
+    dynamicDelivery {
+        deliveryType = "install-time"
+    }
+}
+

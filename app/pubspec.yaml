@@ -52,8 +52,11 @@ flutter:
     - assets/app.db
     - assets/logo.png
     - assets/question.png
-    - assets/images/
-    - assets/sounds/
+    # TODO These have been moved to all_species/src/main/assets/{images,sounds}/
+    # for use with Dynamic Asset Delivery in Android. We need to find a way to make them
+    # available in iOS as well, without bundling them twice on Android.
+    # - assets/images/
+    # - assets/sounds/
     - assets/licenses/
 
 # To update the icons, run ./artwork/export.sh
