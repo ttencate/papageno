@@ -480,13 +480,31 @@ The interesting part is the trimming. Some recordings on xeno-canto are minutes
 or even hours long, and we obviously don't want to include those in full, so we
 need to select which part to include.
 
-It works by initially trimming down to the first 12 seconds. This may sound
-short, but it's plenty of time to allow a bird to be identified. Then we
-determine the 20th percentile volume level. Assuming the bird is silent for at
-least 20% of the clip, this gives us a threshold to distinguish bird sound from
-silence. We then find the longest stretch of bird sound, and cut the clip
-shortly after that. This guarantees that we include a good portion of sound,
-while also keeping recordings as short as possible.
+It works by initially trimming down to the first minute to save on processing
+time (the subsequent algorithm is quadratic). Then we determine the volume
+level in decibel for every millisecond of audio, create a histogram and compute the [Otsu threshold](https://en.wikipedia.org/wiki/Otsu%27s_method):
+
+![Otsu method demonstration](README.images/otsu.gif)  
+_Animation from [Wikipedia](https://en.wikipedia.org/wiki/File:Otsu%27s_Method_Visualization.gif) by Lucas(CA) under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) license_
+
+This gives us a threshold to distinguish bird sound from silence. We find all
+runs of consecutive milliseconds that are above the threshold, and fill any
+short holes in between them so we end up with good solid chunks, called
+"utterances" in the code. These are highlighted in green below:
+
+![Sonogram with detected utterances](README.images/trimming.png)
+
+Next up is to select the start and end point of the range that we want to
+include. To do that, we simply try all possible start and end utterances that
+we might want to include, and score them based on three criteria:
+
+* Not too short, but anything above the minimum is equally good.
+* Not too long, but anything below the maximum is equally good.
+* Ratio of utterance to the total length of the selected range.
+
+We then select the best one of these ranges, highlighted in blue in the above
+image. Some padding and fade in/out is also added, and the result is encoded as
+Ogg/Vorbis.
 
 The resulting file size of the 4227 selected recordings is what makes up the
 bulk of the app: 239 MB.
