@@ -540,6 +540,17 @@ Each stage described above has a corresponding argument; to run stages
 Typically, none of the optional arguments are needed; the defaults are set to
 the values used to produce the "official" `master.db`.
 
+Exploring data with the web UI
+------------------------------
+
+Launch a Poetry shell, then run:
+
+    ./web_ui.py
+
+Navigate to <http://localhost:8080> for a graphical browser of data.
+
+![Screenshot of web UI](README.images/web_ui.png)
+
 Developing
 ----------
 
