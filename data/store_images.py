@@ -77,10 +77,10 @@ def add_args(parser):
         '--recreate_images', action='store_true',
         help='Do not assume that existing image files on disk are up to date; create them anew')
     parser.add_argument(
-        '--image_size', default=1080,
+        '--image_size', default=768,
         help='Maximum size in pixels of bird photos measured along the longest edge')
     parser.add_argument(
-        '--image_quality', default=70,
+        '--image_quality', default=60,
         help='WebP quality level of bird photos')
 
 

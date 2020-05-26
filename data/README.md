@@ -320,8 +320,9 @@ hope that there will be few Papageno users in those parts of the world as well.
 
 This stage of the pipeline select which species will be included in the app. We
 can't include all species because the app would be several gigabytes, so we
-have to be a bit selective. Somewhat arbitrarily, I decided to include 1200
-species.
+have to be a bit selective. Moreover, due to [limitations of Flutter on
+Android](https://github.com/ttencate/papageno/issues/39), we can't have an app
+over 150 MB. Some experimentation led to the number of 800 species.
 
 To be included, a species must meet the following criteria:
 
@@ -340,7 +341,7 @@ To be included, a species must meet the following criteria:
 This leaves us with about 2400 suitable species, which is still too much to
 include. To filter them further, the script sorts the species based on the
 number of regions (1×1 degree grid cells) in which it occurs, then takes the
-top 1200 of that list. This makes sure that we pick species that will be
+top 800 of that list. This makes sure that we pick species that will be
 relevant to people in most locations, at the expense of species that may be
 very common in a small area but never seen outside it.
 
@@ -468,7 +469,7 @@ representation](https://en.wikipedia.org/wiki/Proportional_representation) in
 elections, so there is no perfect solution, only different tradeoffs.
 
 Finally, the IDs of selected recordings are stored in `master.db`. At the time
-of writing, for the 1200 selected species, we have 4227 recordings in total.
+of writing, for the 800 selected species, we have 2764 recordings in total.
 
 ### `store_audio_files`
 
@@ -503,11 +504,15 @@ we might want to include, and score them based on three criteria:
 * Ratio of utterance to the total length of the selected range.
 
 We then select the best one of these ranges, highlighted in blue in the above
-image. Some padding and fade in/out is also added, and the result is encoded as
-Ogg/Vorbis.
+image. Some padding and fade in/out is also added.
 
-The resulting file size of the 4227 selected recordings is what makes up the
-bulk of the app: 239 MB.
+The result is encoded as Ogg/Vorbis at quality level 1.0, which works out to
+around 80 kbps. There is some audible loss in quality when listening through
+headphones, but sound quality remains acceptable, and this relatively low
+quality lets us include more recordings and species.
+
+The resulting file size of the 2764 selected recordings is what makes up the
+bulk of the app: 108 MB.
 
 ### `store_images`
 
@@ -515,8 +520,8 @@ This stage downloads the images from WikiMedia Commons whose URLs we previously
 determined, resizes them to a maximum resolution, and exports them as WebP to
 the app's assets directory. WebP files are
 [a quarter to a third smaller than JPEG](https://developers.google.com/speed/webp/docs/webp_study)
-at a comparable quality level, but the 1200 resulting images together still
-weigh 60 MB.
+at a comparable quality level, but the 800 resulting images together still
+weigh 23 MB.
 
 ### `store_database`
 
