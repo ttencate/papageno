@@ -10,3 +10,6 @@ xc:505432
 # These seem fine, mplayer and VLC can play them, but pydub (ffmpeg) cannot decode them.
 xc:540071
 xc:540072
+
+# Just a wacko sound that a great tit pretty much never makes.
+xc:406339
