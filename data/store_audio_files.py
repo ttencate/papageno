@@ -95,11 +95,12 @@ def _detect_utterances(sound, max_gap_ms=100):
             silence_ms = 0
         else:
             if utterance_start is not None:
-                silence_ms += 1
                 if silence_ms >= max_gap_ms:
                     utterances.append((utterance_start, ms - silence_ms))
                     utterance_start = None
                     silence_ms = None
+                else:
+                    silence_ms += 1
 
     if utterance_start is not None:
         # Final utterance ran right up to the end of the sound.
@@ -138,26 +139,63 @@ def _process_recording(recording):
                       f'(cache file {_fetcher.cache_file_name(recording.audio_url)}): {str(ex)[:5000]}')
         return None
 
-    # pydub does everything in milliseconds.
+    # pydub does everything in milliseconds, and so do we, unless otherwise
+    # specified.
     sound = sound[:1000 * _args.audio_scan_duration]
     sound = sound.set_channels(1)
     sound = sound.set_frame_rate(_args.audio_sample_rate)
 
+    min_duration = round(1000 * _args.min_audio_duration)
+    max_duration = round(1000 * _args.max_audio_duration)
     padding_duration = round(1000 * _args.audio_padding_duration)
     fade_duration = round(1000 * _args.audio_fade_duration)
 
     # Find longest utterance, the end of which is a good place to cut off the
     # sample.
-    utterances = list(_detect_utterances(sound))
+    utterances = list(_detect_utterances(sound, max_gap_ms=padding_duration))
     # This should not happen, because the threshold is such that there is
     # always something above it.
     assert utterances, f'No utterances detected in {recording.url}'
 
-    _, longest_utterance_end = max(utterances, key=lambda start_end: start_end[1] - start_end[0])
-    start_ms = 0
-    end_ms = max(round(1000 * _args.min_audio_duration), longest_utterance_end + padding_duration)
-    sound = sound[start_ms:end_ms]
+    # Exhaustively search all possible ranges of consecutive utterances that we
+    # want to include, and score them by desirability.
+    candidates = []
+    for i, start_utterance in enumerate(utterances):
+        start_ms = max(0, utterances[i][0] - padding_duration)
+        utterance_duration = 0
+        for j, end_utterance in enumerate(utterances[i:]):
+            utterance_duration += end_utterance[1] - end_utterance[0]
+            end_ms = min(len(sound), end_utterance[1] + padding_duration)
+            total_duration = end_ms - start_ms
+            # First criterion: it must be long enough. More negative is more bad.
+            longness_score = min(0.0, total_duration - min_duration)
+            # Second criterion: it must not be too long. More negative is more bad.
+            shortness_score = min(0.0, max_duration - total_duration)
+            # Third criterion: it must have a good utterance to silence ratio.
+            utterance_score = utterance_duration / total_duration
+            score_vector = (longness_score, shortness_score, utterance_score)
+            candidates.append((score_vector, (start_ms, end_ms)))
+    _, (start_ms, end_ms) = max(candidates)
+    duration_ms = end_ms - start_ms
+    # Never go above the maximum duration.
+    if duration_ms > max_duration:
+        end_ms = start_ms + max_duration
+    # Never go below the minimum duration.
+    if duration_ms < min_duration:
+        # Try adding half of the missing duration before and half after.
+        margin_ms = (min_duration - duration_ms + 1) // 2
+        start_ms -= margin_ms
+        end_ms += margin_ms
+        if start_ms < 0:
+            # Running up to the start of the sound.
+            start_ms = 0
+            end_ms = min(len(sound), start_ms + min_duration)
+        if end_ms > len(sound):
+            # Running up to the end of the sound.
+            end_ms = len(sound)
+            start_ms = max(0, end_ms - min_duration)
 
+    sound = sound[start_ms:end_ms]
     sound = sound.fade_in(fade_duration).fade_out(fade_duration)
     sound = pydub.effects.normalize(sound)
 
@@ -170,6 +208,8 @@ def _process_recording(recording):
         draw = ImageDraw.Draw(sonogram, mode='RGBA')
         def highlight(start_ms, end_ms, color):
             # Fixed parameters for full sonograms drawn by xeno-canto.
+            # Visual left margin is at 62px, but it seems the audio starts
+            # 4px later.
             margin_left = 66
             px_per_ms = 75 / 1000
             left_px = margin_left + px_per_ms * start_ms
@@ -207,10 +247,10 @@ def add_args(parser):
         '--audio_scan_duration', type=float, default=60.0,
         help='Amount of audio to scan for a suitable sample, from the beginning of the recording')
     parser.add_argument(
-        '--min_audio_duration', type=float, default=5.0,
+        '--min_audio_duration', type=float, default=3.0,
         help='Minimum duration in seconds of exported audio clips')
     parser.add_argument(
-        '--max_audio_duration', type=float, default=12.0,
+        '--max_audio_duration', type=float, default=8.0,
         help='Maximum duration in seconds of exported audio clips')
     parser.add_argument(
         '--audio_fade_duration', type=float, default=0.05,
