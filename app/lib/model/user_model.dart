@@ -31,7 +31,6 @@ class Profile {
 }
 
 class Course {
-  static const minProgressPercentToUnlockNextLesson = 60;
 
   int courseId;
   final int profileId;
@@ -48,6 +47,8 @@ class Course {
 
   int get unlockedLessonCount => _unlockedLessonCount;
 
+  bool get hasAnyLockedLessons => _unlockedLessonCount < lessons.length;
+
   Lesson get lastUnlockedLesson => lessons[_unlockedLessonCount - 1];
   BuiltList<Lesson> get unlockedLessons => lessons.sublist(0, _unlockedLessonCount);
   BuiltList<Lesson> get lockedLessons => lessons.sublist(_unlockedLessonCount);
@@ -56,7 +57,7 @@ class Course {
     final prevUnlockedLessonCount = _unlockedLessonCount;
     print('Prev: ${prevUnlockedLessonCount}');
     while (_unlockedLessonCount < lessonCount) {
-      if (lastUnlockedLesson.progressPercent(knowledge) < minProgressPercentToUnlockNextLesson) {
+      if (lastUnlockedLesson.score(knowledge) < lastUnlockedLesson.scoreToUnlockNext) {
         break;
       }
       _unlockedLessonCount++;
@@ -67,6 +68,8 @@ class Course {
 
 @immutable
 class Lesson {
+  static const _scorePerSpeciesToUnlockNextLesson = 3;
+  
   final int index;
   final BuiltList<Species> species;
 
@@ -74,9 +77,11 @@ class Lesson {
 
   int get number => index + 1;
 
-  double progressPercent(Knowledge knowledge) {
-    return species.map((species) => knowledge.ofSpecies(species).scorePercent).fold(100.0, (a, b) => min(a, b));
+  int score(Knowledge knowledge) {
+    return species.map((species) => knowledge.ofSpecies(species).correctAnswerCount).fold(0, (a, b) => a + b);
   }
+  
+  int get scoreToUnlockNext => _scorePerSpeciesToUnlockNextLesson * species.length;
 }
 
 class Quiz {

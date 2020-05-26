@@ -63,8 +63,8 @@ abstract class Strings {
   String lessonTitle(int lessonNumber);
   /// Text below lesson title showing how well the lesson has been learned
   String lessonProgress(int progressPercent);
-  /// Text explaining why subsequent lessons are locked
-  String unlockExplanation(int progressPercent);
+  /// Text above a progress bar
+  String get unlockProgress;
   /// Button text for starting a lesson
   String get startLesson;
   /// Indicates current question number (starting from 1) and the total number of questions
@@ -246,7 +246,7 @@ abstract class Strings {
       case 'lessonCount': return lessonCount;
       case 'lessonTitle': return lessonTitle;
       case 'lessonProgress': return lessonProgress;
-      case 'unlockExplanation': return unlockExplanation;
+      case 'unlockProgress': return unlockProgress;
       case 'startLesson': return startLesson;
       case 'questionIndex': return questionIndex;
       case 'tapInstructions': return tapInstructions;
@@ -368,7 +368,7 @@ class _Strings_en extends Strings {
   @override String lessonCount(int lessonCount, int speciesCount) => <String>[lessonCount.toString(), ' chapters, ', speciesCount.toString(), ' birds'].join();
   @override String lessonTitle(int lessonNumber) => <String>['Chapter ', lessonNumber.toString()].join();
   @override String lessonProgress(int progressPercent) => <String>['Progress: ', progressPercent.toString(), '%'].join();
-  @override String unlockExplanation(int progressPercent) => <String>['Reach a progress of ', progressPercent.toString(), '% to unlock the next chapter!'].join();
+  @override String get unlockProgress => 'Progress towards the next chapter:';
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Question ', current.toString(), ' of ', total.toString()].join();
   @override String get tapInstructions => 'Tap anywhere to continue';
@@ -469,7 +469,7 @@ class _Strings_nl extends _Strings_en {
   @override String lessonCount(int lessonCount, int speciesCount) => <String>[lessonCount.toString(), ' hoofdstukken, ', speciesCount.toString(), ' vogels'].join();
   @override String lessonTitle(int lessonNumber) => <String>['Hoofdstuk ', lessonNumber.toString()].join();
   @override String lessonProgress(int progressPercent) => <String>['Voortgang: ', progressPercent.toString(), '%'].join();
-  @override String unlockExplanation(int progressPercent) => <String>['Bereik een voortgang van ', progressPercent.toString(), '% om het volgende hoofdstuk te ontgrendelen!'].join();
+  @override String get unlockProgress => 'Voortgang tot het volgende hoofdstuk:';
   @override String get startLesson => 'Start';
   @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
