@@ -20,13 +20,13 @@ _RECORDING_TYPES = ['call', 'song']
 
 def add_args(parser):
     parser.add_argument(
-        '--max_selected_recordings_per_species', type=int, default=8,
+        '--max_selected_recordings_per_species', type=int, default=7,
         help='Number of selected recordings for the most important species')
     parser.add_argument(
         '--min_selected_recordings_per_species', type=int, default=3,
         help='Minimum number of selected recordings for a species')
     parser.add_argument(
-        '--recording_selection_decay', type=int, default=0.997,
+        '--recording_selection_decay', type=int, default=0.996,
         help='For each next species, multiply the number of selected recordings by this value')
 
 

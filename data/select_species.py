@@ -15,7 +15,7 @@ from species import Species, SelectedSpecies
 
 def add_args(parser):
     parser.add_argument(
-        '--num_selected_species', type=int, default=1200,
+        '--num_selected_species', type=int, default=800,
         help='Number of species to select for inclusion in the app')
     parser.add_argument(
         '--min_num_recordings', type=int, default=50,

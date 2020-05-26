@@ -262,8 +262,8 @@ def add_args(parser):
         '--audio_sample_rate', type=int, default=44100,
         help='Sample rate in Hz of output audio')
     parser.add_argument(
-        '--audio_quality', type=float, default=2.0,
-        help='OGG/Vorbis quality level of output audio between -1.0 and 10.0')
+        '--audio_quality', type=float, default=1.0,
+        help='OGG/Vorbis quality level of output audio between 0.0 and 10.0 (should go down to -2.0, but negative values seem to end up as 3.0)')
     parser.add_argument(
         '--debug_recording_ids', type=str, default=None,
         help='Process only the given recording IDs (comma separated), do not store results, and show debug windows')
