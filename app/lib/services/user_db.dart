@@ -243,13 +243,21 @@ class UserDb {
   Future<Course> _courseFromMap(Map<String, dynamic> map) async {
     final lessons = <Lesson>[];
     for (final lesson in json.decode(map['lessons'] as String) as List<dynamic>) {
-      final species = <Species>[];
+      final speciesList = <Species>[];
       for (final speciesId in lesson['s'] as List<dynamic>) {
-        species.add(await _appDb.species(speciesId as int));
+        final species = await _appDb.speciesOrNull(speciesId as int);
+        if (species == null) {
+          // This can happen if the species was removed from a subsequent version of the app.
+          continue;
+        }
+        speciesList.add(species);
+      }
+      if (speciesList.isEmpty) {
+        continue;
       }
       lessons.add(Lesson(
         index: lesson['i'] as int,
-        species: species.toBuiltList(),
+        species: speciesList.toBuiltList(),
       ));
     }
     return Course(
