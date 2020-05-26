@@ -160,7 +160,11 @@ def _process_recording(recording):
     # Exhaustively search all possible ranges of consecutive utterances that we
     # want to include, and score them by desirability.
     candidates = []
-    for i, start_utterance in enumerate(utterances):
+    # We try to start only from the first three utterances, because recordists
+    # tend to trim the audio such that it starts on a relevant bit. This seems
+    # to help to avoid including (unlabelled) background species and other
+    # noise.
+    for i, start_utterance in enumerate(utterances[:3]):
         start_ms = max(0, utterances[i][0] - padding_duration)
         utterance_duration = 0
         for j, end_utterance in enumerate(utterances[i:]):
