@@ -68,7 +68,7 @@ class Course {
 
 @immutable
 class Lesson {
-  static const _scorePerSpeciesToUnlockNextLesson = 3;
+  static const _scorePerSpeciesToUnlockNextLesson = 4;
   
   final int index;
   final BuiltList<Species> species;
