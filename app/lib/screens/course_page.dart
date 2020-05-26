@@ -11,6 +11,7 @@ import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/settings.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
+import 'package:papageno/widgets/inner_shadow.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:provider/provider.dart';
 
@@ -55,9 +56,13 @@ class _CoursePageState extends State<CoursePage> {
       drawer: MenuDrawer(profile: widget.profile, course: widget.course),
       body: FutureBuilder<Knowledge>(
         future: _knowledge,
-        builder: (context, snapshot) =>
-          snapshot.hasData ?
-          Container(
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+          final lessonScore = course.lastUnlockedLesson.score(snapshot.data);
+          final unlockScore = course.lastUnlockedLesson.scoreToUnlockNext;
+          return Container(
             color: Colors.grey.shade200,
             child: ListView(
               children: <Widget>[
@@ -67,12 +72,27 @@ class _CoursePageState extends State<CoursePage> {
                   lesson: lesson,
                   onStart: () { _startQuiz(course, lesson); },
                 ),
-                Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    strings.unlockExplanation(Course.minProgressPercentToUnlockNextLesson),
-                    style: theme.textTheme.bodyText1,
-                    softWrap: true,
+                if (course.hasAnyLockedLessons) Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text(
+                        strings.unlockProgress,
+                        style: theme.textTheme.bodyText1,
+                        softWrap: true,
+                      ),
+                      SizedBox(height: 8.0),
+                      _FancyProgressBar(
+                        value: lessonScore / unlockScore,
+                        backgroundColor: Colors.grey.shade400,
+                        valueColor: _percentageColor(
+                          (lessonScore / unlockScore * 100.0).round()),
+                        child: Text(
+                          '${lessonScore}/${unlockScore}',
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 for (final lesson in course.lockedLessons) _LessonCard(
@@ -82,8 +102,8 @@ class _CoursePageState extends State<CoursePage> {
                 ),
               ],
             ),
-          ) :
-          Center(child: CircularProgressIndicator()),
+          );
+        },
       ),
     );
   }
@@ -124,26 +144,17 @@ class _LessonCard extends StatelessWidget {
       child: Opacity(
         opacity: _locked ? 0.6 : 1.0,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        strings.lessonTitle(lesson.number),
-                        style: theme.textTheme.headline5,
-                      ),
-                      if (!_locked) Text(
-                        strings.lessonProgress(lesson.progressPercent(knowledge).round()),
-                        style: theme.textTheme.bodyText2.copyWith(color: theme.textTheme.caption.color),
-                      )
-                    ],
+                  Text(
+                    strings.lessonTitle(lesson.number),
+                    style: theme.textTheme.headline5,
                   ),
                   if (!_locked) RaisedButton(
                     child: Text(strings.startLesson.toUpperCase()),
@@ -156,7 +167,7 @@ class _LessonCard extends StatelessWidget {
             Padding(
               padding: EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   for (final species in lesson.species) _SpeciesItem(
                     species: species,
@@ -191,45 +202,96 @@ class _SpeciesItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
-            style: theme.textTheme.bodyText2,
-            softWrap: true,
+          Expanded(
+            child: Text(
+              species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+              style: theme.textTheme.bodyText2,
+              softWrap: true,
+            ),
           ),
           SizedBox(width: 16.0),
-          SizedBox(
-            width: 40.0,
-            child: Text(
-              locked ? '' : '${knowledge.scorePercent.round()}%',
-              style: theme.textTheme.bodyText2.copyWith(fontWeight: FontWeight.bold, color: _percentageColor(knowledge.scorePercent.round())),
-              textAlign: TextAlign.right,
-            ),
+          Text(
+            locked ? '' : '${knowledge.correctAnswerCount}',
+            style: theme.textTheme.bodyText2.copyWith(fontWeight: FontWeight.bold, color: _percentageColor(knowledge.scorePercent.round())),
+            textAlign: TextAlign.right,
           ),
         ],
       ),
     );
   }
+}
 
-  static Color _percentageColor(int percent) {
-    // Conveniently, maps in Dart preserve their order.
-    const stops = <int, Color>{
-      0: Color.fromRGBO(0, 0, 0, 0.15),
-      20: Colors.red,
-      40: Colors.deepOrange,
-      50: Colors.orange,
-      60: Colors.yellow,
-      75: Colors.lightGreen,
-      100: Colors.green,
-    };
-    var prevLocation = stops.keys.first;
-    var prevColor = stops.values.first;
-    for (final stop in stops.entries.skip(1)) {
-      if (percent <= stop.key) {
-        return Color.lerp(prevColor, stop.value, (percent - prevLocation) / (stop.key - prevLocation));
-      }
-      prevLocation = stop.key;
-      prevColor = stop.value;
-    }
-    return stops.values.last;
+class _FancyProgressBar extends StatelessWidget {
+  final double value;
+  final Color backgroundColor;
+  final Color valueColor;
+  final Widget child;
+
+  const _FancyProgressBar({Key key, @required this.value, this.backgroundColor, this.valueColor, this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InnerShadow(
+      shadows: <Shadow>[
+        Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 4.0, offset: Offset(0.0, 1.0)),
+      ],
+      child: Container(
+        height: 32.0,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+        ),
+        child: Stack(
+          fit: StackFit.passthrough,
+          alignment: Alignment.center,
+          children: <Widget>[
+            FractionallySizedBox(
+              widthFactor: value,
+              alignment: Alignment.centerLeft,
+              child: Container(
+                decoration: BoxDecoration(color: valueColor),
+              ),
+            ),
+            if (child != null) Center(
+              child: DefaultTextStyle(
+                style: theme.textTheme.subtitle1.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: <Shadow>[
+                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 2.0),
+                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 8.0),
+                  ],
+                ),
+                child: child,
+              ),
+            ),
+          ]
+        ),
+      ),
+    );
   }
+
+}
+
+Color _percentageColor(int percent) {
+  // Conveniently, maps in Dart preserve their order.
+  const stops = <int, Color>{
+    0: Color.fromRGBO(0, 0, 0, 0.15),
+    20: Colors.red,
+    40: Colors.deepOrange,
+    50: Colors.orange,
+    60: Colors.yellow,
+    75: Colors.lightGreen,
+    100: Colors.green,
+  };
+  var prevLocation = stops.keys.first;
+  var prevColor = stops.values.first;
+  for (final stop in stops.entries.skip(1)) {
+    if (percent <= stop.key) {
+      return Color.lerp(prevColor, stop.value, (percent - prevLocation) / (stop.key - prevLocation));
+    }
+    prevLocation = stop.key;
+    prevColor = stop.value;
+  }
+  return stops.values.last;
 }
