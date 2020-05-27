@@ -44,9 +44,9 @@ class _CoursesPageState extends State<CoursesPage> {
     if (_proceedAutomatically) {
       _proceedAutomatically = false;
       if (courses.isEmpty) {
-        Navigator.of(context).push(CreateCourseRoute(widget.profile)); // ignore: unawaited_futures
+        _createCourse(); // ignore: unawaited_futures
       } else if (courses.length == 1) {
-        Navigator.of(context).push(CourseRoute(widget.profile, courses.single)); // ignore: unawaited_futures
+        _openCourse(courses.single); // ignore: unawaited_futures
       }
     }
   }
