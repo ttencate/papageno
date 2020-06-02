@@ -8,7 +8,7 @@ import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/services/settings.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/inner_shadow.dart';

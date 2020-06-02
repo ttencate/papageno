@@ -12,7 +12,7 @@ import 'package:papageno/controller/controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/services/settings.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:papageno/widgets/zoombuttons_plugin_option.dart';

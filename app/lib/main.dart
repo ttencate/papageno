@@ -8,7 +8,7 @@ import 'package:papageno/common/theme.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/splash_screen_page.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/services/settings.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';

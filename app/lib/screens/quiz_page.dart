@@ -10,7 +10,7 @@ import 'package:papageno/model/app_model.dart' as model show Image; // Avoid con
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/attribution_dialog.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/services/settings.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
