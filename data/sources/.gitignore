@@ -3,5 +3,14 @@
 # and place it (or a symlink to it) here.
 eod_occurrences.zip
 
+# A bit on the large side (1.2 GB). Get the .hdf from
+# https://e4ftl01.cr.usgs.gov/MOTA/MCD12C1.006/2018.01.01/
+# (free account required, activated instantly), convert it to a .h5 using
+# h4toh5convert MCD12C1.A2018001.006.2019200161458.hdf MCD12C1.A2018001.006.2019200161458.h5
+# using h4toh5convert from
+# https://portal.hdfgroup.org/display/support/Download+h4h5tools
+# and place it (or a symlink to it) here.
+mcd.h5
+
 # LibreOffice lock files
 .~lock.*#

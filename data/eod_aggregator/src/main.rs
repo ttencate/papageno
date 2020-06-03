@@ -16,7 +16,7 @@
 ///
 /// For almost 5x better performance though, let `unzip` do the unzipping:
 ///
-///     unzip -p /path/to/eod_occurrences.zip | cargo run --release -- --input_file -
+///     unzip -p /path/to/eod_occurrences.zip | cargo run --release -- --eod_file -
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -31,6 +31,7 @@ use std::time::Duration;
 use std::time::Instant;
 
 use csv;
+use hdf5;
 use structopt::StructOpt;
 use zip::read::ZipArchive;
 
@@ -39,7 +40,11 @@ use zip::read::ZipArchive;
 struct Opt {
     /// Path to input ZIP or CSV file (- for stdin)
     #[structopt(long, default_value = "../sources/eod_occurrences.zip")]
-    input_file: String,
+    eod_file: String,
+
+    /// Path to MCD dataset.
+    #[structopt(long, default_value = "../sources/mcd.h5")]
+    mcd_file: String,
 
     /// Input size in bytes, used for timing calculations only
     #[structopt(long, default_value = "271600362608")] // Default taken from the actual zip file.
@@ -115,17 +120,25 @@ impl Counts {
     }
 }
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
 
+    eprintln!("Opening HDF file {}", opt.mcd_file);
+    let mcd = hdf5::File::open(&opt.mcd_file)?;
+    let land_cover = mcd.dataset("/MOD12C1/Data Fields/Land_Cover_Type_1_Percent")?;
+    let land_cover_raw = land_cover.read_raw::<u8>()?;
+    eprintln!("Dataset shape: {:?}", land_cover.shape());
+    eprintln!("Raw length: {}", land_cover_raw.len());
+    // TODO use it for something good!
+
     let grid =
-        if opt.input_file == "-" {
+        if opt.eod_file == "-" {
             eprintln!("Reading from stdin, assuming file size of {}", opt.input_size);
             process(&opt, &mut stdin().lock(), opt.input_size)?
         } else {
-            let mut input = File::open(&opt.input_file)?;
-            if opt.input_file.ends_with(".zip") {
-                eprintln!("Treating {} as a ZIP file", &opt.input_file);
+            let mut input = File::open(&opt.eod_file)?;
+            if opt.eod_file.ends_with(".zip") {
+                eprintln!("Treating {} as a ZIP file", &opt.eod_file);
                 let mut zip = ZipArchive::new(input)?;
                 let num_files = zip.len();
                 let mut file = zip.by_index(0)?;
@@ -133,7 +146,7 @@ fn main() -> std::io::Result<()> {
                 let file_size = file.size();
                 process(&opt, &mut file, file_size)?
             } else {
-                eprintln!("Treating {} as a TSV file", &opt.input_file);
+                eprintln!("Treating {} as a TSV file", &opt.eod_file);
                 let file_size = input.seek(SeekFrom::End(0))?;
                 input.seek(SeekFrom::Start(0))?;
                 process(&opt, &mut input, file_size)?

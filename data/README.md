@@ -32,6 +32,8 @@ The following sources of data are used.
   Commons license. This data is used to determine which species occur where in
   the world.
 
+- [Terra and Aqua combined Moderate Resolution Imaging Spectroradiometer (MODIS) Land Cover Climate Modeling Grid (CMG) (MCD12C1) Version 6](https://lpdaac.usgs.gov/products/mcd12c1v006/)
+
 Pipeline structure
 ------------------
 
@@ -98,6 +100,57 @@ species should be taught and in which order.
 The EOD dataset is a ZIP file of 68 GB, which contains a TSV (tab-separated
 values) file of 253 GB. For size reasons, it is not checked into this
 repository; it can be downloaded from GBIF after creating a free account.
+
+This pipeline stage also uses the
+[MCD12C1 v006](https://lpdaac.usgs.gov/products/mcd12c1v006/) land cover data
+set by USGS, the
+[version of 2018](https://e4ftl01.cr.usgs.gov/MOTA/MCD12C1.006/2018.01.01/).
+This data set contains global land cover classification at 0.05 degree
+resolution: for each 0.05×0.05 degree grid cell, the data set describes what
+percentage of it consists of grassland, desert, forest, and so on.
+
+![Overview of MCD12C1](README.images/mcd.jpg)
+
+We use this to compute, for each bird species, what its typical habitat is, so
+we can let the user pick lessons that focus on specific habitats such as
+forests.
+
+To download the data set, a
+[free account](https://urs.earthdata.nasa.gov/users/new) is required. The
+format is HDF4, which is difficult to use directly in Rust because there is no
+crate for it. There is, however, a `hdf5` crate, so we can use `h4toh5convert`
+from
+[h4h5tools](https://portal.hdfgroup.org/display/support/Download+h4h5tools) to
+convert the `.hdf` into `.h5` format. We can also use
+[Panoply](https://www.giss.nasa.gov/tools/panoply/) to view the file and
+discover that `Land_Cover_Type_1_Percent` is the data field with the largest
+number of classes (`Type_2` and `Type_3` seem to be different classification
+schemes); it contains the following 17 layers:
+
+```
+ubyte Land_Cover_Type_1_Percent(YDim=3600, XDim=7200, Num_IGBP_Classes=17);
+  :long_name = "Land_Cover_Type_1_Percent";
+  :valid_range = 0B, 100B; // byte
+  :_FillValue = -1B; // byte
+  :Layer_0 = "water";
+  :Layer_1 = "evergreen needleleaf forest";
+  :Layer_2 = "evergreen broadleaf forest";
+  :Layer_3 = "deciduous needleleaf forest";
+  :Layer_4 = "deciduous broadleaf forest";
+  :Layer_5 = "mixed forests";
+  :Layer_6 = "closed shrubland";
+  :Layer_7 = "open shrublands";
+  :Layer_8 = "woody savannas";
+  :Layer_9 = "savannas";
+  :Layer_10 = "grasslands";
+  :Layer_11 = "permanent wetlands";
+  :Layer_12 = "croplands";
+  :Layer_13 = "urban and built-up";
+  :Layer_14 = "cropland/natural vegetation mosaic";
+  :Layer_15 = "snow and ice";
+  :Layer_16 = "barren or sparsely vegetated";
+  :units = "percent in integers";
+```
 
 Processing this much data would take a long time in Python, so this stage is
 implemented as a standalone Rust program, which runs in about 35 minutes. It
