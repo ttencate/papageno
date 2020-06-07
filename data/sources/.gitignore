@@ -1,7 +1,6 @@
-# Too big for Git (68 GB). Get a copy from
-# https://www.gbif.org/occurrence/download?dataset_key=4fa7b334-ce0d-4e88-aaae-2e0c138d049e
-# and place it (or a symlink to it) here.
-eod_occurrences.zip
+# Too big for Git (95 GB). Get a copy from https://ebird.org/data/download and
+# place it (or a symlink to it) here.
+ebd.tar
 
 # LibreOffice lock files
 .~lock.*#

@@ -1,6 +1,6 @@
 '''
-Loads species observations from `eod_regions.csv` which was produces by
-the `eod_aggregator` program. These are regions of 1×1 degree latitude and
+Loads species observations from `ebd_regions.csv` which was produces by
+the `ebd_aggregator` program. These are regions of 1×1 degree latitude and
 longitude, and for each region we have a count of how often the species was
 observed there.
 
@@ -35,8 +35,8 @@ def _round_down(x, multiple_of):
 
 def add_args(parser):
     parser.add_argument(
-        '--eod_regions_file',
-        default=os.path.join(os.path.dirname(__file__), 'sources', 'eod_regions.csv'),
+        '--ebd_regions_file',
+        default=os.path.join(os.path.dirname(__file__), 'sources', 'ebd_regions.csv'),
         help='Path to CSV file containing eBird observation data by region')
 
 
@@ -54,7 +54,7 @@ def main(args, session):
     logging.info('Processing regions')
     regions = []
     warned_scientific_names = set()
-    with open(args.eod_regions_file, 'rt') as input_file:
+    with open(args.ebd_regions_file, 'rt') as input_file:
         # Hardcoding the CSV length here is awful but it's just for progress reporting anyway.
         for row in progress.percent(csv.DictReader(input_file), 14835):
             region_id = int(row['region_id'])

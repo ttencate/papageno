@@ -28,9 +28,8 @@ The following sources of data are used.
   names into various languages, licensed under Creative Commons.
 
 - [eBird](https://ebird.org/) is a crowd-sourced bird observation platform,
-  whose data is published by [GBIF](https://www.gbif.org/) under a Creative
-  Commons license. This data is used to determine which species occur where in
-  the world.
+  whose data is published under a Creative Commons license. This data is used
+  to determine which species occur where in the world.
 
 Pipeline structure
 ------------------
@@ -78,32 +77,36 @@ stores:
 - scientific name according to Clements (if any)
 - common name of the species in 30 different languages
 
-### `eod_aggregator`
+### `ebd_aggregator`
 
-The input consists of the massive eBird Observational Dataset (EOD) from
-[eBird](https://ebird.org/), downloadable from
-[GBIF](https://www.gbif.org/occurrence/download?dataset_key=4fa7b334-ce0d-4e88-aaae-2e0c138d049e).
-It is a list of over 500 million bird observations, annotated with, among others:
+The input consists of the massive [eBird Basic Dataset
+(EBD)](https://ebird.org/data/download) from [eBird](https://ebird.org/). It is
+a list of over 500 million bird observations, annotated with, among others:
 
 - date/time of observation
 - latitude/longitude
 - scientific name of observed species
 - number of individual specimens observed
 
-![Sample of EOD data](README.images/eod.png)
+![Sample of EBD data](README.images/ebd.png)
 
 We use this data in the app to figure out, based on your location, which
 species should be taught and in which order.
 
-The EOD dataset is a ZIP file of 68 GB, which contains a TSV (tab-separated
-values) file of 253 GB. For size reasons, it is not checked into this
-repository; it can be downloaded from GBIF after creating a free account.
+The EBD dataset is a TAR file of 95 GB, which contains a zipped TSV
+(tab-separated values) file. For size reasons, it is not checked into this
+repository; it can be downloaded from eBird after creating a free account.
+
+[A great introduction to the data](https://cornelllabofornithology.github.io/ebird-best-practices/ebird.html#ebird-intro)
+is published by eBird itself. A sample of the data is also provided by eBird,
+and is checked into this repository as
+`sources/ebd_US-AL-101_201801_201801_relMay-2018_SAMPLE.zip`.
 
 Processing this much data would take a long time in Python, so this stage is
 implemented as a standalone Rust program, which runs in about 35 minutes. It
 cannot be invoked from the `master.py` script.
 
-The `eod_aggregator` aggregates all observations from the dataset into regions
+The `ebd_aggregator` aggregates all observations from the dataset into regions
 regions of 1 degree latitude by 1 degree longitude. For each region, it counts
 the number of observations for each species.
 
@@ -116,36 +119,32 @@ Some filtering is applied: for a species to be present in the output, it must
 be observed at least 10 times in at least 3 different years. This is an attempt
 to weed out any anomalies in the data.
 
-Note that eBird published a
+eBird publishes a
 [best practices](https://cornelllabofornithology.github.io/ebird-best-practices/)
 guide based on the case study
-["Best practices for making reliable inferences from citizen science data: case study using eBird to estimate species distributions", A. Johnston et al, 2019](https://www.biorxiv.org/content/10.1101/574392v2).
-The most important thing to do, according to the paper, is to use _complete_
-checklists only. To understand what that means, you need to know how volunteers
-enter data into eBird. They go out to some location with a checklist of birds
-that they might encounter, and they mark species that they see on their
-checklist. However, some birders might only be interested in particular
-species, and not mark _every_ species that they observe; for example, they
-might not care about very common species like mallards. Such checklists are
-considered _incomplete_. They result in a bias in the data, where less common
-species have a higher chance of being recorded.
+["Best practices for making reliable inferences from citizen science data: case study using eBird to estimate species distributions", A. Johnston et al, 2019](https://www.biorxiv.org/content/10.1101/574392v2),
+which helps to interpret the data in a reliable way. The most important thing
+to do, according to the paper, is to use _complete_ checklists only. To
+understand what that means, you need to know how volunteers enter data into
+eBird. They go out to some location with a checklist of birds that they might
+encounter, and they mark species that they see on their checklist. However,
+some birders might only be interested in particular species, and not mark
+_every_ species that they observe; for example, they might not care about very
+common species like mallards. Such checklists are considered _incomplete_. They
+result in a bias in the data, where less common species have a higher chance of
+being recorded, and are best excluded.
 
-However, the data set that I downloaded (the "simple" one rather than the
-"Darwin Core archive") does not contain information about whether a given
-observation came from a complete or incomplete checklist. Rather than
-downloading the even bigger Darwin Core to see if it does have this data, I
-chose to disregard the problem. After all, we only use this data to create
-_relative_ rankings of species in a particular location, so as long as a
-rare species isn't recorded more often (in absolute terms) than a more common
-species, it should not make a difference.
+Furthermore, the advice is to use only checklists that took at most 5 hours,
+moved at most 5 km, were done by at most 10 observers, and are at most 10 years
+old. We apply all these filters.
 
-The program writes its output to `sources/eod_regions.csv` which _is_ included
+The program writes its output to `sources/ebd_regions.csv` which _is_ included
 in this repository, so if you want to work on the data processing, you don't
 need either Rust or the eBird dataset.
 
 ### `load_regions`
 
-This simply takes `sources/eod_regions.csv` produced by the `eod_aggregator`
+This simply takes `sources/ebd_regions.csv` produced by the `ebd_aggregator`
 program and ingests it into the `master.db` database. In hindsight, maybe I
 could have Rust write to the database directly, but then `master.db` (556 MB)
 would need to be checked into this repository too.
