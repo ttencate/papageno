@@ -1,6 +1,5 @@
-# Too big for Git (95 GB). Get a copy from https://ebird.org/data/download and
-# place it (or a symlink to it) here.
-ebd.tar
+# Too big for Git (95 GB). Use ebd_download.sh to fetch it in chunks.
+ebird
 
 # LibreOffice lock files
 .~lock.*#

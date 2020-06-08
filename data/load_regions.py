@@ -65,7 +65,12 @@ def main(args, session):
             for scientific_name_clements, num_observations in observations_by_scientific_name.items():
                 scientific_name = clements_to_ioc.get(scientific_name_clements)
                 if not scientific_name:
-                    if scientific_name_clements not in warned_scientific_names:
+                    if (scientific_name_clements not in warned_scientific_names
+                            and '/' not in scientific_name_clements # Uncertainties.
+                            and 'sp.' not in scientific_name_clements.split(' ') # Only genus, not species.
+                            and 'x' not in scientific_name_clements.split(' ') # Hybrids.
+                            and 'undescribed' not in scientific_name_clements # Undescribed forms.
+                            ):
                         # This happens a fair bit; in the "IOC vs other lists"
                         # these rows are typically reddish brown, indicating
                         # "species not recognized by IOC".

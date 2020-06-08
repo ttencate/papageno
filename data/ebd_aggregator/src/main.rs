@@ -1,14 +1,12 @@
 /// This program processes the eBird Basic Data (EBD) and outputs the observation count per grid
 /// square.
 ///
-/// To run, after installing the Rust toolchain, just do:
+/// To run, first install the Rust toolchain.
 ///
-///     cargo run --release
+/// Input is expected on stdin. For best performance on a multicore machine, let `pigz` do the
+/// unzipping in parallel with our processing code:
 ///
-/// For almost 5x better performance though, let `unzip` do the unzipping:
-///
-///     // TODO update command
-///     unzip -p /path/to/ebd.tar | cargo run --release -- --ebd_file -
+///     cat ../sources/ebird/*.tar.part* | tar -Oxf - ebd_relApr-2020.txt.gz | pigz -cd | cargo run --release -- --ebd_file -
 ///
 /// To run on the sample provided by eBird, which is checked into this repository but packaged
 /// in a ZIP instead of a TAR file:
@@ -38,8 +36,9 @@ struct Opt {
     #[structopt(long, default_value = "../sources/ebd.tar")]
     ebd_file: String,
 
-    /// Input size in bytes, used for timing calculations only
-    #[structopt(long, default_value = "271600362608")] // TODO update
+    /// Uncompressed input size in bytes, used for timing calculations only. Use ebd_filesize.sh to
+    /// get an estimate.
+    #[structopt(long, default_value = "282555650701")]
     ebd_file_size: u64,
 
     /// Size of grid regions in degrees
@@ -47,11 +46,11 @@ struct Opt {
     grid_size: f64,
 
     /// Minimum number of observations
-    #[structopt(long, default_value = "10")]
+    #[structopt(long, default_value = "5")]
     min_num_observations: u64,
 
     /// Minimum number of years in which a species was observed
-    #[structopt(long, default_value = "3")]
+    #[structopt(long, default_value = "1")]
     min_num_years: u32,
 
     /// Path to output CSV file
@@ -252,8 +251,18 @@ fn process<F: std::io::Read>(opt: &Opt, file: &mut F, file_size: u64) -> std::io
     let mut bytes_read = 0;
     let start_time = Instant::now();
     while { line.clear(); reader.read_line(&mut line)? > 0 } {
-        lines_read += 1;
+        if lines_read % 50000 == 0 {
+            let progress = bytes_read as f64 / file_size as f64;
+            let elapsed_time = Instant::now() - start_time;
+            let total_time = if progress == 0.0 { elapsed_time } else { elapsed_time.div_f64(progress) };
+            let remaining_time = total_time - elapsed_time;
+            write!(stderr(), "\rAccepted {}/{} lines   {}/{} = {:.2}% of bytes   {}/{}   ETA {}",
+                acceptations, lines_read, bytes_read, file_size, progress * 100.0,
+                format_duration(elapsed_time), format_duration(total_time), format_duration(remaining_time))?;
+        }
+
         bytes_read += line.len();
+        lines_read += 1;
         strip_newline(&mut line);
         let fields = line.split('\t').collect::<Vec<_>>();
 
@@ -314,21 +323,12 @@ fn process<F: std::io::Read>(opt: &Opt, file: &mut F, file_size: u64) -> std::io
             .species
             .entry(scientific_name.to_string()).or_insert_with(|| { Counts::default() })
             .count_observation(individual_count, year);
-
-        if lines_read % 10000 == 0 {
-            let progress = bytes_read as f64 / file_size as f64;
-            let elapsed_time = Instant::now() - start_time;
-            let total_time = elapsed_time.div_f64(progress);
-            let remaining_time = total_time - elapsed_time;
-            write!(stderr(), "\r{} lines   {}/{} = {:.2}% of bytes   {}/{}   ETA {}",
-                lines_read, bytes_read, file_size, progress * 100.0,
-                format_duration(elapsed_time), format_duration(total_time), format_duration(remaining_time))?;
-        }
     }
     write!(stderr(), "\n")?;
     let print_stat = |name: &str, stat: u64| {
         writeln!(stderr(), "{:33} {:9}", name, stat).unwrap();
     };
+    print_stat("Total bytes processed", bytes_read);
     print_stat("Total lines processed", lines_read);
     print_stat("Accepted", acceptations);
     print_stat("Rejected (incomplete checklist)", complete_checklist_rejections);
