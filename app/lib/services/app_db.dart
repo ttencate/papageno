@@ -84,8 +84,8 @@ class AppDb {
     // SQLite does not have trigonometry functions, so we can't compute the
     // great-circle distance in the database directly.
     final records = await _db.rawQuery('select * from regions order by region_id');
-    final regions = records.map((record) => Region.fromMap(record)).toList();
-    regions.sort((a, b) => a.centroid.distanceInKmTo(pos).compareTo(b.centroid.distanceInKmTo(pos)));
+    final regions = records.map((record) => Region.fromMap(record)).toList()
+        ..sort((a, b) => a.centroid.distanceInKmTo(pos).compareTo(b.centroid.distanceInKmTo(pos)));
     return regions;
   }
 

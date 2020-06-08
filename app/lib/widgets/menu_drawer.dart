@@ -46,7 +46,7 @@ class MenuDrawer extends StatelessWidget {
     );
   }
 
-  void _switchCourse(BuildContext context) async {
+  void _switchCourse(BuildContext context) {
     // TODO Navigator.popUntil() doesn't honor the route's willPop() callback.
     //  Reimplementing it in terms of maybePop() seems fraught with peril though.
     Navigator.of(context).popUntil((route) => route is CoursesRoute);

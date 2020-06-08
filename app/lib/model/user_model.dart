@@ -55,7 +55,6 @@ class Course {
 
   bool unlockLessons(Knowledge knowledge) {
     final prevUnlockedLessonCount = _unlockedLessonCount;
-    print('Prev: ${prevUnlockedLessonCount}');
     while (_unlockedLessonCount < lessonCount) {
       if (lastUnlockedLesson.score(knowledge) < lastUnlockedLesson.scoreToUnlockNext) {
         break;

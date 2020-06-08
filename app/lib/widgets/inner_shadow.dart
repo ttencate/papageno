@@ -34,8 +34,8 @@ class _RenderInnerShadow extends RenderProxyBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     if (child == null) return;
-    final bounds = offset & size;
     final canvas = context.canvas;
+    final bounds = offset & size;
 
     canvas.saveLayer(bounds, Paint());
     context.paintChild(child, offset);

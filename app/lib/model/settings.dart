@@ -160,7 +160,7 @@ class Setting<T> {
 
   Future<void> _init(Settings settings) async {
     _settings = settings;
-    var string = await settings._userDb.getSetting(settings._profileId, _key);
+    final string = await settings._userDb.getSetting(settings._profileId, _key);
     _value = _defaultValue;
     if (string != null) {
       try {

@@ -27,8 +27,9 @@ class RandomBag<T> {
   T next(Random random) {
     if (_remaining.isEmpty) {
       assert(elements.isNotEmpty);
-      _remaining.addAll(elements);
-      _remaining.shuffle(random);
+      _remaining
+          ..addAll(elements)
+          ..shuffle(random);
     }
     return _remaining.removeLast();
   }

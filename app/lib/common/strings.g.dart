@@ -2,6 +2,9 @@
 /// To make changes to this file, edit translations.csv
 /// and run `flutter pub run bin/generate_translations`.
 
+// ignore_for_file: camel_case_types
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:flutter/widgets.dart';
 
 /// Interface for localized strings.

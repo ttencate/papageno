@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:papageno/model/app_model.dart';
+
+final log = Logger('Player');
 
 /// Audio player widget with seek bar and play/pause button.
 class Player extends StatefulWidget {
@@ -43,7 +46,7 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
   Future<void> _startPlaying() async {
     final audioPlayer = await _audioCache.loop(_recording.fileName);
     if (_disposed) {
-      print('${this} disposed before playback started');
+      log.warning('${this} disposed before playback started');
       await _disposeAudioPlayer(audioPlayer);
       return;
     }
@@ -141,7 +144,7 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
 
   void _togglePlaying() {
     if (_audioPlayer == null) {
-      print('${this} tried to toggle playback without AudioPlayer');
+      log.warning('${this} tried to toggle playback without AudioPlayer');
       return;
     }
     if (_state != AudioPlayerState.PLAYING) {
@@ -154,7 +157,7 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
 
   void _seek(double position) {
     if (_audioPlayer == null) {
-      print('${this} tried to seek without AudioPlayer');
+      log.warning('${this} tried to seek without AudioPlayer');
       return;
     }
     _audioPlayer.seek(Duration(milliseconds: position.toInt()));
@@ -162,5 +165,5 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      super.toString(minLevel: minLevel) + '(${_recording.fileName})';
+      '${super.toString(minLevel: minLevel)}(${_recording.fileName})';
 }

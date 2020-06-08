@@ -26,7 +26,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
     _init();
   }
 
-  void _init() async {
+  Future<void> _init() async {
     final waitFuture = Future<void>.delayed(_minimumSplashScreenDuration);
     await widget.loadingFuture;
     setState(() { _loading = false; });

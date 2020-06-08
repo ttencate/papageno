@@ -62,8 +62,8 @@ class AttributionDialog extends StatelessWidget {
       ),
       actions: <Widget>[
         FlatButton(
-          child: Text(strings.ok),
           onPressed: () => Navigator.of(context).pop(),
+          child: Text(strings.ok),
         )
       ],
     );
@@ -86,8 +86,8 @@ class _LinkTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var linkColor = Theme.of(context).accentColor;
-    var textStyle = style ?? DefaultTextStyle.of(context).style;
+    final linkColor = Theme.of(context).accentColor;
+    final textStyle = style ?? DefaultTextStyle.of(context).style;
     const placeholder = '__LINK_TEXT__';
     final replacedText = text(placeholder);
     final placeholderIndex = replacedText.indexOf(placeholder);

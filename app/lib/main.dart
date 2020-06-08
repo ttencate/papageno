@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:logging/logging.dart';
 import 'package:package_info/package_info.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
@@ -14,6 +15,10 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 void main() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}'); // ignore: avoid_print
+  });
   // Forcing portrait mode until we implement landscape layouts (https://github.com/ttencate/papageno/issues/16)
   // https://stackoverflow.com/a/52720581/14637
   WidgetsFlutterBinding.ensureInitialized();

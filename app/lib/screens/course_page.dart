@@ -13,6 +13,7 @@ import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/inner_shadow.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
+import 'package:pedantic/pedantic.dart';
 import 'package:provider/provider.dart';
 
 class CoursePage extends StatefulWidget {
@@ -108,7 +109,7 @@ class _CoursePageState extends State<CoursePage> {
     );
   }
 
-  void _startQuiz(Course course, Lesson lesson) async {
+  Future<void> _startQuiz(Course course, Lesson lesson) async {
     final appDb = Provider.of<AppDb>(context, listen: false);
     final quiz = await createQuiz(appDb, course, lesson);
     final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, course, quiz));
@@ -120,7 +121,7 @@ class _CoursePageState extends State<CoursePage> {
       // TODO show a nice message!
     }
     if (quizPageResult is QuizPageResult && quizPageResult.restart) {
-      _startQuiz(course, lesson);
+      unawaited(_startQuiz(course, lesson));
     }
   }
 }
@@ -157,8 +158,8 @@ class _LessonCard extends StatelessWidget {
                     style: theme.textTheme.headline5,
                   ),
                   if (!_locked) RaisedButton(
-                    child: Text(strings.startLesson.toUpperCase()),
                     onPressed: onStart,
+                    child: Text(strings.startLesson.toUpperCase()),
                   )
                 ],
               ),

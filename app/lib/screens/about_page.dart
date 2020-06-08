@@ -178,7 +178,7 @@ class _ContributorTile extends StatelessWidget {
         textBaseline: TextBaseline.alphabetic,
         children: <Widget>[
           Expanded(child: Text(name)),
-          url == null ? null : Text(prettyUrl(url), style: theme.textTheme.bodyText2.copyWith(color: Colors.blue)),
+          if (url != null) Text(prettyUrl(url), style: theme.textTheme.bodyText2.copyWith(color: Colors.blue)),
         ],
       ),
       subtitle: Text(role),
@@ -207,7 +207,7 @@ class _LicenseTile extends StatelessWidget {
     );
   }
 
-  void _viewFullText(BuildContext context) async {
+  Future<void> _viewFullText(BuildContext context) async {
     if (fullTextAsset != null) {
       final text = await DefaultAssetBundle.of(context).loadString(fullTextAsset, cache: false);
       await showDialog<void>(
@@ -334,8 +334,8 @@ class _BaseDialog extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   FlatButton(
-                    child: Text(strings.ok.toUpperCase()),
                     onPressed: () { Navigator.of(context).pop(); },
+                    child: Text(strings.ok.toUpperCase()),
                   ),
                 ],
               ),

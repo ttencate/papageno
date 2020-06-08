@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:math' hide log;
 import 'dart:ui';
 
@@ -10,14 +9,14 @@ import 'package:location/location.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/controller/controller.dart';
 import 'package:papageno/model/app_model.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
+import 'package:papageno/utils/url_utils.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:papageno/widgets/zoombuttons_plugin_option.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CreateCoursePage extends StatefulWidget {
   final Profile profile;
@@ -75,6 +74,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                 ),
                 SizedBox(height: 8.0),
                 RaisedButton(
+                  onPressed: _searchingLocation ? null : _useCurrentLocation,
                   child: Stack(
                     alignment: Alignment.center,
                     children: <Widget>[
@@ -82,7 +82,6 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                       if (_searchingLocation) CircularProgressIndicator(),
                     ],
                   ),
-                  onPressed: _searchingLocation ? null : _useCurrentLocation,
                 ),
                 SizedBox(height: 8.0),
                 Align(
@@ -164,14 +163,14 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
           Padding(
             padding: EdgeInsets.all(16.0),
             child: RaisedButton(
+              onPressed: _course == null ?
+              null :
+              _createCourse,
               child: Text(
                   _rankedSpecies == null ?
                   strings.createCourseButtonDisabled.toUpperCase() :
                   strings.createCourseButtonEnabled(_rankedSpecies.length).toUpperCase()
               ),
-              onPressed: _course == null ?
-              null :
-              _createCourse,
             ),
           ),
         ],
@@ -246,7 +245,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     );
   }
 
-  void _useCurrentLocation() async {
+  Future<void> _useCurrentLocation() async {
     if (_searchingLocation) {
       return;
     }
@@ -269,17 +268,17 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
         }
       }
       final locationData = await location.getLocation();
-      _selectLocation(LatLng(locationData.latitude, locationData.longitude));
+      await _selectLocation(LatLng(locationData.latitude, locationData.longitude));
     } finally {
-      setState(() {_searchingLocation = false;});
+      setState(() { _searchingLocation = false; });
     }
   }
 
-  void _onMapTap(LatLng latLng) async {
+  Future<void> _onMapTap(LatLng latLng) async {
     await _selectLocation(latLng);
   }
 
-  void _selectLocation(LatLng latLng) async {
+  Future<void> _selectLocation(LatLng latLng) async {
     setState(() {
       _selectedLocation = latLng;
       _rankedSpecies = null;
@@ -321,7 +320,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     return LatLng(latLon.lat, latLon.lon);
   }
 
-  void _createCourse() async {
+  Future<void> _createCourse() async {
     assert(_course != null);
     final userDb = Provider.of<UserDb>(context, listen: false);
     await userDb.insertCourse(_course);
@@ -345,7 +344,7 @@ class _OpenStreetMapCopyright extends StatelessWidget {
             text: 'OpenStreetMap',
             style: textStyle.copyWith(color: Colors.blue, decoration: TextDecoration.underline),
             recognizer: TapGestureRecognizer()
-              ..onTap = () { _openUrl('https://www.openstreetmap.org/copyright'); },
+              ..onTap = () { openUrl('https://www.openstreetmap.org/copyright'); },
           ),
           TextSpan(
             text: ' contributors',
@@ -354,13 +353,5 @@ class _OpenStreetMapCopyright extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _openUrl(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      log('Could not launch URL ${url}');
-    }
   }
 }

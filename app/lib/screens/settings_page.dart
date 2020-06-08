@@ -58,9 +58,7 @@ class SettingsPage extends StatelessWidget {@override
           CheckboxListTile(
             title: Text(strings.showScientificName),
             value: settings.showScientificName.value,
-            onChanged: (value) {
-              settings.showScientificName.set(value);
-            },
+            onChanged: settings.showScientificName.set,
           ),
         ],
       )
@@ -79,9 +77,9 @@ class LanguagePicker extends StatelessWidget {
     final strings = Strings.of(context);
     final languageCodes = LanguageCode.allSupported
         .map((languageCode) => LanguageSetting.languageCode(languageCode))
-        .toList();
-    languageCodes.sort((a, b) => strings.languageSettingName(a).compareTo(strings.languageSettingName(b)));
-    languageCodes.insert(0, LanguageSetting.system);
+        .toList()
+        ..sort((a, b) => strings.languageSettingName(a).compareTo(strings.languageSettingName(b)))
+        ..insert(0, LanguageSetting.system);
     if (allowNone) {
       languageCodes.insert(0, LanguageSetting.none);
     }
@@ -89,10 +87,10 @@ class LanguagePicker extends StatelessWidget {
       title: Text(title),
       children: <Widget>[
         for (final languageCode in languageCodes) SimpleDialogOption(
-          child: Text(strings.languageSettingName(languageCode)),
           onPressed: () {
             Navigator.of(context).pop(languageCode);
           },
+          child: Text(strings.languageSettingName(languageCode)),
         ),
       ],
     );

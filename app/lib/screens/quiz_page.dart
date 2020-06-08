@@ -97,7 +97,6 @@ class _QuizPageState extends State<QuizPage> {
       setState(() {
         quiz.proceedToNextQuestion();
       });
-      print('Animate to page ${quiz.currentQuestionIndex}');
       await _pageController.animateToPage(
           quiz.currentQuestionIndex,
           duration: Duration(milliseconds: 400),
@@ -105,8 +104,8 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  void _restart() async {
-    await Navigator.of(context).pop(QuizPageResult(restart: true));
+  void _restart() {
+    Navigator.of(context).pop(QuizPageResult(restart: true));
   }
 
   void _back() {
@@ -125,12 +124,12 @@ class _QuizPageState extends State<QuizPage> {
           content: Text(strings.abortQuizContent),
           actions: <Widget>[
             FlatButton(
-              child: Text(strings.no.toUpperCase()),
               onPressed: () => Navigator.of(context).pop(false),
+              child: Text(strings.no.toUpperCase()),
             ),
             FlatButton(
-              child: Text(strings.yes.toUpperCase()),
               onPressed: () => Navigator.of(context).pop(true),
+              child: Text(strings.yes.toUpperCase()),
             ),
           ],
         ),
@@ -181,7 +180,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
     ];
     final settings = Provider.of<Settings>(context);
     // TODO alternative layout for landscape orientation
-    var questionScreen = Column(
+    final questionScreen = Column(
       children: <Widget>[
         Expanded(
           child: RevealingImage(
@@ -493,13 +492,13 @@ class QuizResult extends StatelessWidget {
           child: Row(
             children: <Widget>[
               FlatButton(
-                child: Text(strings.backButton.toUpperCase()),
                 onPressed: onBack,
+                child: Text(strings.backButton.toUpperCase()),
               ),
               Spacer(),
               RaisedButton(
-                child: Text(strings.retryQuizButton.toUpperCase()),
                 onPressed: onRetry,
+                child: Text(strings.retryQuizButton.toUpperCase()),
               ),
             ],
           ),

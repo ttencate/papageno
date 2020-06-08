@@ -32,8 +32,8 @@ Future<RankedSpecies> rankSpecies(AppDb appDb, LatLon location) async {
     }
   }
 
-  final speciesIds = weights.keys.toList();
-  speciesIds.sort((a, b) => -weights[a].compareTo(weights[b]));
+  final speciesIds = weights.keys.toList()
+      ..sort((a, b) => -weights[a].compareTo(weights[b]));
   final species = <Species>[];
   for (final speciesId in speciesIds) {
     species.add(await appDb.species(speciesId));

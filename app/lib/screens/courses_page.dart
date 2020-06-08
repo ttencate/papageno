@@ -85,8 +85,8 @@ class _CoursesPageState extends State<CoursesPage> {
           Padding(
             padding: EdgeInsets.all(8.0),
             child: RaisedButton(
-              child: Text(strings.startCreatingCourseButton.toUpperCase()),
               onPressed: _createCourse,
+              child: Text(strings.startCreatingCourseButton.toUpperCase()),
             ),
           )
         ],
@@ -114,12 +114,12 @@ class _CoursesPageState extends State<CoursesPage> {
         content: Text(strings.deleteCourseConfirmation(strings.courseName(course))),
         actions: <Widget>[
           FlatButton(
-            child: Text(strings.no.toUpperCase()),
             onPressed: () => Navigator.of(context).pop(false),
+            child: Text(strings.no.toUpperCase()),
           ),
           FlatButton(
-            child: Text(strings.yes.toUpperCase()),
             onPressed: () => Navigator.of(context).pop(true),
+            child: Text(strings.yes.toUpperCase()),
           ),
         ],
       ),

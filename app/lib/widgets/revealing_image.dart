@@ -45,9 +45,9 @@ class _RevealingImageState extends State<RevealingImage> with SingleTickerProvid
   void initState() {
     super.initState();
     controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    animation = Tween<double>(begin: 0.0, end: 1.0).animate(controller);
-    // TODO figure out why we need this -- CustomClipper.reclip is tied to this animation so it should be updating outside the build cycle, right?
-    animation.addListener(() { setState(() {}); });
+    animation = Tween<double>(begin: 0.0, end: 1.0).animate(controller)
+        // TODO figure out why we need this -- CustomClipper.reclip is tied to this animation so it should be updating outside the build cycle, right?
+        ..addListener(() { setState(() {}); });
   }
 
   @override
