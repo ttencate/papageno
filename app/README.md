@@ -33,14 +33,24 @@ Releasing
 Signing configuration should be present in `android/key.properties` as per
 [the Flutter deployment guide](https://flutter.dev/docs/deployment/android#reference-the-keystore-from-the-app).
 
-To measure the size of the resulting APKs (needs
-[bundletool](https://developer.android.com/studio/command-line/bundletool)):
+To build the app bundle:
 
     $ flutter build appbundle
+
+To build APKs out of this bundle for testing (needs
+[bundletool](https://developer.android.com/studio/command-line/bundletool)):
+
     # Note: resulting APKS are signed with a debug key; not suitable for deployment.
-    $ bundletool build-apks --bundle build/app/outputs/bundle/release/app-release.aab --output /tmp/set.apks
+    $ bundletool build-apks --bundle build/app/outputs/bundle/release/app-release.aab --output /tmp/papageno.apks
+
+To measure the size of the resulting APKs:
+
     $ bundletool get-size total --apks=/tmp/set.apks
 
 The MAX must remain below 150 MB for the app bundle to be accepted by the Play
 Store. Whether this is binary megabytes (1024² bytes) or SI megabytes (1000²
 bytes) is unknown.
+
+To test the built app on a connected device:
+
+    $ bundletool install-apks --apks /tmp/papageno.apks
