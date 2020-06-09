@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
 import 'package:logging/logging.dart';
 import 'package:papageno/common/strings.g.dart';
+import 'package:papageno/controller/controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/app_model.dart' as model show Image; // Avoid conflict with Flutter's Image class.
 import 'package:papageno/model/user_model.dart';
@@ -111,7 +112,7 @@ class _QuizPageState extends State<QuizPage> {
   Future<void> _storeAnswer(Question question) async {
     _log.finer('Storing answer to question $question');
     final userDb = Provider.of<UserDb>(context, listen: false);
-    await userDb.insertQuestion(widget.profile.profileId, widget.course.courseId, question);
+    await storeAnswer(userDb, widget.profile, widget.course, question);
     // HACK: after answering a question, the state of the entire Quiz has changed.
     setState(() {});
   }

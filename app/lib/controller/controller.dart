@@ -4,6 +4,8 @@ import 'package:built_collection/built_collection.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
+import 'package:papageno/services/user_db.dart';
+import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/random_utils.dart';
 
 Future<RankedSpecies> rankSpecies(AppDb appDb, LatLon location) async {
@@ -62,8 +64,10 @@ int _numSpeciesInLesson(int index) {
   return index == 0 ? 10 : 5;
 }
 
-Future<Quiz> createQuiz(AppDb appDb, Course course, Lesson lesson) async {
+Future<Quiz> createQuiz(AppDb appDb, UserDb userDb, Course course, Lesson lesson, [DateTime now]) async {
   assert(course.lessons[lesson.index] == lesson);
+
+  now ??= DateTime.now();
 
   const questionCount = 20;
   const newSpeciesQuestionCount = 10;
@@ -80,16 +84,33 @@ Future<Quiz> createQuiz(AppDb appDb, Course course, Lesson lesson) async {
   final allSpecies = oldSpecies + newSpecies;
   assert(allSpecies.length >= choiceCount);
 
-  final newSpeciesBag = RandomBag(newSpecies);
-  final oldSpeciesBag = RandomBag(oldSpecies);
+  final knowledge = await userDb.knowledge(course.profileId);
+
+  // Ask higher priority first.
+  final byPriority = (Species a, Species b) {
+    final ka = knowledge.ofSpecies(a);
+    final kb = knowledge.ofSpecies(b);
+    if (ka == null && kb == null) {
+      return 0;
+    } else if (ka == null) {
+      return -1;
+    } else if (kb == null) {
+      return 1;
+    } else {
+      return -ka.priority(now).compareTo(kb.priority(now));
+    }
+  };
+  final newSpeciesBag = CyclicBag(newSpecies.sorted(byPriority));
+  final oldSpeciesBag = CyclicBag(oldSpecies.sorted(byPriority));
+
   final allSpeciesBag = RandomBag(allSpecies);
   final recordingsBags = <Species, RandomBag<Recording>>{};
 
   final questions = <Question>[];
   for (var i = 0; i < questionCount; i++) {
     final answer = i < newSpeciesQuestionCount || oldSpecies.isEmpty ?
-        newSpeciesBag.next(random) :
-        oldSpeciesBag.next(random);
+        newSpeciesBag.next() :
+        oldSpeciesBag.next();
     if (!recordingsBags.containsKey(answer)) {
       recordingsBags[answer] = RandomBag(await appDb.recordingsFor(answer));
     }
@@ -111,4 +132,25 @@ Future<Quiz> createQuiz(AppDb appDb, Course course, Lesson lesson) async {
   questions.shuffle(random);
 
   return Quiz(questions.toBuiltList());
+}
+
+Future<void> storeAnswer(UserDb userDb, Profile profile, Course course, Question question) async {
+  await userDb.insertQuestion(profile.profileId, course.courseId, question);
+  final speciesKnowledge = await userDb.speciesKnowledgeOrNull(profile.profileId, question.correctAnswer.speciesId);
+  final newSpeciesKnowledge =
+      speciesKnowledge?.update(correct: question.isCorrect, answerTimestamp: question.answerTimestamp) ??
+      SpeciesKnowledge.initial(question.answerTimestamp);
+  await userDb.upsertSpeciesKnowledge(profile.profileId, question.correctAnswer.speciesId, newSpeciesKnowledge);
+}
+
+const minScorePercentToUnlockNextLesson = 90;
+
+Future<bool> maybeUnlockNextLesson(UserDb userDb, Course course, Quiz quiz) async {
+  if (quiz.scorePercent >= minScorePercentToUnlockNextLesson) {
+    if (course.unlockNextLesson()) {
+      await userDb.updateCourseUnlockedLessons(course);
+      return true;
+    }
+  }
+  return false;
 }

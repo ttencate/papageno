@@ -11,7 +11,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class UserDb {
-  static const _latestVersion = 5;
+  static const _latestVersion = 6;
 
   final AppDb _appDb;
   final Database _db;
@@ -63,6 +63,7 @@ class UserDb {
       case 3: return _upgradeToVersion3(txn);
       case 4: return _upgradeToVersion4(txn);
       case 5: return _upgradeToVersion5(txn);
+      case 6: return _upgradeToVersion6(txn);
       default: return Future.value();
     }
   }
@@ -132,6 +133,28 @@ class UserDb {
   static Future<void> _upgradeToVersion5(Transaction txn) async {
     await txn.execute('''
       alter table profiles add column last_used_timestamp_ms integer
+    ''');
+  }
+
+  /// Adds knowledge table.
+  static Future<void> _upgradeToVersion6(Transaction txn) async {
+    await txn.execute('''
+      create table knowledge (
+        profile_id integer not null,
+        species_id integer not null,
+        ebisu_time double,
+        ebisu_alpha double,
+        ebisu_beta double,
+        last_asked_timestamp_ms int,
+        primary key (profile_id, species_id),
+        foreign key (profile_id) references profiles(profile_id) on delete cascade
+      )
+    ''');
+    await txn.execute('''
+      create index knowledge_profile_id on knowledge(profile_id)
+    ''');
+    await txn.execute('''
+      create index knowledge_profile_id_species_id on knowledge(profile_id, species_id)
     ''');
   }
 
@@ -238,27 +261,41 @@ class UserDb {
   }
 
   Future<Knowledge> knowledge(int profileId) async {
-    final records = await _db.rawQuery('''
-      select
-        correct_species_id as species_id,
-        sum(case when given_species_id = correct_species_id then 1 else 0 end) as correct_answer_count,
-        count(*) as total_answer_count
-      from questions
-      where profile_id = ? and correct_species_id is not null
-      group by species_id
-    ''', <dynamic>[profileId]);
+    final records = await _db.query(
+        'knowledge',
+        where: 'profile_id = ?',
+        whereArgs: <dynamic>[profileId]);
     final bySpecies = <Species, SpeciesKnowledge>{};
     for (final record in records) {
       final species = await _appDb.speciesOrNull(record['species_id'] as int);
       if (species == null) {
         continue;
       }
-      bySpecies[species] = SpeciesKnowledge(
-        correctAnswerCount: record['correct_answer_count'] as int,
-        totalAnswerCount: record['total_answer_count'] as int,
-      );
+      bySpecies[species] = SpeciesKnowledge.fromMap(record);
     }
     return Knowledge(bySpecies);
+  }
+
+  Future<SpeciesKnowledge> speciesKnowledgeOrNull(int profileId, int speciesId) async {
+    final records = await _db.query(
+        'knowledge',
+        where: 'profile_id = ? and species_id = ?',
+        whereArgs: <dynamic>[profileId, speciesId]);
+    if (records.isEmpty) {
+      return null;
+    }
+    return SpeciesKnowledge.fromMap(records.single);
+  }
+
+  Future<void> upsertSpeciesKnowledge(int profileId, int speciesId, SpeciesKnowledge speciesKnowledge) async {
+    await _db.insert(
+        'knowledge',
+        <String, dynamic>{
+          'profile_id': profileId,
+          'species_id': speciesId,
+          ...speciesKnowledge.toMap(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Map<String, dynamic> _courseToMap(Course course) => <String, dynamic>{

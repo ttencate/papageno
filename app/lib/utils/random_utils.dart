@@ -35,3 +35,19 @@ class RandomBag<T> {
   }
 
 }
+
+/// Like `RandomBag` except not random.
+class CyclicBag<T> {
+  final BuiltList<T> elements;
+  var _nextIndex = 0;
+
+  CyclicBag(Iterable<T> elements) :
+      elements = elements.toBuiltList();
+
+  T next() {
+    assert(elements.isNotEmpty);
+    final result = elements[_nextIndex];
+    _nextIndex = (_nextIndex + 1) % elements.length;
+    return result;
+  }
+}

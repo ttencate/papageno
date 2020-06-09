@@ -1,9 +1,13 @@
 import 'dart:math';
 
 import 'package:built_collection/built_collection.dart';
+import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
+import 'package:papageno/ebisu/ebisu.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
+
+final log = Logger('user_model');
 
 @immutable
 class RankedSpecies {
@@ -61,34 +65,24 @@ class Course {
   BuiltList<Lesson> get unlockedLessons => lessons.sublist(0, _unlockedLessonCount);
   BuiltList<Lesson> get lockedLessons => lessons.sublist(_unlockedLessonCount);
 
-  bool unlockLessons(Knowledge knowledge) {
-    final prevUnlockedLessonCount = _unlockedLessonCount;
-    while (_unlockedLessonCount < lessonCount) {
-      if (lastUnlockedLesson.score(knowledge) < lastUnlockedLesson.scoreToUnlockNext) {
-        break;
-      }
+  bool unlockNextLesson() {
+    if (_unlockedLessonCount < lessonCount) {
       _unlockedLessonCount++;
+      return true;
+    } else {
+      return false;
     }
-    return _unlockedLessonCount != prevUnlockedLessonCount;
   }
 }
 
 @immutable
 class Lesson {
-  static const _scorePerSpeciesToUnlockNextLesson = 4;
-  
   final int index;
   final BuiltList<Species> species;
 
   Lesson({this.index, this.species});
 
   int get number => index + 1;
-
-  int score(Knowledge knowledge) {
-    return species.map((species) => knowledge.ofSpecies(species).correctAnswerCount).fold(0, (a, b) => a + b);
-  }
-  
-  int get scoreToUnlockNext => _scorePerSpeciesToUnlockNextLesson * species.length;
 }
 
 class Quiz {
@@ -162,7 +156,7 @@ class Knowledge {
   Knowledge(this._ofSpecies);
 
   SpeciesKnowledge ofSpecies(Species species) {
-    return _ofSpecies[species] ?? SpeciesKnowledge.none;
+    return _ofSpecies[species];
   }
 
   @override
@@ -171,17 +165,53 @@ class Knowledge {
 
 @immutable
 class SpeciesKnowledge {
-  static const int _minAnswerCountForFullScore = 4;
+  static const _minutesPerDay = 60.0 * 24.0;
+  static const _millisecondsPerDay = 1000.0 * 60.0 * 60.0 * 24.0;
+  
+  static const _initialHalflifeDays = 10.0 / _minutesPerDay;
 
-  static final none = SpeciesKnowledge(correctAnswerCount: 0, totalAnswerCount: 0);
+  /// The underlying Ebisu model. Time is in days.
+  final EbisuModel _model;
+  final int _lastAskedTimestampMs;
 
-  final int correctAnswerCount;
-  final int totalAnswerCount;
+  SpeciesKnowledge.initial(DateTime creationTimestamp) :
+      _model = EbisuModel(time: _initialHalflifeDays),
+      _lastAskedTimestampMs = creationTimestamp.millisecondsSinceEpoch;
 
-  SpeciesKnowledge({@required this.correctAnswerCount, @required this.totalAnswerCount});
+  SpeciesKnowledge.fromMap(Map<String, dynamic> map) :
+      _model = EbisuModel(
+        time: map['ebisu_time'] as double,
+        alpha: map['ebisu_alpha'] as double,
+        beta: map['ebisu_beta'] as double,
+      ),
+      _lastAskedTimestampMs = map['last_asked_timestamp_ms'] as int;
+  
+  SpeciesKnowledge._internal(this._model, this._lastAskedTimestampMs);
 
-  double get scorePercent => 100.0 * correctAnswerCount.toDouble() / max(totalAnswerCount, _minAnswerCountForFullScore).toDouble();
+  /// Returns the estimated halflife (time to forget) for this species.
+  double get halflife => _model.modelToPercentileDecay(percentile: 0.5);
 
-  @override
-  String toString() => '${correctAnswerCount}/${totalAnswerCount} (${scorePercent.round()}%)';
+  /// Returns a number that represents how important it is to ask about this species now (greater is higher priority).
+  /// The number is not meaningful by itself, only in comparisons.
+  double priority(DateTime now) => -_model.predictRecall(_daysSinceAsked(now));
+  
+  SpeciesKnowledge update({@required bool correct, DateTime answerTimestamp}) {
+    answerTimestamp ??= DateTime.now();
+    var newModel = _model;
+    try {
+      newModel = _model.updateRecall(correct ? 1 : 0, 1, _daysSinceAsked(answerTimestamp));
+    } catch (ex) {
+      log.warning('Failed to update Ebishu model', ex);
+    }
+    return SpeciesKnowledge._internal(newModel, answerTimestamp.millisecondsSinceEpoch);
+  }
+
+  double _daysSinceAsked(DateTime now) => (now.millisecondsSinceEpoch - _lastAskedTimestampMs) / _millisecondsPerDay;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+    'ebisu_time': _model.time,
+    'ebisu_alpha': _model.alpha,
+    'ebisu_beta': _model.beta,
+    'last_asked_timestamp_ms': _lastAskedTimestampMs,
+  };
 }

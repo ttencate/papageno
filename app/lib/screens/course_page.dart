@@ -63,8 +63,6 @@ class _CoursePageState extends State<CoursePage> {
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
-            final lessonScore = course.lastUnlockedLesson.score(snapshot.data);
-            final unlockScore = course.lastUnlockedLesson.scoreToUnlockNext;
             return Container(
               color: Colors.grey.shade200,
               child: ListView(
@@ -77,25 +75,10 @@ class _CoursePageState extends State<CoursePage> {
                   ),
                   if (course.hasAnyLockedLessons) Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Text(
-                          strings.unlockProgress,
-                          style: theme.textTheme.bodyText1,
-                          softWrap: true,
-                        ),
-                        SizedBox(height: 8.0),
-                        _FancyProgressBar(
-                          value: lessonScore / unlockScore,
-                          backgroundColor: Colors.grey.shade400,
-                          valueColor: _percentageColor(
-                            (lessonScore / unlockScore * 100.0).round()),
-                          child: Text(
-                            '${lessonScore}/${unlockScore}',
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      strings.unlockExplanation(minScorePercentToUnlockNextLesson),
+                      style: theme.textTheme.bodyText1,
+                      softWrap: true,
                     ),
                   ),
                   for (final lesson in course.lockedLessons) _LessonCard(
@@ -115,13 +98,11 @@ class _CoursePageState extends State<CoursePage> {
   Future<void> _startQuiz(Course course, Lesson lesson) async {
     unawaited(_userDb.markProfileUsed(widget.profile));
     final appDb = Provider.of<AppDb>(context, listen: false);
-    final quiz = await createQuiz(appDb, course, lesson);
+    final quiz = await createQuiz(appDb, _userDb, course, lesson);
     final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, course, quiz));
-    final knowledge = await _loadKnowledge();
-    var unlockedAnyLessons = false;
-    setState(() { unlockedAnyLessons = course.unlockLessons(knowledge); });
-    if (unlockedAnyLessons) {
-      await _userDb.updateCourseUnlockedLessons(course);
+    unawaited(_loadKnowledge());
+    if (await maybeUnlockNextLesson(_userDb, course, quiz)) {
+      setState(() {});
       // TODO show a nice message!
     }
     if (quizPageResult is QuizPageResult && quizPageResult.restart) {
@@ -216,8 +197,9 @@ class _SpeciesItem extends StatelessWidget {
           ),
           SizedBox(width: 16.0),
           Text(
-            locked ? '' : '${knowledge.correctAnswerCount}',
-            style: theme.textTheme.bodyText2.copyWith(fontWeight: FontWeight.bold, color: _percentageColor(knowledge.scorePercent.round())),
+            // TODO show star rating
+            knowledge?.halflife?.toStringAsFixed(5) ?? '',
+            // style: theme.textTheme.bodyText2.copyWith(fontWeight: FontWeight.bold, color: _percentageColor(knowledge.scorePercent.round())),
             textAlign: TextAlign.right,
           ),
         ],
