@@ -30,12 +30,36 @@ abstract class Strings {
   String get appCopyright;
   /// Shown on the splash screen while data is being loaded
   String get loading;
+  /// Menu item that opens profile selection screen
+  String get switchProfile;
   /// Menu item that opens course selection screen
   String get switchCourse;
   /// Menu item that opens Settings screen
   String get settings;
   /// Menu item that opens About screen
   String get about;
+  /// Title of screen listing all profiles
+  String get profiles;
+  /// Name shown for a profile that has not been given a name
+  String anonymousProfileName(int number);
+  /// Text describing when a profile was last accessed; the placeholder is replaced by a date and time
+  String profileLastUsed(String when);
+  /// Used instead of date if a profile has not been used yet
+  String get profileNeverUsed;
+  /// Button text for creating a new profile
+  String get startCreatingProfileButton;
+  /// Dialog title
+  String get createProfileTitle;
+  /// Dialog title
+  String get editProfileTitle;
+  /// Text above text input field for profile name
+  String get profileNameLabel;
+  /// Placeholder text in empty profile name text input
+  String get profileNamePlaceholder;
+  /// Text on button to delete profile
+  String get deleteProfileButton;
+  /// Text asking to delete a profile
+  String deleteProfileConfirmation(String profileName);
   /// Title of screen listing all courses in a profile
   String get courses;
   /// Button to start course creation
@@ -104,8 +128,10 @@ abstract class Strings {
   String source(String url);
   /// Referring to the name of a license, e.g. CC BY-SA
   String license(String name);
-  /// Text for a button
+  /// Text for an OK button
   String get ok;
+  /// Text for a cancel button
+  String get cancel;
   /// Text for confirmation button
   String get yes;
   /// Text for rejection button
@@ -222,7 +248,8 @@ abstract class Strings {
   String get imagesLicensesText;
   /// Returns the translation for the given key.
   /// For translations without arguments, returns a `String`.
-  /// For translations with arguments, returns a `String Function(...)`.Returns `null` if the key was not found.
+  /// For translations with arguments, returns a `String Function(...)`.
+  /// Returns `null` if the key was not found.
   dynamic operator [](String key){
     switch (key) {
       case 'appTitleShort': return appTitleShort;
@@ -231,9 +258,21 @@ abstract class Strings {
       case 'appVersion': return appVersion;
       case 'appCopyright': return appCopyright;
       case 'loading': return loading;
+      case 'switchProfile': return switchProfile;
       case 'switchCourse': return switchCourse;
       case 'settings': return settings;
       case 'about': return about;
+      case 'profiles': return profiles;
+      case 'anonymousProfileName': return anonymousProfileName;
+      case 'profileLastUsed': return profileLastUsed;
+      case 'profileNeverUsed': return profileNeverUsed;
+      case 'startCreatingProfileButton': return startCreatingProfileButton;
+      case 'createProfileTitle': return createProfileTitle;
+      case 'editProfileTitle': return editProfileTitle;
+      case 'profileNameLabel': return profileNameLabel;
+      case 'profileNamePlaceholder': return profileNamePlaceholder;
+      case 'deleteProfileButton': return deleteProfileButton;
+      case 'deleteProfileConfirmation': return deleteProfileConfirmation;
       case 'courses': return courses;
       case 'startCreatingCourseButton': return startCreatingCourseButton;
       case 'deleteCourseConfirmation': return deleteCourseConfirmation;
@@ -269,6 +308,7 @@ abstract class Strings {
       case 'source': return source;
       case 'license': return license;
       case 'ok': return ok;
+      case 'cancel': return cancel;
       case 'yes': return yes;
       case 'no': return no;
       case 'speciesNameDisplay': return speciesNameDisplay;
@@ -353,9 +393,21 @@ class _Strings_en extends Strings {
   @override String appVersion(String versionNumber) => <String>['Version ', versionNumber].join();
   @override String get appCopyright => 'Copyright © 2020, Thomas ten Cate';
   @override String get loading => 'Loading…';
+  @override String get switchProfile => 'Switch profile';
   @override String get switchCourse => 'Switch course';
   @override String get settings => 'Settings';
   @override String get about => 'About Papageno';
+  @override String get profiles => 'Profiles';
+  @override String anonymousProfileName(int number) => <String>['Unnamed profile ', number.toString()].join();
+  @override String profileLastUsed(String when) => <String>['Last used: ', when].join();
+  @override String get profileNeverUsed => 'never';
+  @override String get startCreatingProfileButton => 'Create new profile';
+  @override String get createProfileTitle => 'Create profile';
+  @override String get editProfileTitle => 'Edit profile';
+  @override String get profileNameLabel => 'Name';
+  @override String get profileNamePlaceholder => 'For example, your name';
+  @override String get deleteProfileButton => 'Delete profile';
+  @override String deleteProfileConfirmation(String profileName) => <String>['The profile "', profileName, '" will be deleted, along with all its courses and progress. This cannot be undone. Are you sure?'].join();
   @override String get courses => 'Courses';
   @override String get startCreatingCourseButton => 'Start new course';
   @override String deleteCourseConfirmation(String courseTitle) => <String>['The course "', courseTitle, '" will be deleted. This cannot be undone. Are you sure?'].join();
@@ -391,6 +443,7 @@ class _Strings_en extends Strings {
   @override String source(String url) => <String>['Source: ', url].join();
   @override String license(String name) => <String>['License: ', name].join();
   @override String get ok => 'OK';
+  @override String get cancel => 'Cancel';
   @override String get yes => 'Yes';
   @override String get no => 'No';
   @override String get speciesNameDisplay => 'Display of bird names';
@@ -454,9 +507,21 @@ class _Strings_en extends Strings {
 class _Strings_nl extends _Strings_en {
   @override String appVersion(String versionNumber) => <String>['Versie ', versionNumber].join();
   @override String get loading => 'Bezig met laden…';
+  @override String get switchProfile => 'Profiel kiezen';
   @override String get switchCourse => 'Cursus kiezen';
   @override String get settings => 'Instellingen';
   @override String get about => 'Over Papageno';
+  @override String get profiles => 'Profielen';
+  @override String anonymousProfileName(int number) => <String>['Naamloos profiel ', number.toString()].join();
+  @override String profileLastUsed(String when) => <String>['Laatst gebruikt: ', when].join();
+  @override String get profileNeverUsed => 'nooit';
+  @override String get startCreatingProfileButton => 'Maak nieuw profiel';
+  @override String get createProfileTitle => 'Profiel maken';
+  @override String get editProfileTitle => 'Profiel bewerken';
+  @override String get profileNameLabel => 'Naam';
+  @override String get profileNamePlaceholder => 'Bijvoorbeeld je eigen naam';
+  @override String get deleteProfileButton => 'Profiel verwijderen';
+  @override String deleteProfileConfirmation(String profileName) => <String>['Het profiel "', profileName, '" zal worden verwijderd, samen met al zijn cursussen en voortgang. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
   @override String get courses => 'Cursussen';
   @override String get startCreatingCourseButton => 'Nieuwe cursus beginnen';
   @override String deleteCourseConfirmation(String courseTitle) => <String>['De cursus "', courseTitle, '" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
@@ -492,6 +557,7 @@ class _Strings_nl extends _Strings_en {
   @override String source(String url) => <String>['Bron: ', url].join();
   @override String license(String name) => <String>['Licensie: ', name].join();
   @override String get ok => 'OK';
+  @override String get cancel => 'Annuleren';
   @override String get yes => 'Ja';
   @override String get no => 'Nee';
   @override String get speciesNameDisplay => 'Weergave van vogelnamen';

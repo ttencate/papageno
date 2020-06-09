@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 
 class MenuDrawer extends StatelessWidget {
@@ -22,19 +23,21 @@ class MenuDrawer extends StatelessWidget {
               image: AssetImage('assets/logo.png'),
             ),
           ),
-//          ListTile(
-//            title: Text(strings.profile),
-//          ),
+          if (profile != null) ListTile(
+            title: Text(strings.switchProfile),
+            subtitle: Text(strings.profileName(profile)),
+            onTap: () { _switchProfile(context); },
+          ),
           if (course != null) ListTile(
             title: Text(strings.switchCourse),
             subtitle: course == null ? null : Text(strings.courseName(course)),
             onTap: () { _switchCourse(context); },
           ),
           Divider(),
-          ListTile(
+          if (profile?.settings != null) ListTile(
             leading: Icon(Icons.settings),
             title: Text(strings.settings),
-            onTap: () { _openSettings(context); },
+            onTap: () { _openSettings(context, profile?.settings); },
           ),
           ListTile(
             leading: Icon(Icons.info_outline),
@@ -46,16 +49,22 @@ class MenuDrawer extends StatelessWidget {
     );
   }
 
+  void _switchProfile(BuildContext context) {
+    // TODO Navigator.popUntil() doesn't honor the route's willPop() callback.
+    //  Reimplementing it in terms of maybePop() seems fraught with peril though.
+    Navigator.of(context).popUntil((route) => route is ProfilesRoute);
+  }
+
   void _switchCourse(BuildContext context) {
     // TODO Navigator.popUntil() doesn't honor the route's willPop() callback.
     //  Reimplementing it in terms of maybePop() seems fraught with peril though.
     Navigator.of(context).popUntil((route) => route is CoursesRoute);
   }
 
-  void _openSettings(BuildContext context) {
+  void _openSettings(BuildContext context, Settings settings) {
     Navigator.of(context)
         ..pop()
-        ..push(SettingsRoute());
+        ..push(SettingsRoute(settings));
   }
 
   void _openAbout(BuildContext context) {

@@ -11,7 +11,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class UserDb {
-  static const _latestVersion = 4;
+  static const _latestVersion = 5;
 
   final AppDb _appDb;
   final Database _db;
@@ -62,6 +62,7 @@ class UserDb {
       case 2: return _upgradeToVersion2(txn);
       case 3: return _upgradeToVersion3(txn);
       case 4: return _upgradeToVersion4(txn);
+      case 5: return _upgradeToVersion5(txn);
       default: return Future.value();
     }
   }
@@ -127,10 +128,18 @@ class UserDb {
     ''');
   }
 
+  /// Adds last_used timestamp to profiles table.
+  static Future<void> _upgradeToVersion5(Transaction txn) async {
+    await txn.execute('''
+      alter table profiles add column last_used_timestamp_ms integer
+    ''');
+  }
+
+  /// Returns all profiles, ordered by descending last used timestamp.
   Future<List<Profile>> getProfiles() async {
     final records = await _db.query(
         'profiles',
-        orderBy: 'profile_id');
+        orderBy: 'last_used_timestamp_ms desc');
     return records.map((record) => Profile.fromMap(record)).toList();
   }
 
@@ -147,6 +156,32 @@ class UserDb {
         'profiles',
         <String, dynamic>{'name': name});
     return await getProfile(profileId);
+  }
+
+  Future<void> renameProfile(Profile profile, String name) async {
+    await _db.update(
+      'profiles',
+      <String, dynamic>{'name': name},
+      where: 'profile_id = ?',
+      whereArgs: <dynamic>[profile.profileId]
+    );
+  }
+
+  Future<void> markProfileUsed(Profile profile) async {
+    profile.lastUsedTimestampMs = DateTime.now().millisecondsSinceEpoch;
+    await _db.update(
+      'profiles',
+      <String, dynamic>{'last_used_timestamp_ms': profile.lastUsedTimestampMs},
+      where: 'profile_id = ?',
+      whereArgs: <dynamic>[profile.profileId]
+    );
+  }
+
+  Future<void> deleteProfile(Profile profile) async {
+    await _db.delete(
+      'profiles',
+      where: 'profile_id = ?',
+      whereArgs: <dynamic>[profile.profileId]);
   }
 
   Future<String> getSetting(int profileId, String name, [String defaultValue]) async {

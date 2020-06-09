@@ -52,36 +52,39 @@ class _QuizPageState extends State<QuizPage> {
   @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
-    return WillPopScope(
-      onWillPop: _willPop,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            !quiz.isComplete ?
-            strings.questionIndex(quiz.currentQuestionNumber, quiz.questionCount) :
-            strings.quizResultsTitle
-          ),
-          // TODO show some sort of progress bar
-        ),
-        drawer: MenuDrawer(profile: widget.profile, course: widget.course),
-        body: PageView.builder(
-          controller: _pageController,
-          scrollDirection: Axis.horizontal,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: quiz.questionCount + 1,
-          itemBuilder: (BuildContext context, int index) =>
-            index < quiz.questionCount ?
-            QuestionScreen(
-              key: ObjectKey(quiz.questions[index]),
-              question: quiz.questions[index],
-              onAnswer: _storeAnswer,
-              onProceed: _showNextQuestion,
-            ) :
-            QuizResult(
-              quiz: quiz,
-              onRetry: _restart,
-              onBack: _back,
+    return ChangeNotifierProvider<Settings>.value(
+      value: widget.profile.settings,
+      child: WillPopScope(
+        onWillPop: _willPop,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(
+              !quiz.isComplete ?
+              strings.questionIndex(quiz.currentQuestionNumber, quiz.questionCount) :
+              strings.quizResultsTitle
             ),
+            // TODO show some sort of progress bar
+          ),
+          drawer: MenuDrawer(profile: widget.profile, course: widget.course),
+          body: PageView.builder(
+            controller: _pageController,
+            scrollDirection: Axis.horizontal,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: quiz.questionCount + 1,
+            itemBuilder: (BuildContext context, int index) =>
+              index < quiz.questionCount ?
+              QuestionScreen(
+                key: ObjectKey(quiz.questions[index]),
+                question: quiz.questions[index],
+                onAnswer: _storeAnswer,
+                onProceed: _showNextQuestion,
+              ) :
+              QuizResult(
+                quiz: quiz,
+                onRetry: _restart,
+                onBack: _back,
+              ),
+          ),
         ),
       ),
     );

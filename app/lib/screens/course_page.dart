@@ -50,66 +50,70 @@ class _CoursePageState extends State<CoursePage> {
     final theme = Theme.of(context);
     final strings = Strings.of(context);
     final course = widget.course;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(strings.courseName(course)),
-      ),
-      drawer: MenuDrawer(profile: widget.profile, course: widget.course),
-      body: FutureBuilder<Knowledge>(
-        future: _knowledge,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-          final lessonScore = course.lastUnlockedLesson.score(snapshot.data);
-          final unlockScore = course.lastUnlockedLesson.scoreToUnlockNext;
-          return Container(
-            color: Colors.grey.shade200,
-            child: ListView(
-              children: <Widget>[
-                for (final lesson in course.unlockedLessons) _LessonCard(
-                  knowledge: snapshot.data,
-                  course: course,
-                  lesson: lesson,
-                  onStart: () { _startQuiz(course, lesson); },
-                ),
-                if (course.hasAnyLockedLessons) Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Text(
-                        strings.unlockProgress,
-                        style: theme.textTheme.bodyText1,
-                        softWrap: true,
-                      ),
-                      SizedBox(height: 8.0),
-                      _FancyProgressBar(
-                        value: lessonScore / unlockScore,
-                        backgroundColor: Colors.grey.shade400,
-                        valueColor: _percentageColor(
-                          (lessonScore / unlockScore * 100.0).round()),
-                        child: Text(
-                          '${lessonScore}/${unlockScore}',
-                        ),
-                      ),
-                    ],
+    return ChangeNotifierProvider<Settings>.value(
+      value: widget.profile.settings,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(strings.courseName(course)),
+        ),
+        drawer: MenuDrawer(profile: widget.profile, course: widget.course),
+        body: FutureBuilder<Knowledge>(
+          future: _knowledge,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return Center(child: CircularProgressIndicator());
+            }
+            final lessonScore = course.lastUnlockedLesson.score(snapshot.data);
+            final unlockScore = course.lastUnlockedLesson.scoreToUnlockNext;
+            return Container(
+              color: Colors.grey.shade200,
+              child: ListView(
+                children: <Widget>[
+                  for (final lesson in course.unlockedLessons) _LessonCard(
+                    knowledge: snapshot.data,
+                    course: course,
+                    lesson: lesson,
+                    onStart: () { _startQuiz(course, lesson); },
                   ),
-                ),
-                for (final lesson in course.lockedLessons) _LessonCard(
-                  knowledge: snapshot.data,
-                  course: course,
-                  lesson: lesson,
-                ),
-              ],
-            ),
-          );
-        },
+                  if (course.hasAnyLockedLessons) Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          strings.unlockProgress,
+                          style: theme.textTheme.bodyText1,
+                          softWrap: true,
+                        ),
+                        SizedBox(height: 8.0),
+                        _FancyProgressBar(
+                          value: lessonScore / unlockScore,
+                          backgroundColor: Colors.grey.shade400,
+                          valueColor: _percentageColor(
+                            (lessonScore / unlockScore * 100.0).round()),
+                          child: Text(
+                            '${lessonScore}/${unlockScore}',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  for (final lesson in course.lockedLessons) _LessonCard(
+                    knowledge: snapshot.data,
+                    course: course,
+                    lesson: lesson,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
   Future<void> _startQuiz(Course course, Lesson lesson) async {
+    unawaited(_userDb.markProfileUsed(widget.profile));
     final appDb = Provider.of<AppDb>(context, listen: false);
     final quiz = await createQuiz(appDb, course, lesson);
     final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, course, quiz));

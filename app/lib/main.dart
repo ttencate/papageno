@@ -6,10 +6,8 @@ import 'package:package_info/package_info.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/theme.dart';
-import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/splash_screen_page.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -43,16 +41,19 @@ class AppState extends State<App> {
   Future<void> _loadingFuture;
 
   PackageInfo _packageInfo;
-  Settings _settings;
   AppDb _appDb;
   UserDb _userDb;
-  Profile _profile;
 
   @override
   void initState() {
     super.initState();
     // TODO handle exceptions here!
     _loadingFuture = () async {
+      // According to the `intl` docs we need to call this:
+      // await initializeDateFormatting(null, null);
+      // But on Flutter it crashes because Material also initializes it:
+      // https://github.com/flutter/flutter/issues/15741
+
       final packageInfo = await PackageInfo.fromPlatform();
       setState(() { _packageInfo = packageInfo; });
 
@@ -61,15 +62,6 @@ class AppState extends State<App> {
       setState(() { _appDb = appDb; });
       final userDb = await UserDb.open(appDb: _appDb);
       setState(() { _userDb = userDb; });
-
-      // When we start supporting multiple profiles, these objects will be pushed down
-      // to lower widgets.
-      final profiles = await userDb.getProfiles();
-      final profile = profiles.isEmpty ? await userDb.createProfile(null) : profiles.first;
-      setState(() { _profile = profile; });
-
-      final settings = await Settings.create(userDb, profile);
-      setState(() { _settings = settings; });
     }();
   }
 
@@ -86,17 +78,15 @@ class AppState extends State<App> {
     return MultiProvider(
       providers: <SingleChildWidget>[
         Provider<PackageInfo>.value(value: _packageInfo),
-        ChangeNotifierProvider<Settings>.value(value: _settings), // TODO stop providing globally, get from Profile somehow
         Provider<AppDb>.value(value: _appDb),
         Provider<UserDb>.value(value: _userDb),
-        Provider<Profile>.value(value: _profile),
       ],
       child: MaterialApp(
         onGenerateTitle: (BuildContext context) => Strings.of(context).appTitleShort,
         theme: appTheme,
         home: Builder(builder: (context) => SplashScreenPage(
           loadingFuture: _loadingFuture,
-          onDismissed: () => Navigator.of(context).pushReplacement(CoursesRoute(_profile, proceedAutomatically: true)),
+          onDismissed: () => Navigator.of(context).pushReplacement(ProfilesRoute(proceedAutomatically: true)),
         )),
         localizationsDelegates: [
           Strings.delegate,

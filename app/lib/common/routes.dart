@@ -3,13 +3,20 @@
 /// Using a class for each route type is much nicer!
 
 import 'package:flutter/material.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/about_page.dart';
 import 'package:papageno/screens/course_page.dart';
 import 'package:papageno/screens/courses_page.dart';
 import 'package:papageno/screens/create_course_page.dart';
+import 'package:papageno/screens/profiles_page.dart';
 import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/screens/settings_page.dart';
+
+class ProfilesRoute extends MaterialPageRoute<void> {
+  ProfilesRoute({bool proceedAutomatically = false}) :
+      super(builder: (context) => ProfilesPage(proceedAutomatically: proceedAutomatically));
+}
 
 class CoursesRoute extends MaterialPageRoute<void> {
   CoursesRoute(Profile profile, {bool proceedAutomatically = false}) :
@@ -32,8 +39,8 @@ class QuizRoute extends MaterialPageRoute<QuizPageResult> {
 }
 
 class SettingsRoute extends MaterialPageRoute<void> {
-  SettingsRoute() :
-      super(builder: (context) => SettingsPage());
+  SettingsRoute(Settings settings) :
+      super(builder: (context) => SettingsPage(settings));
 }
 
 class AboutRoute extends MaterialPageRoute<void> {

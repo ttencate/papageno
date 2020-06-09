@@ -4,13 +4,16 @@ import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
-import 'package:provider/provider.dart';
 
-class SettingsPage extends StatelessWidget {@override
+class SettingsPage extends StatelessWidget {
+  final Settings settings;
+
+  const SettingsPage(this.settings);
+
+  @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
     final theme = Theme.of(context);
-    final settings = Provider.of<Settings>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.settings),

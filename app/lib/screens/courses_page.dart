@@ -6,6 +6,7 @@ import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/user_db.dart';
+import 'package:papageno/widgets/confirmation_dialog.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:provider/provider.dart';
 
@@ -110,18 +111,8 @@ class _CoursesPageState extends State<CoursesPage> {
     final strings = Strings.of(context);
     final reallyDelete = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
+      builder: (BuildContext context) => ConfirmationDialog(
         content: Text(strings.deleteCourseConfirmation(strings.courseName(course))),
-        actions: <Widget>[
-          FlatButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(strings.no.toUpperCase()),
-          ),
-          FlatButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(strings.yes.toUpperCase()),
-          ),
-        ],
       ),
     ) ?? false;
     if (reallyDelete) {

@@ -202,7 +202,7 @@ class LatLon {
   }
 
   @override
-  String toString([int fractionDigits = 3]) =>
+  String toString({int fractionDigits = 3}) =>
       '${lat.toStringAsFixed(fractionDigits)}, ${lon.toStringAsFixed(fractionDigits)}';
 }
 

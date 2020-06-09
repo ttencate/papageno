@@ -9,7 +9,6 @@ import 'package:location/location.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/controller/controller.dart';
 import 'package:papageno/model/app_model.dart';
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/user_db.dart';
@@ -56,7 +55,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     final theme = Theme.of(context);
     final strings = Strings.of(context);
     final locale = WidgetsBinding.instance.window.locale;
-    final settings = Provider.of<Settings>(context);
+    final settings = widget.profile.settings;
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.createCourseTitle),

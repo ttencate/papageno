@@ -5,9 +5,21 @@ appTitleFull,Title of the app,Papageno: Birdsong Tutor,
 appVersion,Version of the app,Version ${versionNumber},Versie ${versionNumber}
 appCopyright,Copyright line,"Copyright © 2020, Thomas ten Cate",
 loading,Shown on the splash screen while data is being loaded,Loading…,Bezig met laden…
+switchProfile,Menu item that opens profile selection screen,Switch profile,Profiel kiezen
 switchCourse,Menu item that opens course selection screen,Switch course,Cursus kiezen
 settings,Menu item that opens Settings screen,Settings,Instellingen
 about,Menu item that opens About screen,About Papageno,Over Papageno
+profiles,Title of screen listing all profiles,Profiles,Profielen
+anonymousProfileName,Name shown for a profile that has not been given a name,Unnamed profile #{number},Naamloos profiel #{number}
+profileLastUsed,Text describing when a profile was last accessed; the placeholder is replaced by a date and time,Last used: ${when},Laatst gebruikt: ${when}
+profileNeverUsed,Used instead of date if a profile has not been used yet,never,nooit
+startCreatingProfileButton,Button text for creating a new profile,Create new profile,Maak nieuw profiel
+createProfileTitle,Dialog title,Create profile,Profiel maken
+editProfileTitle,Dialog title,Edit profile,Profiel bewerken
+profileNameLabel,Text above text input field for profile name,Name,Naam
+profileNamePlaceholder,Placeholder text in empty profile name text input,"For example, your name",Bijvoorbeeld je eigen naam
+deleteProfileButton,Text on button to delete profile,Delete profile,Profiel verwijderen
+deleteProfileConfirmation,Text asking to delete a profile,"The profile ""${profileName}"" will be deleted, along with all its courses and progress. This cannot be undone. Are you sure?","Het profiel ""${profileName}"" zal worden verwijderd, samen met al zijn cursussen en voortgang. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
 courses,Title of screen listing all courses in a profile,Courses,Cursussen
 startCreatingCourseButton,Button to start course creation,Start new course,Nieuwe cursus beginnen
 deleteCourseConfirmation,Text asking to delete a course,"The course ""${courseTitle}"" will be deleted. This cannot be undone. Are you sure?","De cursus ""${courseTitle}"" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
@@ -42,7 +54,8 @@ imageCreator,Credit for photographers,Photo by ${name},Foto door ${name}
 unknownCreator,"Shown instead of author name if author is unknown, referring to the web page where their work was found","[unknown, see source page]","[onbekend, zie bronpagina]"
 source,"Referring to a URL where source material (audio, photo) was found",Source: ${url},Bron: ${url}
 license,"Referring to the name of a license, e.g. CC BY-SA",License: ${name},Licensie: ${name}
-ok,Text for a button,OK,OK
+ok,Text for an OK button,OK,OK
+cancel,Text for a cancel button,Cancel,Annuleren
 yes,Text for confirmation button,Yes,Ja
 no,Text for rejection button,No,Nee
 speciesNameDisplay,Heading on the Settings screen,Display of bird names,Weergave van vogelnamen

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 import 'package:papageno/model/app_model.dart';
+import 'package:papageno/model/settings.dart';
 
 @immutable
 class RankedSpecies {
@@ -18,16 +19,23 @@ class RankedSpecies {
 
 /// A [Profile] represents a single user of the app.
 /// Pretty much all other data (courses, settings, ...) is scoped to a single profile.
-@immutable
 class Profile {
   final int profileId;
   final String name;
+  /// Unix timestamp when the profile was last accessed; 0 if never set.
+  int lastUsedTimestampMs;
+  /// Caution: may be `null` if not loaded.
+  Settings settings;
 
-  Profile(this.profileId, this.name);
+  Profile(this.profileId, this.name, this.lastUsedTimestampMs);
+
+  /// Returns the time (in the local time zone) when the profile was last used, or `null` if unused.
+  DateTime get lastUsed => lastUsedTimestampMs <= 0 ? null : DateTime.fromMillisecondsSinceEpoch(lastUsedTimestampMs);
 
   Profile.fromMap(Map<String, dynamic> map) :
-        profileId = map['profile_id'] as int,
-        name = map['name'] as String;
+      profileId = map['profile_id'] as int,
+      name = map['name'] as String,
+      lastUsedTimestampMs = (map['last_used_timestamp_ms'] ?? 0) as int;
 }
 
 class Course {
