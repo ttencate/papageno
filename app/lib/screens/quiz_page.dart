@@ -70,20 +70,31 @@ class _QuizPageState extends State<QuizPage> {
             controller: _pageController,
             scrollDirection: Axis.horizontal,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: quiz.currentQuestionIndex + 1,
-            itemBuilder: (BuildContext context, int index) =>
-              index < quiz.questionCount ?
-              QuestionScreen(
-                key: ObjectKey(quiz.questions[index]),
-                question: quiz.questions[index],
-                onAnswer: _storeAnswer,
-                onProceed: _showNextQuestion,
-              ) :
-              QuizResult(
-                quiz: quiz,
-                onRetry: _restart,
-                onBack: _back,
-              ),
+            // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
+            // the `PageView` sometimes creates pages before they are visible, causing
+            // https://github.com/ttencate/papageno/issues/58.
+            // If we fix this by setting `itemCount` to `quiz.currentQuestionIndex + 1`, then
+            // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
+            // (shouldn't keys prevent this?).
+            itemCount: null,
+            itemBuilder: (BuildContext context, int index) {
+              if (index < quiz.questionCount) {
+                return QuestionScreen(
+                  key: ObjectKey(quiz.questions[index]),
+                  question: quiz.questions[index],
+                  onAnswer: _storeAnswer,
+                  onProceed: _showNextQuestion,
+                );
+              } else if (index == quiz.questionCount) {
+                return QuizResult(
+                  quiz: quiz,
+                  onRetry: _restart,
+                  onBack: _back,
+                );
+              } else {
+                return null;
+              }
+            },
           ),
         ),
       ),
@@ -159,16 +170,29 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   Question get _question => widget.question;
   model.Image _image;
+  PlayerController _playerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _playerController = PlayerController(playing: true, looping: true);
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final appDb = Provider.of<AppDb>(context);
     appDb.imageForOrNull(_question.correctAnswer).then((image) {
-      if (image != null) {
+      if (mounted && image != null) {
         setState(() { _image = image; });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _playerController.dispose();
+    super.dispose();
   }
 
   @override
@@ -183,69 +207,71 @@ class _QuestionScreenState extends State<QuestionScreen> {
     ];
     final settings = Provider.of<Settings>(context);
     // TODO alternative layout for landscape orientation
-    final questionScreen = Column(
-      children: <Widget>[
-        Expanded(
-          child: RevealingImage(
-            image: Stack(
-              fit: StackFit.expand,
-              alignment: Alignment.center,
-              children: <Widget>[
-                if (_image == null) Placeholder(),
-                if (_image != null) material.Image(
-                  image: AssetImage(join('assets', 'images', _image.fileName)),
-                  fit: BoxFit.cover,
-                ),
-                if (_image != null) ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: 8.0,
-                      sigmaY: 8.0,
-                    ),
-                    child: material.Image(
-                      image: AssetImage(join('assets', 'images', _image.fileName)),
-                      fit: BoxFit.contain,
+    return GestureDetector(
+      onTap: _question.isAnswered ? widget.onProceed : null,
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: RevealingImage(
+              image: Stack(
+                fit: StackFit.expand,
+                alignment: Alignment.center,
+                children: <Widget>[
+                  if (_image == null) Placeholder(),
+                  if (_image != null) material.Image(
+                    image: AssetImage(join('assets', 'images', _image.fileName)),
+                    fit: BoxFit.cover,
+                  ),
+                  if (_image != null) ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 8.0,
+                        sigmaY: 8.0,
+                      ),
+                      child: material.Image(
+                        image: AssetImage(join('assets', 'images', _image.fileName)),
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 0.0,
-                  right: 0.0,
-                  bottom: 0.0,
-                  child: Container(
-                    color: Colors.black.withOpacity(0.2),
-                    alignment: Alignment.center,
-                    padding: EdgeInsets.all(2.0),
-                    child: Column(
-                      children: <Widget>[
-                        Text(
-                          _question.correctAnswer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
-                          style: theme.textTheme.headline6.copyWith(
-                            color: textOnImageColor,
-                            shadows: textOnImageShadows,
+                  Positioned(
+                    left: 0.0,
+                    right: 0.0,
+                    bottom: 0.0,
+                    child: Container(
+                      color: Colors.black.withOpacity(0.2),
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(2.0),
+                      child: Column(
+                        children: <Widget>[
+                          Text(
+                            _question.correctAnswer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                            style: theme.textTheme.headline6.copyWith(
+                              color: textOnImageColor,
+                              shadows: textOnImageShadows,
+                            ),
                           ),
-                        ),
-                        if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) Text(
-                          _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
-                          style: theme.textTheme.headline6.copyWith(
-                            color: textOnImageColor,
-                            shadows: textOnImageShadows,
-                            fontWeight: FontWeight.normal,
+                          if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) Text(
+                            _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                            style: theme.textTheme.headline6.copyWith(
+                              color: textOnImageColor,
+                              shadows: textOnImageShadows,
+                              fontWeight: FontWeight.normal,
+                            ),
                           ),
-                        ),
-                        if (settings.showScientificName.value) Text(
-                          _question.correctAnswer.scientificName.capitalize(),
-                          style: theme.textTheme.caption.copyWith(
-                            fontStyle: FontStyle.italic,
-                            color: textOnImageColor,
-                            shadows: textOnImageShadows,
+                          if (settings.showScientificName.value) Text(
+                            _question.correctAnswer.scientificName.capitalize(),
+                            style: theme.textTheme.caption.copyWith(
+                              fontStyle: FontStyle.italic,
+                              color: textOnImageColor,
+                              shadows: textOnImageShadows,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
+                  Positioned(
                     right: 0.0,
                     top: 0.0,
                     child: IconButton(
@@ -255,26 +281,27 @@ class _QuestionScreenState extends State<QuestionScreen> {
                       padding: EdgeInsets.zero,
                       color: Colors.white.withOpacity(0.5),
                       onPressed: _showAttribution,
-                    )
-                ),
-              ],
+                    ),
+                  ),
+                ],
+              ),
+              revealed: _question.isAnswered,
             ),
-            revealed: _question.isAnswered,
           ),
-        ),
-        Player(
-          key: GlobalObjectKey(_question.recording),
-          recording: _question.recording,
-        ),
-        Divider(height: 0.0),
-        for (var widget in ListTile.divideTiles(
-          context: context,
-          tiles: _question.choices.map(_buildChoice),
-        )) widget,
-        Divider(height: 0.0),
-        Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Center(
+          Player(
+            key: GlobalObjectKey(_question.recording),
+            controller: _playerController,
+            audioFile: 'assets/sounds/${_question.recording.fileName}',
+          ),
+          Divider(height: 0.0),
+          for (var widget in ListTile.divideTiles(
+            context: context,
+            tiles: _question.choices.map(_buildChoice),
+          )) widget,
+          Divider(height: 0.0),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Center(
               child: AnimatedOpacity(
                 key: GlobalObjectKey(_question),
                 opacity: _question.isAnswered ? 1.0 : 0.0,
@@ -283,18 +310,11 @@ class _QuestionScreenState extends State<QuestionScreen> {
                 curve: _DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
                 child: Text(instructions, style: theme.textTheme.caption),
               )
-          ),
-        )
-      ],
+            ),
+          )
+        ],
+      ),
     );
-    if (!_question.isAnswered) {
-      return questionScreen;
-    } else {
-      return GestureDetector(
-        onTap: widget.onProceed,
-        child: questionScreen,
-      );
-    }
   }
 
   Widget _buildChoice(Species species) {
@@ -339,6 +359,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       setState(() {
         _question.answerWith(species);
       });
+      _playerController.looping = false;
       if (widget.onAnswer != null) {
         widget.onAnswer(_question);
       }
