@@ -102,13 +102,27 @@ class Quiz {
   bool get isComplete => _currentQuestionIndex >= questionCount;
 
   int get currentQuestionIndex => _currentQuestionIndex;
+
+  set currentQuestionIndex(int index) {
+    if (index < 0) index = 0;
+    if (index > questionCount) index = questionCount;
+    _currentQuestionIndex = index;
+  }
+
+  int get firstUnansweredQuestionIndex {
+    final index = questions.indexWhere((question) => !question.isAnswered);
+    return index >= 0 ? index : questionCount;
+  }
+
   int get currentQuestionNumber => _currentQuestionIndex + 1;
 
   Question get currentQuestion => isComplete ? null : questions[_currentQuestionIndex];
 
   void proceedToNextQuestion() {
     assert(!isComplete);
-    _currentQuestionIndex++;
+    while (currentQuestion?.isAnswered ?? false) {
+      _currentQuestionIndex++;
+    }
   }
 
   int get correctAnswerCount => questions.where((question) => question.isCorrect == true).length;
@@ -116,11 +130,11 @@ class Quiz {
   int get scorePercent => correctAnswerCount * 100 ~/ questionCount;
 
   Set<Species> get fullyCorrectSpecies =>
-      questions
-          .map((question) => question.correctAnswer)
-          .toSet()
-        ..removeAll(incorrectQuestions.map((question) => question.correctAnswer))
-        ..removeAll(incorrectQuestions.map((question) => question.givenAnswer));
+  questions
+      .map((question) => question.correctAnswer)
+      .toSet()
+    ..removeAll(incorrectQuestions.map((question) => question.correctAnswer))
+    ..removeAll(incorrectQuestions.map((question) => question.givenAnswer));
 
   List<Question> get correctQuestions => questions.where((question) => question.isCorrect == true).toList();
   List<Question> get incorrectQuestions => questions.where((question) => question.isCorrect == false).toList();

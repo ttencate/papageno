@@ -69,7 +69,8 @@ class _QuizPageState extends State<QuizPage> {
           body: PageView.builder(
             controller: _pageController,
             scrollDirection: Axis.horizontal,
-            physics: NeverScrollableScrollPhysics(),
+            physics: PageScrollPhysics(),
+            onPageChanged: _showQuestion,
             // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
             // the `PageView` sometimes creates pages before they are visible, causing
             // https://github.com/ttencate/papageno/issues/58.
@@ -78,6 +79,9 @@ class _QuizPageState extends State<QuizPage> {
             // (shouldn't keys prevent this?).
             itemCount: null,
             itemBuilder: (BuildContext context, int index) {
+              if (index > quiz.firstUnansweredQuestionIndex) {
+                return null;
+              }
               if (index < quiz.questionCount) {
                 return QuestionScreen(
                   key: ObjectKey(quiz.questions[index]),
@@ -85,14 +89,12 @@ class _QuizPageState extends State<QuizPage> {
                   onAnswer: _storeAnswer,
                   onProceed: _showNextQuestion,
                 );
-              } else if (index == quiz.questionCount) {
+              } else {
                 return QuizResult(
                   quiz: quiz,
                   onRetry: _restart,
                   onBack: _back,
                 );
-              } else {
-                return null;
               }
             },
           ),
@@ -116,6 +118,10 @@ class _QuizPageState extends State<QuizPage> {
           duration: Duration(milliseconds: 400),
           curve: Curves.ease);
     }
+  }
+
+  void _showQuestion(int index) {
+    setState(() { quiz.currentQuestionIndex = index; });
   }
 
   void _restart() {
@@ -175,7 +181,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
   @override
   void initState() {
     super.initState();
-    _playerController = PlayerController(playing: true, looping: true);
+    _playerController = PlayerController(playing: !_question.isAnswered, looping: !_question.isAnswered);
   }
 
   @override
@@ -217,7 +223,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                 fit: StackFit.expand,
                 alignment: Alignment.center,
                 children: <Widget>[
-                  if (_image == null) Placeholder(),
+                  if (_image == null) Container(),
                   if (_image != null) material.Image(
                     image: AssetImage(join('assets', 'images', _image.fileName)),
                     fit: BoxFit.cover,

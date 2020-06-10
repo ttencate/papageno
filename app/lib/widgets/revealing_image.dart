@@ -48,6 +48,9 @@ class _RevealingImageState extends State<RevealingImage> with SingleTickerProvid
     animation = Tween<double>(begin: 0.0, end: 1.0).animate(controller)
         // TODO figure out why we need this -- CustomClipper.reclip is tied to this animation so it should be updating outside the build cycle, right?
         ..addListener(() { setState(() {}); });
+    if (widget.revealed) {
+      controller.forward(from: 1.0); // Skip to end.
+    }
   }
 
   @override
