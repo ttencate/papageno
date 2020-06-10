@@ -70,7 +70,7 @@ class _QuizPageState extends State<QuizPage> {
             controller: _pageController,
             scrollDirection: Axis.horizontal,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: quiz.questionCount + 1,
+            itemCount: quiz.currentQuestionIndex + 1,
             itemBuilder: (BuildContext context, int index) =>
               index < quiz.questionCount ?
               QuestionScreen(
