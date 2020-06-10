@@ -18,52 +18,55 @@ class SettingsPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(strings.settings),
       ),
-      body: ListView(
-        children: <Widget>[
-          ListTile(
-            title: Text(
-              strings.speciesNameDisplay.toUpperCase(),
-              style: theme.textTheme.subtitle2,
+      body: AnimatedBuilder( // Strangely named widget: https://github.com/flutter/flutter/issues/50528#issuecomment-584781225
+        animation: settings,
+        builder: (context, _) => ListView(
+          children: <Widget>[
+            ListTile(
+              title: Text(
+                strings.speciesNameDisplay.toUpperCase(),
+                style: theme.textTheme.subtitle2,
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(strings.primarySpeciesNameLanguage),
-            subtitle: Text(strings.languageSettingName(settings.primarySpeciesLanguage.value)),
-            onTap: () async {
-              final value = await showDialog<LanguageSetting>(
-                context: context,
-                builder: (context) => LanguagePicker(
-                  title: strings.primarySpeciesNameLanguage,
-                  allowNone: false,
-                ),
-              );
-              if (value != null) {
-                settings.primarySpeciesLanguage.set(value);
-              }
-            },
-          ),
-          ListTile(
-            title: Text(strings.secondarySpeciesNameLanguage),
-            subtitle: Text(strings.languageSettingName(settings.secondarySpeciesLanguage.value)),
-            onTap: () async {
-              final value = await showDialog<LanguageSetting>(
-                context: context,
-                builder: (context) => LanguagePicker(
-                  title: strings.secondarySpeciesNameLanguage,
-                  allowNone: true,
-                ),
-              );
-              if (value != null) {
-                settings.secondarySpeciesLanguage.set(value);
-              }
-            },
-          ),
-          CheckboxListTile(
-            title: Text(strings.showScientificName),
-            value: settings.showScientificName.value,
-            onChanged: settings.showScientificName.set,
-          ),
-        ],
+            ListTile(
+              title: Text(strings.primarySpeciesNameLanguage),
+              subtitle: Text(strings.languageSettingName(settings.primarySpeciesLanguage.value)),
+              onTap: () async {
+                final value = await showDialog<LanguageSetting>(
+                  context: context,
+                  builder: (context) => LanguagePicker(
+                    title: strings.primarySpeciesNameLanguage,
+                    allowNone: false,
+                  ),
+                );
+                if (value != null) {
+                  settings.primarySpeciesLanguage.set(value);
+                }
+              },
+            ),
+            ListTile(
+              title: Text(strings.secondarySpeciesNameLanguage),
+              subtitle: Text(strings.languageSettingName(settings.secondarySpeciesLanguage.value)),
+              onTap: () async {
+                final value = await showDialog<LanguageSetting>(
+                  context: context,
+                  builder: (context) => LanguagePicker(
+                    title: strings.secondarySpeciesNameLanguage,
+                    allowNone: true,
+                  ),
+                );
+                if (value != null) {
+                  settings.secondarySpeciesLanguage.set(value);
+                }
+              },
+            ),
+            CheckboxListTile(
+              title: Text(strings.showScientificName),
+              value: settings.showScientificName.value,
+              onChanged: settings.showScientificName.set,
+            ),
+          ],
+        ),
       )
     );
   }
