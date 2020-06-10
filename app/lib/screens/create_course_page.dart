@@ -327,7 +327,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
   }
 }
 
-// TODO deduplicate with similar code from question.dart (something like LinkedTextWidget)
+// TODO deduplicate with similar code from quiz_page.dart (something like LinkedTextWidget)
 class _OpenStreetMapCopyright extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
