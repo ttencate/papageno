@@ -131,7 +131,7 @@ Future<Quiz> createQuiz(AppDb appDb, UserDb userDb, Course course, Lesson lesson
   }
   questions.shuffle(random);
 
-  return Quiz(questions.toBuiltList());
+  return Quiz(lesson, questions.toBuiltList());
 }
 
 Future<void> storeAnswer(UserDb userDb, Profile profile, Course course, Question question) async {
@@ -146,7 +146,7 @@ Future<void> storeAnswer(UserDb userDb, Profile profile, Course course, Question
 const minScorePercentToUnlockNextLesson = 90;
 
 Future<bool> maybeUnlockNextLesson(UserDb userDb, Course course, Quiz quiz) async {
-  if (quiz.scorePercent >= minScorePercentToUnlockNextLesson) {
+  if (quiz.lesson.index == course.lastUnlockedLesson.index && quiz.scorePercent >= minScorePercentToUnlockNextLesson) {
     if (course.unlockNextLesson()) {
       await userDb.updateCourseUnlockedLessons(course);
       return true;

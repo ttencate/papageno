@@ -86,9 +86,10 @@ class Lesson {
 }
 
 class Quiz {
+  final Lesson lesson;
   final BuiltList<Question> questions;
 
-  Quiz(this.questions);
+  Quiz(this.lesson, this.questions);
 
   int get questionCount => questions.length;
 
