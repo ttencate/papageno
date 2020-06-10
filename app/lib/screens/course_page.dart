@@ -198,7 +198,7 @@ class _SpeciesItem extends StatelessWidget {
           SizedBox(width: 16.0),
           Text(
             // TODO show star rating
-            knowledge?.halflife?.toStringAsFixed(5) ?? '',
+            knowledge == null ? '' : '${(knowledge.halflife * 24).toStringAsFixed(2)}h   ${(knowledge.recallProbability(DateTime.now()) * 100).toStringAsFixed(2)}%',
             // style: theme.textTheme.bodyText2.copyWith(fontWeight: FontWeight.bold, color: _percentageColor(knowledge.scorePercent.round())),
             textAlign: TextAlign.right,
           ),

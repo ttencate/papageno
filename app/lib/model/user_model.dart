@@ -191,6 +191,9 @@ class SpeciesKnowledge {
   /// Returns the estimated halflife (time to forget) for this species.
   double get halflife => _model.modelToPercentileDecay(percentile: 0.5);
 
+  /// Returns the probability between 0 and 1 that the species is remembered at this moment.
+  double recallProbability(DateTime now) => _model.predictRecall(_daysSinceAsked(now), exact: true);
+
   /// Returns a number that represents how important it is to ask about this species now (greater is higher priority).
   /// The number is not meaningful by itself, only in comparisons.
   double priority(DateTime now) => -_model.predictRecall(_daysSinceAsked(now));
