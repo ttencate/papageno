@@ -29,7 +29,6 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
   Duration _position = Duration();
 
   AudioPlayerState _state = AudioPlayerState.STOPPED;
-  bool _pausedDueToLifecycleState = false;
 
   Recording get _recording => widget.recording;
 
@@ -109,14 +108,9 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
       case AppLifecycleState.detached:
         if (_audioPlayer != null && _audioPlayer.state == AudioPlayerState.PLAYING) {
           _audioPlayer.pause();
-          _pausedDueToLifecycleState = true;
         }
         break;
       case AppLifecycleState.resumed:
-        if (_audioPlayer != null && _audioPlayer.state == AudioPlayerState.PAUSED && _pausedDueToLifecycleState) {
-          _audioPlayer.resume();
-          _pausedDueToLifecycleState = false;
-        }
         break;
     }
   }
@@ -152,7 +146,6 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
     } else {
       _audioPlayer.pause();
     }
-    _pausedDueToLifecycleState = false;
   }
 
   void _seek(double position) {
