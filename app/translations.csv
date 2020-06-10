@@ -10,6 +10,7 @@ switchCourse,Menu item that opens course selection screen,Switch course,Cursus k
 settings,Menu item that opens Settings screen,Settings,Instellingen
 about,Menu item that opens About screen,About Papageno,Over Papageno
 profiles,Title of screen listing all profiles,Profiles,Profielen
+profilesExplanation,Text at the top of the screen listing profiles,"A profile represents a single user of the app, and records their courses and knowledge. If multiple people are using this app on this device, create a profile for each of them.","Een profiel vertegenwoordigt een gebruiker van de app, en bevat de cursussen en kennis van die persoon. Als meerdere mensen deze app gebruiken op dit apparaat, kun je voor elk van hen een profiel maken."
 anonymousProfileName,Name shown for a profile that has not been given a name,Unnamed profile #{number},Naamloos profiel #{number}
 profileLastUsed,Text describing when a profile was last accessed; the placeholder is replaced by a date and time,Last used: ${when},Laatst gebruikt: ${when}
 profileNeverUsed,Used instead of date if a profile has not been used yet,never,nooit

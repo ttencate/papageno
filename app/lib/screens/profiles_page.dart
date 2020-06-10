@@ -57,6 +57,7 @@ class _ProfilesPageState extends State<ProfilesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final strings = Strings.of(context);
     return Scaffold(
       appBar: AppBar(
@@ -65,25 +66,33 @@ class _ProfilesPageState extends State<ProfilesPage> {
       drawer: MenuDrawer(),
       body: Column(
         children: <Widget>[
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              strings.profilesExplanation,
+              softWrap: true,
+              style: theme.textTheme.bodyText2,
+            ),
+          ),
           Expanded(
             child: FutureBuilder<List<Profile>>(
-                future: _profiles,
-                builder: (context, snapshot) =>
-                snapshot.hasData ?
-                ListView(
-                  children: ListTile.divideTiles(context: context, tiles: <Widget>[
-                    for (final profile in snapshot.data) ListTile(
-                      title: Text(strings.profileName(profile)),
-                      subtitle: Text(strings.profileLastUsed(strings.profileLastUsedDate(profile))),
-                      onTap: () { _openProfile(profile); },
-                      trailing: IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () { _editProfile(profile); },
-                      ),
+              future: _profiles,
+              builder: (context, snapshot) =>
+              snapshot.hasData ?
+              ListView(
+                children: ListTile.divideTiles(context: context, tiles: <Widget>[
+                  for (final profile in snapshot.data) ListTile(
+                    title: Text(strings.profileName(profile)),
+                    subtitle: Text(strings.profileLastUsed(strings.profileLastUsedDate(profile))),
+                    onTap: () { _openProfile(profile); },
+                    trailing: IconButton(
+                      icon: Icon(Icons.edit),
+                      onPressed: () { _editProfile(profile); },
                     ),
-                  ]).toList(),
-                ) :
-                Center(child: CircularProgressIndicator())
+                  ),
+                ]).toList(),
+              ) :
+              Center(child: CircularProgressIndicator())
             ),
           ),
           Padding(

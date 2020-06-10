@@ -40,6 +40,8 @@ abstract class Strings {
   String get about;
   /// Title of screen listing all profiles
   String get profiles;
+  /// Text at the top of the screen listing profiles
+  String get profilesExplanation;
   /// Name shown for a profile that has not been given a name
   String anonymousProfileName(int number);
   /// Text describing when a profile was last accessed; the placeholder is replaced by a date and time
@@ -263,6 +265,7 @@ abstract class Strings {
       case 'settings': return settings;
       case 'about': return about;
       case 'profiles': return profiles;
+      case 'profilesExplanation': return profilesExplanation;
       case 'anonymousProfileName': return anonymousProfileName;
       case 'profileLastUsed': return profileLastUsed;
       case 'profileNeverUsed': return profileNeverUsed;
@@ -398,6 +401,7 @@ class _Strings_en extends Strings {
   @override String get settings => 'Settings';
   @override String get about => 'About Papageno';
   @override String get profiles => 'Profiles';
+  @override String get profilesExplanation => 'A profile represents a single user of the app, and records their courses and knowledge. If multiple people are using this app on this device, create a profile for each of them.';
   @override String anonymousProfileName(int number) => <String>['Unnamed profile ', number.toString()].join();
   @override String profileLastUsed(String when) => <String>['Last used: ', when].join();
   @override String get profileNeverUsed => 'never';
@@ -512,6 +516,7 @@ class _Strings_nl extends _Strings_en {
   @override String get settings => 'Instellingen';
   @override String get about => 'Over Papageno';
   @override String get profiles => 'Profielen';
+  @override String get profilesExplanation => 'Een profiel vertegenwoordigt een gebruiker van de app, en bevat de cursussen en kennis van die persoon. Als meerdere mensen deze app gebruiken op dit apparaat, kun je voor elk van hen een profiel maken.';
   @override String anonymousProfileName(int number) => <String>['Naamloos profiel ', number.toString()].join();
   @override String profileLastUsed(String when) => <String>['Laatst gebruikt: ', when].join();
   @override String get profileNeverUsed => 'nooit';
