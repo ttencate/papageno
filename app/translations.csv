@@ -49,7 +49,7 @@ confusionText,Text describing a single incorrect answer,Took ${correct} to be ${
 retryQuizButton,Text on button that retries this quiz once more,Have another go,Nog eens proberen
 backButton,Text on button that goes back to the previous screen,Back,Terug
 abortQuizTitle,Title of dialog asking to abort the current quiz,Abort quiz?,Toets beëindigen?
-abortQuizContent,Text of dialog asking to abort the current quiz,This will end the current quiz without storing results. Are you sure?,Hiermee wordt de huidige toets beëindigd zonder resultaten op te slaan. Weet je het zeker?
+abortQuizContent,Text of dialog asking to abort the current quiz,This will end the current quiz. Are you sure?,Hiermee wordt de huidige toets beëindigd. Weet je het zeker?
 recordingCreator,Credit for audio recordists,Audio recording by ${name},Geluidsopname door ${name}
 imageCreator,Credit for photographers,Photo by ${name},Foto door ${name}
 unknownCreator,"Shown instead of author name if author is unknown, referring to the web page where their work was found","[unknown, see source page]","[onbekend, zie bronpagina]"

@@ -440,7 +440,7 @@ class _Strings_en extends Strings {
   @override String get retryQuizButton => 'Have another go';
   @override String get backButton => 'Back';
   @override String get abortQuizTitle => 'Abort quiz?';
-  @override String get abortQuizContent => 'This will end the current quiz without storing results. Are you sure?';
+  @override String get abortQuizContent => 'This will end the current quiz. Are you sure?';
   @override String recordingCreator(String name) => <String>['Audio recording by ', name].join();
   @override String imageCreator(String name) => <String>['Photo by ', name].join();
   @override String get unknownCreator => '[unknown, see source page]';
@@ -555,7 +555,7 @@ class _Strings_nl extends _Strings_en {
   @override String get retryQuizButton => 'Nog eens proberen';
   @override String get backButton => 'Terug';
   @override String get abortQuizTitle => 'Toets beëindigen?';
-  @override String get abortQuizContent => 'Hiermee wordt de huidige toets beëindigd zonder resultaten op te slaan. Weet je het zeker?';
+  @override String get abortQuizContent => 'Hiermee wordt de huidige toets beëindigd. Weet je het zeker?';
   @override String recordingCreator(String name) => <String>['Geluidsopname door ', name].join();
   @override String imageCreator(String name) => <String>['Foto door ', name].join();
   @override String get unknownCreator => '[onbekend, zie bronpagina]';
