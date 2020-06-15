@@ -4,6 +4,8 @@ import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
+import 'package:papageno/utils/url_utils.dart';
+import 'package:papageno/widgets/feedback_dialog.dart';
 
 class MenuDrawer extends StatelessWidget {
   final Profile profile;
@@ -44,6 +46,12 @@ class MenuDrawer extends StatelessWidget {
             title: Text(strings.about),
             onTap: () { _openAbout(context); },
           ),
+          ListTile(
+            leading: Icon(Icons.email),
+            title: Text(strings.sendFeedbackButton),
+            onTap: () { _openFeedback(context); },
+          ),
+          Divider(),
         ],
       ),
     );
@@ -71,5 +79,10 @@ class MenuDrawer extends StatelessWidget {
     Navigator.of(context)
         ..pop()
         ..push(AboutRoute());
+  }
+
+  void _openFeedback(BuildContext context) {
+    Navigator.of(context).pop();
+    showDialog<void>(context: context, builder: (context) => FeedbackDialog());
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -15,6 +17,8 @@ import 'package:provider/single_child_widget.dart';
 
 LogWriter _logWriter;
 
+final _log = Logger('main');
+
 Future<void> main() async {
   _logWriter = await LogWriter.toCache();
 
@@ -25,14 +29,18 @@ Future<void> main() async {
     _logWriter.write(formattedMessage);
   });
 
-  Logger.root.info('Starting application');
+  _log.info('Starting application');
 
   // Forcing portrait mode until we implement landscape layouts (https://github.com/ttencate/papageno/issues/16)
   // https://stackoverflow.com/a/52720581/14637
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
 
-  runApp(App());
+  runZonedGuarded(() { runApp(App()); }, _handleError);
+}
+
+void _handleError(dynamic exception, StackTrace stackTrace) {
+  _log.severe('uncaught future error', exception, stackTrace);
 }
 
 /// The root widget of the app.

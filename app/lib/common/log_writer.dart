@@ -150,7 +150,11 @@ class LogWriter {
       } catch (e) {
         _logLoggerError('could not delete log file ${_previous.path}', e);
       }
-      _writer.close();
+      try {
+        _writer.closeSync();
+      } catch (e) {
+        _logLoggerError('could not close log file ${_current.path}', e);
+      }
       _writer = null;
 
       try {

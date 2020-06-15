@@ -248,6 +248,18 @@ abstract class Strings {
   String get wikimediaCommonsSource;
   /// Button text in About screen
   String get imagesLicensesText;
+  /// Button that opens the email app to send feedback
+  String get sendFeedbackButton;
+  /// Explanatory text in dialog for sending feedback
+  String get feedbackExplanation;
+  /// Text of check box that selects whether a debug log is added to the feedback email
+  String get feedbackIncludeDebugLog;
+  /// Explanation in send feedback dialog
+  String get feedbackIncludeDebugLogExplanation;
+  /// Button that starts the email app to compose a feedback email
+  String get feedbackStartEmailAppButton;
+  /// Template for feedback email; only translate to English, Dutch and German!
+  String get feedbackEmailTemplate;
   /// Button that opens the debug log screen
   String get debugLogButton;
   /// Title of debug log screen
@@ -373,6 +385,12 @@ abstract class Strings {
       case 'recordingsLicensesText': return recordingsLicensesText;
       case 'wikimediaCommonsSource': return wikimediaCommonsSource;
       case 'imagesLicensesText': return imagesLicensesText;
+      case 'sendFeedbackButton': return sendFeedbackButton;
+      case 'feedbackExplanation': return feedbackExplanation;
+      case 'feedbackIncludeDebugLog': return feedbackIncludeDebugLog;
+      case 'feedbackIncludeDebugLogExplanation': return feedbackIncludeDebugLogExplanation;
+      case 'feedbackStartEmailAppButton': return feedbackStartEmailAppButton;
+      case 'feedbackEmailTemplate': return feedbackEmailTemplate;
       case 'debugLogButton': return debugLogButton;
       case 'debugLogTitle': return debugLogTitle;
     }
@@ -511,6 +529,12 @@ class _Strings_en extends Strings {
   @override String get recordingsLicensesText => 'View licenses for all recordings';
   @override String get wikimediaCommonsSource => 'Photos sourced from Wikimedia Commons';
   @override String get imagesLicensesText => 'View licenses for all photos';
+  @override String get sendFeedbackButton => 'Send feedback';
+  @override String get feedbackExplanation => 'This starts your email app to write a message to the developer, Thomas. I understand English, Dutch and German.';
+  @override String get feedbackIncludeDebugLog => 'Include debug log';
+  @override String get feedbackIncludeDebugLogExplanation => 'Adds logging information to the end of the email. Check this box if a problem just occurred with the app, and you want to report it. It greatly helps me to find and fix the issue!';
+  @override String get feedbackStartEmailAppButton => 'Start email app';
+  @override String get feedbackEmailTemplate => 'Hi Thomas,\n\n';
   @override String get debugLogButton => 'Debug log';
   @override String get debugLogTitle => 'Debug log';
 }
@@ -622,6 +646,12 @@ class _Strings_nl extends _Strings_en {
   @override String get recordingsLicensesText => 'Bekijk licensies voor opnames';
   @override String get wikimediaCommonsSource => 'Foto\'s verkregen via Wikimedia Commons';
   @override String get imagesLicensesText => 'Bekijk licensies voor alle foto\'s';
+  @override String get sendFeedbackButton => 'Feedback sturen';
+  @override String get feedbackExplanation => 'Hiermee open je je email-app om de ontwikkelaar, Thomas, een mail te schrijven. Ik versta Nederlands, Engels en Duits.';
+  @override String get feedbackIncludeDebugLog => 'Logbestand bijvoegen';
+  @override String get feedbackIncludeDebugLogExplanation => 'Voeg het logbestand toe aan het eind van de email. Vink dit aan als er zojuist een probleem is opgetreden in de app, en je dat wilt melden. Dit helpt mij heel erg bij het vinden en verhelpen van het probleem!';
+  @override String get feedbackStartEmailAppButton => 'Start email-app';
+  @override String get feedbackEmailTemplate => 'Hoi Thomas,\n\n';
   @override String get debugLogButton => 'Logbestand voor debuggen';
   @override String get debugLogTitle => 'Logbestand voor debuggen';
 }

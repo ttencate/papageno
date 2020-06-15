@@ -116,5 +116,15 @@ xenoCantoSource,Text in About screen,Audio recordings sourced from xeno-canto,Ge
 recordingsLicensesText,Button text in About screen,View licenses for all recordings,Bekijk licensies voor opnames
 wikimediaCommonsSource,Text in About screen,Photos sourced from Wikimedia Commons,Foto's verkregen via Wikimedia Commons
 imagesLicensesText,Button text in About screen,View licenses for all photos,Bekijk licensies voor alle foto's
+sendFeedbackButton,Button that opens the email app to send feedback,Send feedback,Feedback sturen
+feedbackExplanation,Explanatory text in dialog for sending feedback,"This starts your email app to write a message to the developer, Thomas. I understand English, Dutch and German.","Hiermee open je je email-app om de ontwikkelaar, Thomas, een mail te schrijven. Ik versta Nederlands, Engels en Duits."
+feedbackIncludeDebugLog,Text of check box that selects whether a debug log is added to the feedback email,Include debug log,Logbestand bijvoegen
+feedbackIncludeDebugLogExplanation,Explanation in send feedback dialog,"Adds logging information to the end of the email. Check this box if a problem just occurred with the app, and you want to report it. It greatly helps me to find and fix the issue!","Voeg het logbestand toe aan het eind van de email. Vink dit aan als er zojuist een probleem is opgetreden in de app, en je dat wilt melden. Dit helpt mij heel erg bij het vinden en verhelpen van het probleem!"
+feedbackStartEmailAppButton,Button that starts the email app to compose a feedback email,Start email app,Start email-app
+feedbackEmailTemplate,"Template for feedback email; only translate to English, Dutch and German!","Hi Thomas,
+
+","Hoi Thomas,
+
+"
 debugLogButton,Button that opens the debug log screen,Debug log,Logbestand voor debuggen
 debugLogTitle,Title of debug log screen,Debug log,Logbestand voor debuggen

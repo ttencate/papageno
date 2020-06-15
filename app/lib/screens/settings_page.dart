@@ -66,15 +66,6 @@ class SettingsPage extends StatelessWidget {
               value: settings.showScientificName.value,
               onChanged: settings.showScientificName.set,
             ),
-            Divider(),
-            ListTile(
-              title: Text(strings.debugLogButton),
-              onTap: () {
-                Navigator.of(context)
-                    ..pop()
-                    ..push(DebugLogRoute());
-              },
-            )
           ],
         ),
       )
