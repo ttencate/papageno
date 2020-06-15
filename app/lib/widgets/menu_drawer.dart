@@ -4,7 +4,6 @@ import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
-import 'package:papageno/utils/url_utils.dart';
 import 'package:papageno/widgets/feedback_dialog.dart';
 
 class MenuDrawer extends StatelessWidget {
