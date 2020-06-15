@@ -93,36 +93,18 @@ class Lesson {
 
 class Quiz {
   final BuiltList<Question> questions;
-  int _currentQuestionIndex = 0;
 
   Quiz(this.questions);
 
   int get questionCount => questions.length;
 
-  bool get isComplete => _currentQuestionIndex >= questionCount;
+  bool get isComplete => !questions.any((q) => !q.isAnswered);
 
-  int get currentQuestionIndex => _currentQuestionIndex;
-
-  set currentQuestionIndex(int index) {
-    if (index < 0) index = 0;
-    if (index > questionCount) index = questionCount;
-    _currentQuestionIndex = index;
-  }
-
+  /// Returns the index (0-based) of the first question that has not been answered yet.
+  /// If all questions have been answered, returns [questionCount].
   int get firstUnansweredQuestionIndex {
     final index = questions.indexWhere((question) => !question.isAnswered);
     return index >= 0 ? index : questionCount;
-  }
-
-  int get currentQuestionNumber => _currentQuestionIndex + 1;
-
-  Question get currentQuestion => isComplete ? null : questions[_currentQuestionIndex];
-
-  void proceedToNextQuestion() {
-    assert(!isComplete);
-    while (currentQuestion?.isAnswered ?? false) {
-      _currentQuestionIndex++;
-    }
   }
 
   int get correctAnswerCount => questions.where((question) => question.isCorrect == true).length;
@@ -167,6 +149,9 @@ class Question {
     _givenAnswer = answer;
     _answerTimestamp = DateTime.now();
   }
+
+  @override
+  String toString() => 'Question(correctAnswer: $correctAnswer, givenAnswer: $givenAnswer)';
 }
 
 /// Represents how much the user knows about each species.

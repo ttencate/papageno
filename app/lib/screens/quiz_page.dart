@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
+import 'package:logging/logging.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/app_model.dart' as model show Image; // Avoid conflict with Flutter's Image class.
@@ -19,6 +20,8 @@ import 'package:papageno/widgets/player.dart';
 import 'package:papageno/widgets/revealing_image.dart';
 import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
+
+final _log = Logger('QuizPage');
 
 class QuizPageResult {
   final bool restart;
@@ -40,11 +43,13 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
 
   PageController _pageController;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _log.finer('Creating _QuizPageState for quiz ${quiz.questions.map((q) => q.correctAnswer.toString()).join(', ')}');
+    _pageController = PageController(initialPage: _currentPage);
   }
 
   Quiz get quiz => widget.quiz;
@@ -59,25 +64,25 @@ class _QuizPageState extends State<QuizPage> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(
-              !quiz.isComplete ?
-              strings.questionIndex(quiz.currentQuestionNumber, quiz.questionCount) :
-              strings.quizResultsTitle
+              _currentPage < quiz.questionCount ?
+                strings.questionIndex(_currentPage + 1, quiz.questionCount) :
+                strings.quizResultsTitle,
             ),
             // TODO show some sort of progress bar
           ),
           drawer: MenuDrawer(profile: widget.profile, course: widget.course),
           body: PageView.builder(
             controller: _pageController,
+            onPageChanged: (index) { setState(() { _currentPage = index; }); },
             scrollDirection: Axis.horizontal,
             physics: PageScrollPhysics(),
-            onPageChanged: _showQuestion,
             // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
             // the `PageView` sometimes creates pages before they are visible, causing
             // https://github.com/ttencate/papageno/issues/58.
             // If we fix this by setting `itemCount` to `quiz.currentQuestionIndex + 1`, then
             // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
             // (shouldn't keys prevent this?).
-            itemCount: null,
+            itemCount: quiz.firstUnansweredQuestionIndex + 1,
             itemBuilder: (BuildContext context, int index) {
               if (index > quiz.firstUnansweredQuestionIndex) {
                 return null;
@@ -104,24 +109,21 @@ class _QuizPageState extends State<QuizPage> {
   }
   
   Future<void> _storeAnswer(Question question) async {
+    _log.finer('Storing answer to question $question');
     final userDb = Provider.of<UserDb>(context, listen: false);
     await userDb.insertQuestion(widget.profile.profileId, widget.course.courseId, question);
+    // HACK: after answering a question, the state of the entire Quiz has changed.
+    setState(() {});
   }
 
   Future<void> _showNextQuestion() async {
-    if (!quiz.isComplete) {
-      setState(() {
-        quiz.proceedToNextQuestion();
-      });
-      await _pageController.animateToPage(
-          quiz.currentQuestionIndex,
-          duration: Duration(milliseconds: 400),
-          curve: Curves.ease);
-    }
-  }
-
-  void _showQuestion(int index) {
-    setState(() { quiz.currentQuestionIndex = index; });
+    _log.finer('_QuizScreenState._showNextQuestion() isComplete: ${quiz.isComplete}');
+    final targetPage = quiz.isComplete ? quiz.questionCount : quiz.firstUnansweredQuestionIndex;
+    _log.finer('Animating to page ${targetPage}');
+    await _pageController.animateToPage(
+        targetPage,
+        duration: Duration(milliseconds: 400),
+        curve: Curves.ease);
   }
 
   void _restart() {
@@ -180,12 +182,14 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   @override
   void initState() {
+    _log.finer('_QuestionScreenState.initState() for $_question');
     super.initState();
     _playerController = PlayerController(playing: !_question.isAnswered, looping: !_question.isAnswered);
   }
 
   @override
   void didChangeDependencies() {
+    _log.finer('_QuestionScreenState.didChangeDependencies() for $_question');
     super.didChangeDependencies();
     final appDb = Provider.of<AppDb>(context);
     appDb.imageForOrNull(_question.correctAnswer).then((image) {
@@ -197,6 +201,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   @override
   void dispose() {
+    _log.finer('_QuestionScreenState.dispose() for $_question');
     _playerController.dispose();
     super.dispose();
   }
@@ -361,8 +366,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 
   void _choose(Species species) {
+    _log.finer('_QuestionScreenState._choose($species) for $_question');
     if (!_question.isAnswered) {
       setState(() {
+        _log.finer('Answering question $_question');
         _question.answerWith(species);
       });
       _playerController.looping = false;
