@@ -116,3 +116,5 @@ xenoCantoSource,Text in About screen,Audio recordings sourced from xeno-canto,Ge
 recordingsLicensesText,Button text in About screen,View licenses for all recordings,Bekijk licensies voor opnames
 wikimediaCommonsSource,Text in About screen,Photos sourced from Wikimedia Commons,Foto's verkregen via Wikimedia Commons
 imagesLicensesText,Button text in About screen,View licenses for all photos,Bekijk licensies voor alle foto's
+debugLogButton,Button that opens the debug log screen,Debug log,Logbestand voor debuggen
+debugLogTitle,Title of debug log screen,Debug log,Logbestand voor debuggen

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/model/app_model.dart';
@@ -65,6 +66,15 @@ class SettingsPage extends StatelessWidget {
               value: settings.showScientificName.value,
               onChanged: settings.showScientificName.set,
             ),
+            Divider(),
+            ListTile(
+              title: Text(strings.debugLogButton),
+              onTap: () {
+                Navigator.of(context)
+                    ..pop()
+                    ..push(DebugLogRoute());
+              },
+            )
           ],
         ),
       )

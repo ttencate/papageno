@@ -248,6 +248,10 @@ abstract class Strings {
   String get wikimediaCommonsSource;
   /// Button text in About screen
   String get imagesLicensesText;
+  /// Button that opens the debug log screen
+  String get debugLogButton;
+  /// Title of debug log screen
+  String get debugLogTitle;
   /// Returns the translation for the given key.
   /// For translations without arguments, returns a `String`.
   /// For translations with arguments, returns a `String Function(...)`.
@@ -369,6 +373,8 @@ abstract class Strings {
       case 'recordingsLicensesText': return recordingsLicensesText;
       case 'wikimediaCommonsSource': return wikimediaCommonsSource;
       case 'imagesLicensesText': return imagesLicensesText;
+      case 'debugLogButton': return debugLogButton;
+      case 'debugLogTitle': return debugLogTitle;
     }
     return null;
   }
@@ -505,6 +511,8 @@ class _Strings_en extends Strings {
   @override String get recordingsLicensesText => 'View licenses for all recordings';
   @override String get wikimediaCommonsSource => 'Photos sourced from Wikimedia Commons';
   @override String get imagesLicensesText => 'View licenses for all photos';
+  @override String get debugLogButton => 'Debug log';
+  @override String get debugLogTitle => 'Debug log';
 }
 
 /// Translations for language code "nl".
@@ -614,4 +622,6 @@ class _Strings_nl extends _Strings_en {
   @override String get recordingsLicensesText => 'Bekijk licensies voor opnames';
   @override String get wikimediaCommonsSource => 'Foto\'s verkregen via Wikimedia Commons';
   @override String get imagesLicensesText => 'Bekijk licensies voor alle foto\'s';
+  @override String get debugLogButton => 'Logbestand voor debuggen';
+  @override String get debugLogTitle => 'Logbestand voor debuggen';
 }

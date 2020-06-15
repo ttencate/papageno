@@ -9,6 +9,7 @@ import 'package:papageno/screens/about_page.dart';
 import 'package:papageno/screens/course_page.dart';
 import 'package:papageno/screens/courses_page.dart';
 import 'package:papageno/screens/create_course_page.dart';
+import 'package:papageno/screens/debug_log_page.dart';
 import 'package:papageno/screens/profiles_page.dart';
 import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/screens/settings_page.dart';
@@ -46,4 +47,9 @@ class SettingsRoute extends MaterialPageRoute<void> {
 class AboutRoute extends MaterialPageRoute<void> {
   AboutRoute() :
       super(builder: (context) => AboutPage());
+}
+
+class DebugLogRoute extends MaterialPageRoute<void> {
+  DebugLogRoute() :
+      super(builder: (context) => DebugLogPage());
 }

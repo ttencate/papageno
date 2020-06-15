@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info/package_info.dart';
+import 'package:papageno/common/log_writer.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/theme.dart';
@@ -12,18 +13,26 @@ import 'package:papageno/services/user_db.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
-void main() {
+LogWriter _logWriter;
+
+Future<void> main() async {
+  _logWriter = await LogWriter.toCache();
+
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}'); // ignore: avoid_print
+    final formattedMessage = '${record.level.name}: ${record.time}: ${record.message}';
+    print(formattedMessage); // ignore: avoid_print
+    _logWriter.write(formattedMessage);
   });
+
+  Logger.root.info('Starting application');
+
   // Forcing portrait mode until we implement landscape layouts (https://github.com/ttencate/papageno/issues/16)
   // https://stackoverflow.com/a/52720581/14637
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown])
-    .then((_) {
-      runApp(App());
-    });
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+
+  runApp(App());
 }
 
 /// The root widget of the app.
@@ -77,6 +86,7 @@ class AppState extends State<App> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: <SingleChildWidget>[
+        Provider<LogWriter>.value(value: _logWriter),
         Provider<PackageInfo>.value(value: _packageInfo),
         Provider<AppDb>.value(value: _appDb),
         Provider<UserDb>.value(value: _userDb),
