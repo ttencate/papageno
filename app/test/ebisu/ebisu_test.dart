@@ -4,12 +4,12 @@
 /// https://github.com/fasiha/ebisu-java/blob/master/src/test/java/me/aldebrn/ebisu/EbisuTest.java
 
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papageno/ebisu/ebisu.dart';
 import 'package:papageno/ebisu/math.dart';
+
 import 'ulp.dart';
 
 /// Test cases, taken from the Python version of Ebisu.

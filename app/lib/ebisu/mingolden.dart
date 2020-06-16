@@ -16,14 +16,14 @@ class MinimizationStatus {
   MinimizationStatus(this.iterations, this.argmin, this.minimum, this.converged);
 }
 
-final _PHI_RATIO = 2 / (1 + sqrt(5));
+final _phiRatio = 2 / (1 + sqrt(5));
 
 MinimizationStatus minimize(double Function(double) f, double xL, double xU, double tol, int maxIterations) {
   double xF;
   double fF;
   var iteration = 0;
-  var x1 = xU - _PHI_RATIO * (xU - xL);
-  var x2 = xL + _PHI_RATIO * (xU - xL);
+  var x1 = xU - _phiRatio * (xU - xL);
+  var x2 = xL + _phiRatio * (xU - xL);
   // Initial bounds:
   var f1 = f(x1);
   var f2 = f(x2);
@@ -42,13 +42,13 @@ MinimizationStatus minimize(double Function(double) f, double xL, double xU, dou
       xU = x2;
       x2 = x1;
       f2 = f1;
-      x1 = xU - _PHI_RATIO * (xU - xL);
+      x1 = xU - _phiRatio * (xU - xL);
       f1 = f(x1);
     } else {
       xL = x1;
       x1 = x2;
       f1 = f2;
-      x2 = xL + _PHI_RATIO * (xU - xL);
+      x2 = xL + _phiRatio * (xU - xL);
       f2 = f(x2);
     }
   }
