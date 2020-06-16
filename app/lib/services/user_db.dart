@@ -3,12 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:built_collection/built_collection.dart';
+import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+
+final _log = Logger('UserDb');
 
 class UserDb {
   static const _latestVersion = 6;
@@ -18,25 +21,39 @@ class UserDb {
 
   UserDb._fromDatabase(this._appDb, this._db);
 
-  static Future<UserDb> open({@required AppDb appDb}) async {
-    final databasesPath = await getDatabasesPath();
-    try {
-      await Directory(databasesPath).create(recursive: true);
-    } catch (_) {}
-
-    final db = await openDatabase(
-      join(databasesPath, 'user.db'),
-      version: _latestVersion,
-      onConfigure: _onConfigure,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+  static Future<UserDb> open({@required AppDb appDb, DatabaseFactory factory, String path, int upgradeToVersion}) async {
+    factory ??= databaseFactory;
+    upgradeToVersion ??= _latestVersion;
+    _log.info('Opening database $path');
+    final db = await factory.openDatabase(
+      path ?? await _defaultPath(),
+      options: OpenDatabaseOptions(
+        version: upgradeToVersion,
+        onConfigure: _onConfigure,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      ),
     );
     // TODO run 'pragma quick_check' and/or 'pragma integrity_check'? Needs proper error reporting first.
     return UserDb._fromDatabase(appDb, db);
   }
 
+  static Future<String> _defaultPath() async {
+    final databasesPath = await getDatabasesPath();
+    try {
+      await Directory(databasesPath).create(recursive: true);
+    } catch (_) {}
+    return join(databasesPath, 'user.db');
+  }
+
   Future<void> close() async {
     await _db.close();
+  }
+
+  /// Only used for testing the migrations themselves.
+  /// TODO decouple migrations from UserDb so we can do this in a better way.
+  Future<void> upgradeForTest(int version) async {
+    await _onUpgrade(_db, await _db.getVersion(), version);
   }
 
   static Future<void> _onConfigure(Database db) async {
@@ -57,6 +74,7 @@ class UserDb {
   }
 
   static Future<void> _upgradeToVersion(Transaction txn, int version) {
+    _log.info('Running migration for version $version');
     switch (version) {
       case 1: return _upgradeToVersion1(txn);
       case 2: return _upgradeToVersion2(txn);
@@ -113,7 +131,7 @@ class UserDb {
         choices text,
         correct_species_id integer,
         given_species_id integer,
-        answer_timestamp double,
+        answer_timestamp double, -- Note: we actually store integers (milliseconds) here!
         foreign key (profile_id) references profiles(profile_id) on delete cascade
       )
     ''');
@@ -136,7 +154,9 @@ class UserDb {
     ''');
   }
 
-  /// Adds knowledge table.
+  /// Adds knowledge table and populates it.
+  /// This duplicates some code from the controller, because we don't want the database layer to depend on the
+  /// controller layer. And also, because we want to be able to change the controller but keep the migration frozen.
   static Future<void> _upgradeToVersion6(Transaction txn) async {
     await txn.execute('''
       create table knowledge (
@@ -150,6 +170,50 @@ class UserDb {
         foreign key (profile_id) references profiles(profile_id) on delete cascade
       )
     ''');
+
+    final existingProfileIds = (await txn.query('profiles', columns: <String>['profile_id']))
+        .map((Map<String, dynamic> r) => r['profile_id'] as int)
+        .toSet();
+    final profiles = <int, Map<int, SpeciesKnowledge>>{
+      for (final profileId in existingProfileIds) profileId: <int, SpeciesKnowledge>{},
+    };
+
+    final questionRecords = await txn.query(
+        'questions',
+        columns: <String>['profile_id', 'correct_species_id', 'given_species_id', 'answer_timestamp'],
+        orderBy: 'answer_timestamp');
+    for (final record in questionRecords) {
+      final profileId = record['profile_id'] as int;
+      final profile = profiles[profileId];
+      if (profile == null) {
+        continue;
+      }
+
+      final correctSpeciesId = record['correct_species_id'] as int;
+      final givenSpeciesId = record['given_species_id'] as int;
+      final correct = givenSpeciesId == correctSpeciesId;
+      final answerTimestamp = DateTime.fromMillisecondsSinceEpoch((record['answer_timestamp'] as double).round());
+      profile[correctSpeciesId] = profile.containsKey(correctSpeciesId) ?
+        profile[correctSpeciesId].update(correct: correct, answerTimestamp: answerTimestamp) :
+        SpeciesKnowledge.initial(answerTimestamp);
+    }
+
+    for (final entry in profiles.entries) {
+      final profileId = entry.key;
+      final profile = entry.value;
+      for (final entry in profile.entries) {
+        final speciesId = entry.key;
+        final knowledge = entry.value;
+        await txn.insert(
+            'knowledge',
+            <String, dynamic>{
+              'profile_id': profileId,
+              'species_id': speciesId,
+              ...knowledge.toMap(),
+            });
+      }
+    }
+
     await txn.execute('''
       create index knowledge_profile_id on knowledge(profile_id)
     ''');

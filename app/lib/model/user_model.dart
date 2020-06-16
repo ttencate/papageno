@@ -138,11 +138,11 @@ class Question {
 
   DateTime get answerTimestamp => _answerTimestamp;
 
-  void answerWith(Species answer) {
+  void answerWith(Species answer, [DateTime answerTimestamp]) {
     assert(_givenAnswer == null);
     assert(answer != null);
     _givenAnswer = answer;
-    _answerTimestamp = DateTime.now();
+    _answerTimestamp = answerTimestamp ?? DateTime.now();
   }
 
   @override
@@ -170,13 +170,14 @@ class SpeciesKnowledge {
   static const _millisecondsPerDay = 1000.0 * 60.0 * 60.0 * 24.0;
   
   static const _initialHalflifeDays = 10.0 / _minutesPerDay;
+  static const _initialAlpha = 3.0;
 
   /// The underlying Ebisu model. Time is in days.
   final EbisuModel _model;
   final int _lastAskedTimestampMs;
 
   SpeciesKnowledge.initial(DateTime creationTimestamp) :
-      _model = EbisuModel(time: _initialHalflifeDays),
+      _model = EbisuModel(time: _initialHalflifeDays, alpha: _initialAlpha),
       _lastAskedTimestampMs = creationTimestamp.millisecondsSinceEpoch;
 
   SpeciesKnowledge.fromMap(Map<String, dynamic> map) :
@@ -218,4 +219,7 @@ class SpeciesKnowledge {
     'ebisu_beta': _model.beta,
     'last_asked_timestamp_ms': _lastAskedTimestampMs,
   };
+
+  @override
+  String toString() => '$_model @ ${DateTime.fromMillisecondsSinceEpoch(_lastAskedTimestampMs).toIso8601String()}';
 }

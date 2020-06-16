@@ -2,7 +2,6 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:built_collection/built_collection.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:meta/meta.dart';
 import 'package:papageno/utils/angle_utils.dart';
 
@@ -91,8 +90,7 @@ class Species {
   final String scientificName;
   final BuiltMap<LanguageCode, String> commonNames;
 
-  Species(this.speciesId, this.scientificName, this.commonNames) :
-        assert(LanguageCode.allSupported.every((language) => commonNames.containsKey(language)));
+  Species(this.speciesId, this.scientificName, this.commonNames);
 
   Species.fromMap(Map<String, dynamic> map) :
       speciesId = map['species_id'] as int,
@@ -149,6 +147,9 @@ class Recording implements Attributable {
 
   @override
   String get nameForAttribution => recordingId.replaceFirst('xc:', 'XC');
+
+  /// Direct constructor; used only for testing.
+  Recording({@required this.recordingId, @required this.speciesId, this.fileName, this.sourceUrl, this.licenseName, this.licenseUrl, this.attribution});
 
   Recording.fromMap(Map<String, dynamic> map) :
       recordingId = map['recording_id'] as String,
