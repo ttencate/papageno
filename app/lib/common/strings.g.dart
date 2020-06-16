@@ -86,14 +86,10 @@ abstract class Strings {
   String createCourseButtonEnabled(int speciesCount);
   /// Title of a course, containing GPS location; keep short
   String courseTitle(String location);
-  /// Number of lessons in a course
-  String lessonCount(int lessonCount, int speciesCount);
-  /// Title of a numbered lesson
-  String lessonTitle(int lessonNumber);
-  /// Explanatory text on chapter screen
-  String unlockExplanation(int percent);
-  /// Button text for starting a lesson
-  String get startLesson;
+  /// Detail line about one course in a listing
+  String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount);
+  /// Button text for starting a quiz
+  String get startQuiz;
   /// Indicates current question number (starting from 1) and the total number of questions
   String questionIndex(int current, int total);
   /// Shown at the bottom of the screen when ready to continue to the next question
@@ -302,10 +298,8 @@ abstract class Strings {
       case 'createCourseButtonDisabled': return createCourseButtonDisabled;
       case 'createCourseButtonEnabled': return createCourseButtonEnabled;
       case 'courseTitle': return courseTitle;
-      case 'lessonCount': return lessonCount;
-      case 'lessonTitle': return lessonTitle;
-      case 'unlockExplanation': return unlockExplanation;
-      case 'startLesson': return startLesson;
+      case 'courseDetails': return courseDetails;
+      case 'startQuiz': return startQuiz;
       case 'questionIndex': return questionIndex;
       case 'tapInstructions': return tapInstructions;
       case 'quizResultsTitle': return quizResultsTitle;
@@ -445,10 +439,8 @@ class _Strings_en extends Strings {
   @override String get createCourseButtonDisabled => 'Start course';
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Start course (', speciesCount.toString(), ' birds)'].join();
   @override String courseTitle(String location) => <String>['Birds near ', location].join();
-  @override String lessonCount(int lessonCount, int speciesCount) => <String>[lessonCount.toString(), ' chapters, ', speciesCount.toString(), ' birds'].join();
-  @override String lessonTitle(int lessonNumber) => <String>['Chapter ', lessonNumber.toString()].join();
-  @override String unlockExplanation(int percent) => <String>['Score ', percent.toString(), '% or higher to unlock the next chapter!'].join();
-  @override String get startLesson => 'Start';
+  @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' birds unlocked of ', totalSpeciesCount.toString(), ' total'].join();
+  @override String get startQuiz => 'Start practice';
   @override String questionIndex(int current, int total) => <String>['Question ', current.toString(), ' of ', total.toString()].join();
   @override String get tapInstructions => 'Tap anywhere to continue';
   @override String get quizResultsTitle => 'Quiz results';
@@ -567,10 +559,8 @@ class _Strings_nl extends _Strings_en {
   @override String get createCourseButtonDisabled => 'Begin cursus';
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Begin cursus (', speciesCount.toString(), ' vogels)'].join();
   @override String courseTitle(String location) => <String>['Vogels rondom ', location].join();
-  @override String lessonCount(int lessonCount, int speciesCount) => <String>[lessonCount.toString(), ' hoofdstukken, ', speciesCount.toString(), ' vogels'].join();
-  @override String lessonTitle(int lessonNumber) => <String>['Hoofdstuk ', lessonNumber.toString()].join();
-  @override String unlockExplanation(int percent) => <String>['Scoor ', percent.toString(), '% of meer om door te gaan naar het volgende hoofdstuk!'].join();
-  @override String get startLesson => 'Start';
+  @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' vogels vrijgespeeld van ', totalSpeciesCount.toString(), ' in totaal'].join();
+  @override String get startQuiz => 'Oefening starten';
   @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
   @override String get quizResultsTitle => 'Toetsuitslag';

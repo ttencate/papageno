@@ -113,7 +113,7 @@ class _QuizPageState extends State<QuizPage> {
     _log.finer('Storing answer to question $question');
     final userDb = Provider.of<UserDb>(context, listen: false);
     await storeAnswer(userDb, widget.profile, widget.course, question);
-    // HACK: after answering a question, the state of the entire Quiz has changed.
+    // TODO: after answering a question, the state of the entire Quiz has changed. Refactor to make this call unnecessary.
     setState(() {});
   }
 

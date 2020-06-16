@@ -7,7 +7,7 @@ import 'package:papageno/ebisu/ebisu.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 
-final log = Logger('user_model');
+final _log = Logger('user_model');
 
 @immutable
 class RankedSpecies {
@@ -43,53 +43,21 @@ class Profile {
 }
 
 class Course {
-
   int courseId;
   final int profileId;
   final LatLon location;
-  final BuiltList<Lesson> lessons;
-  int _unlockedLessonCount; // At least 1.
+  final List<Species> unlockedSpecies;
+  final List<Species> lockedSpecies;
 
-  Course({this.courseId, this.profileId, this.location, this.lessons, int unlockedLessonCount}) :
-    _unlockedLessonCount = max(1, unlockedLessonCount ?? 1);
+  Course({this.courseId, this.profileId, this.location, this.unlockedSpecies, this.lockedSpecies});
 
-  int get lessonCount => lessons.length;
-
-  int get speciesCount => lessons.map((lesson) => lesson.species.length).fold(0, (a, b) => a + b);
-
-  int get unlockedLessonCount => _unlockedLessonCount;
-
-  bool get hasAnyLockedLessons => _unlockedLessonCount < lessons.length;
-
-  Lesson get lastUnlockedLesson => lessons[_unlockedLessonCount - 1];
-  BuiltList<Lesson> get unlockedLessons => lessons.sublist(0, _unlockedLessonCount);
-  BuiltList<Lesson> get lockedLessons => lessons.sublist(_unlockedLessonCount);
-
-  bool unlockNextLesson() {
-    if (_unlockedLessonCount < lessonCount) {
-      _unlockedLessonCount++;
-      return true;
-    } else {
-      return false;
-    }
-  }
-}
-
-@immutable
-class Lesson {
-  final int index;
-  final BuiltList<Species> species;
-
-  Lesson({this.index, this.species});
-
-  int get number => index + 1;
+  int get speciesCount => unlockedSpecies.length + lockedSpecies.length;
 }
 
 class Quiz {
-  final Lesson lesson;
   final BuiltList<Question> questions;
 
-  Quiz(this.lesson, this.questions);
+  Quiz(this.questions);
 
   int get questionCount => questions.length;
 
@@ -190,8 +158,13 @@ class SpeciesKnowledge {
   
   SpeciesKnowledge._internal(this._model, this._lastAskedTimestampMs);
 
-  /// Returns the estimated halflife (time to forget) for this species.
-  double get halflife => _model.modelToPercentileDecay(percentile: 0.5);
+  /// Returns the estimated halflife (time to forget) for this species in days.
+  double get halflifeDays => _model.modelToPercentileDecay(percentile: 0.5);
+
+  /// Returns how many half stars (out of 5 whole stars, i.e. 10 half stars) this species gets.
+  /// The first half star is earned at a halflife is 1 hour; each next half star takes twice as much
+  /// as the previous one.
+  int get halfStars => max(0, min((log(halflifeDays * 24.0) / log(2.0) + 1).floor(), 10));
 
   /// Returns the probability between 0 and 1 that the species is remembered at this moment.
   double recallProbability(DateTime now) => _model.predictRecall(_daysSinceAsked(now), exact: true);
@@ -206,7 +179,7 @@ class SpeciesKnowledge {
     try {
       newModel = _model.updateRecall(correct ? 1 : 0, 1, _daysSinceAsked(answerTimestamp));
     } catch (ex) {
-      log.warning('Failed to update Ebishu model', ex);
+      _log.warning('Failed to update Ebishu model', ex);
     }
     return SpeciesKnowledge._internal(newModel, answerTimestamp.millisecondsSinceEpoch);
   }

@@ -30,40 +30,69 @@ void main() {
   // https://github.com/tekartik/sqflite/blob/master/sqflite/doc/testing.md
   sqfliteFfiInit();
 
-  test('upgradeToVersion6', () async {
-    final appDb = MockAppDb();
+  group('UserDb migration', () {
+    group('to version 6', () {
+      test('populates the knowledge table', () async {
+        final userDb = await _createUserDbForTest(version: 5);
 
-    final userDb = await UserDb.open(appDb: appDb, factory: databaseFactoryFfi, path: inMemoryDatabasePath, upgradeToVersion: 5);
+        final profileId1 = (await userDb.createProfile(null)).profileId;
+        final courseId1 = 1;
+        // Species 1: always right.
+        await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species1, species1, _time(days: 1)));
+        await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species1, species1, _time(days: 2)));
+        await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species1, species1, _time(days: 3)));
+        // Species 2: wrong, wrong, right.
+        await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species2, species1, _time(days: 1)));
+        await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species2, species1, _time(days: 2)));
+        await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species2, species2, _time(days: 3)));
+        // Species 3: asked only once (right).
+        await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species3, species3, _time(days: 3)));
 
-    final profileId1 = (await userDb.createProfile(null)).profileId;
-    final courseId1 = 1;
-    // Species 1: always right.
-    await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species1, species1, _time(days: 1)));
-    await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species1, species1, _time(days: 2)));
-    await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species1, species1, _time(days: 3)));
-    // Species 2: wrong, wrong, right.
-    await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species2, species1, _time(days: 1)));
-    await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species2, species1, _time(days: 2)));
-    await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species2, species2, _time(days: 3)));
-    // Species 3: asked only once (right).
-    await userDb.insertQuestion(profileId1, courseId1, _makeQuestion(recording1, species3, species3, _time(days: 3)));
+        final profileId2 = (await userDb.createProfile(null)).profileId;
+        final courseId2 = 2;
+        // Species 1: asked only once, on day 1.
+        await userDb.insertQuestion(profileId2, courseId2, _makeQuestion(recording1, species1, species1, _time(days: 1)));
 
-    final profileId2 = (await userDb.createProfile(null)).profileId;
-    final courseId2 = 2;
-    // Species 1: asked only once, on day 1.
-    await userDb.insertQuestion(profileId2, courseId2, _makeQuestion(recording1, species1, species1, _time(days: 1)));
+        final now = _time(days: 4);
+        await userDb.upgradeForTest(6);
 
-    final now = _time(days: 4);
-    await userDb.upgradeForTest(6);
+        final knowledge1 = await userDb.knowledge(profileId1);
+        expect(knowledge1.ofSpecies(species1).recallProbability(now), greaterThan(knowledge1.ofSpecies(species2).recallProbability(now)));
+        expect(knowledge1.ofSpecies(species1).recallProbability(now), greaterThan(knowledge1.ofSpecies(species3).recallProbability(now)));
+        expect(knowledge1.ofSpecies(species2).recallProbability(now), greaterThan(knowledge1.ofSpecies(species3).recallProbability(now)));
 
-    final knowledge1 = await userDb.knowledge(profileId1);
-    expect(knowledge1.ofSpecies(species1).recallProbability(now), greaterThan(knowledge1.ofSpecies(species2).recallProbability(now)));
-    expect(knowledge1.ofSpecies(species1).recallProbability(now), greaterThan(knowledge1.ofSpecies(species3).recallProbability(now)));
-    expect(knowledge1.ofSpecies(species2).recallProbability(now), greaterThan(knowledge1.ofSpecies(species3).recallProbability(now)));
+        final knowledge2 = await userDb.knowledge(profileId2);
+        expect(knowledge2.ofSpecies(species1).recallProbability(now), lessThan(knowledge1.ofSpecies(species3).recallProbability(now)));
+        expect(knowledge2.ofSpecies(species2), null);
+        expect(knowledge2.ofSpecies(species3), null);
+      });
 
-    final knowledge2 = await userDb.knowledge(profileId2);
-    expect(knowledge2.ofSpecies(species1).recallProbability(now), lessThan(knowledge1.ofSpecies(species3).recallProbability(now)));
-    expect(knowledge2.ofSpecies(species2), null);
-    expect(knowledge2.ofSpecies(species3), null);
+      test('converts courses', () async {
+        final userDb = await _createUserDbForTest(version: 5);
+        final profile = await userDb.createProfile(null);
+        await userDb.dbForTest.insert('courses', <String, dynamic>{
+          'course_id': 1,
+          'profile_id': profile.profileId,
+          'lessons': '[{"i":0,"s":[3]},{"i":1,"s":[1]},{"i":2,"s":[2]}]',
+          'unlocked_lesson_count': 2,
+        });
+
+        await userDb.upgradeForTest(6);
+
+        final course = await userDb.getCourse(1);
+        expect(course.unlockedSpecies, [species3, species1]);
+        expect(course.lockedSpecies, [species2]);
+      });
+    });
   });
+}
+
+Future<UserDb> _createUserDbForTest({int version}) async {
+  final appDb = MockAppDb();
+  return await UserDb.open(
+      appDb: appDb,
+      factory: databaseFactoryFfi,
+      singleInstance: false,
+      path: inMemoryDatabasePath,
+      upgradeToVersion: version);
 }

@@ -33,10 +33,8 @@ courseSpecies,Shown on the course creation screen above a list of bird names,Com
 createCourseButtonDisabled,Button text while button is disabled,Start course,Begin cursus
 createCourseButtonEnabled,Button text when enough species were found,Start course (#{speciesCount} birds),Begin cursus (#{speciesCount} vogels)
 courseTitle,"Title of a course, containing GPS location; keep short",Birds near ${location},Vogels rondom ${location}
-lessonCount,Number of lessons in a course,"#{lessonCount} chapters, #{speciesCount} birds","#{lessonCount} hoofdstukken, #{speciesCount} vogels"
-lessonTitle,Title of a numbered lesson,Chapter #{lessonNumber},Hoofdstuk #{lessonNumber}
-unlockExplanation,Explanatory text on chapter screen,Score #{percent}% or higher to unlock the next chapter!,Scoor #{percent}% of meer om door te gaan naar het volgende hoofdstuk!
-startLesson,Button text for starting a lesson,Start,Start
+courseDetails,Detail line about one course in a listing,"#{unlockedSpeciesCount} birds unlocked of #{totalSpeciesCount} total","#{unlockedSpeciesCount} vogels vrijgespeeld van #{totalSpeciesCount} in totaal"
+startQuiz,Button text for starting a quiz,Start practice,Oefening starten
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
 quizResultsTitle,Title of screen with quiz results,Quiz results,Toetsuitslag

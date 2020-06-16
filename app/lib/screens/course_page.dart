@@ -5,13 +5,13 @@ import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/controller/controller.dart';
 import 'package:papageno/model/app_model.dart';
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
+import 'package:papageno/utils/color_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
-import 'package:papageno/widgets/inner_shadow.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:provider/provider.dart';
@@ -47,7 +47,6 @@ class _CoursePageState extends State<CoursePage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final strings = Strings.of(context);
     final course = widget.course;
     return ChangeNotifierProvider<Settings>.value(
@@ -63,31 +62,35 @@ class _CoursePageState extends State<CoursePage> {
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
-            return Container(
-              color: Colors.grey.shade200,
-              child: ListView(
-                children: <Widget>[
-                  for (final lesson in course.unlockedLessons) _LessonCard(
-                    knowledge: snapshot.data,
-                    course: course,
-                    lesson: lesson,
-                    onStart: () { _startQuiz(course, lesson); },
+            return Column(
+              children: <Widget>[
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.all(16.0),
+                    children: <Widget>[
+                      for (final species in course.unlockedSpecies) _SpeciesItem(
+                        species: species,
+                        knowledge: snapshot.data.ofSpecies(species),
+                        locked: false,
+                      ),
+                      Divider(),
+                      for (final species in course.lockedSpecies) _SpeciesItem(
+                        species: species,
+                        knowledge: snapshot.data.ofSpecies(species),
+                        locked: false,
+                      ),
+                    ],
                   ),
-                  if (course.hasAnyLockedLessons) Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                    child: Text(
-                      strings.unlockExplanation(minScorePercentToUnlockNextLesson),
-                      style: theme.textTheme.bodyText1,
-                      softWrap: true,
-                    ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: RaisedButton(
+                    visualDensity: VisualDensity(horizontal: VisualDensity.maximumDensity, vertical: VisualDensity.maximumDensity),
+                    onPressed: () { _startQuiz(course); },
+                    child: Text(strings.startQuiz.toUpperCase()),
                   ),
-                  for (final lesson in course.lockedLessons) _LessonCard(
-                    knowledge: snapshot.data,
-                    course: course,
-                    lesson: lesson,
-                  ),
-                ],
-              ),
+                )
+              ],
             );
           },
         ),
@@ -95,78 +98,19 @@ class _CoursePageState extends State<CoursePage> {
     );
   }
 
-  Future<void> _startQuiz(Course course, Lesson lesson) async {
+  Future<void> _startQuiz(Course course) async {
     unawaited(_userDb.markProfileUsed(widget.profile));
     final appDb = Provider.of<AppDb>(context, listen: false);
-    final quiz = await createQuiz(appDb, _userDb, course, lesson);
+    final quiz = await createQuiz(appDb, _userDb, course);
     final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, course, quiz));
     unawaited(_loadKnowledge());
-    if (await maybeUnlockNextLesson(_userDb, course, quiz)) {
-      setState(() {});
-      // TODO show a nice message!
-    }
+//    if (await maybeUnlockNextLesson(_userDb, course, quiz)) {
+//      setState(() {});
+//      // TODO show a nice message!
+//    }
     if (quizPageResult is QuizPageResult && quizPageResult.restart) {
-      unawaited(_startQuiz(course, lesson));
+      unawaited(_startQuiz(course));
     }
-  }
-}
-
-class _LessonCard extends StatelessWidget {
-  final Knowledge knowledge;
-  final Course course;
-  final Lesson lesson;
-  final void Function() onStart;
-
-  const _LessonCard({Key key, @required this.knowledge, @required this.course, @required this.lesson, this.onStart}) : super(key: key);
-
-  bool get _locked => onStart == null;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final strings = Strings.of(context);
-    return Card(
-      key: ObjectKey(lesson.index),
-      child: Opacity(
-        opacity: _locked ? 0.6 : 1.0,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    strings.lessonTitle(lesson.number),
-                    style: theme.textTheme.headline5,
-                  ),
-                  if (!_locked) RaisedButton(
-                    onPressed: onStart,
-                    child: Text(strings.startLesson.toUpperCase()),
-                  )
-                ],
-              ),
-            ),
-            Divider(height: 0.0),
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  for (final species in lesson.species) _SpeciesItem(
-                    species: species,
-                    knowledge: knowledge.ofSpecies(species),
-                    locked: _locked,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -196,9 +140,15 @@ class _SpeciesItem extends StatelessWidget {
             ),
           ),
           SizedBox(width: 16.0),
+          if (knowledge != null) _StarRating(
+            starCount: 5,
+            filledHalfStars: knowledge.halfStars,
+            size: 16.0,
+          ),
+          SizedBox(width: 16.0),
           Text(
             // TODO show star rating
-            knowledge == null ? '' : '${(knowledge.halflife * 24).toStringAsFixed(2)}h   ${(knowledge.recallProbability(DateTime.now()) * 100).toStringAsFixed(2)}%',
+            knowledge == null ? '' : '${(knowledge.halflifeDays * 24).toStringAsFixed(2)}h   ${(knowledge.recallProbability(DateTime.now()) * 100).toStringAsFixed(2)}%',
             // style: theme.textTheme.bodyText2.copyWith(fontWeight: FontWeight.bold, color: _percentageColor(knowledge.scorePercent.round())),
             textAlign: TextAlign.right,
           ),
@@ -208,77 +158,34 @@ class _SpeciesItem extends StatelessWidget {
   }
 }
 
-class _FancyProgressBar extends StatelessWidget {
-  final double value;
-  final Color backgroundColor;
-  final Color valueColor;
-  final Widget child;
+class _StarRating extends StatelessWidget {
+  final int starCount;
+  final int filledHalfStars;
+  final double size;
+  final Color color;
 
-  const _FancyProgressBar({Key key, @required this.value, this.backgroundColor, this.valueColor, this.child}) : super(key: key);
+  const _StarRating({Key key, @required this.starCount, @required this.filledHalfStars, this.size, this.color}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InnerShadow(
-      shadows: <Shadow>[
-        Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 4.0, offset: Offset(0.0, 1.0)),
+    return Row(
+      children: <Widget>[
+        for (var i = 0; i < filledHalfStars ~/ 2; i++) Icon(
+          Icons.star,
+          color: color,
+          size: size,
+        ),
+        if (filledHalfStars.isOdd) Icon(
+          Icons.star_half,
+          color: color,
+          size: size,
+        ),
+        for (var i = (filledHalfStars + 1) ~/ 2; i < starCount; i++) Icon(
+          Icons.star_border,
+          color: color,
+          size: size,
+        )
       ],
-      child: Container(
-        height: 32.0,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-        ),
-        child: Stack(
-          fit: StackFit.passthrough,
-          alignment: Alignment.center,
-          children: <Widget>[
-            FractionallySizedBox(
-              widthFactor: value,
-              alignment: Alignment.centerLeft,
-              child: Container(
-                decoration: BoxDecoration(color: valueColor),
-              ),
-            ),
-            if (child != null) Center(
-              child: DefaultTextStyle(
-                style: theme.textTheme.subtitle1.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  shadows: <Shadow>[
-                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 2.0),
-                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 8.0),
-                  ],
-                ),
-                child: child,
-              ),
-            ),
-          ]
-        ),
-      ),
     );
   }
-
-}
-
-Color _percentageColor(int percent) {
-  // Conveniently, maps in Dart preserve their order.
-  const stops = <int, Color>{
-    0: Color.fromRGBO(0, 0, 0, 0.15),
-    20: Colors.red,
-    40: Colors.deepOrange,
-    50: Colors.orange,
-    60: Colors.yellow,
-    75: Colors.lightGreen,
-    100: Colors.green,
-  };
-  var prevLocation = stops.keys.first;
-  var prevColor = stops.values.first;
-  for (final stop in stops.entries.skip(1)) {
-    if (percent <= stop.key) {
-      return Color.lerp(prevColor, stop.value, (percent - prevLocation) / (stop.key - prevLocation));
-    }
-    prevLocation = stop.key;
-    prevColor = stop.value;
-  }
-  return stops.values.last;
 }

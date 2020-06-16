@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:built_collection/built_collection.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:papageno/model/app_model.dart';
@@ -21,7 +20,7 @@ class UserDb {
 
   UserDb._fromDatabase(this._appDb, this._db);
 
-  static Future<UserDb> open({@required AppDb appDb, DatabaseFactory factory, String path, int upgradeToVersion}) async {
+  static Future<UserDb> open({@required AppDb appDb, DatabaseFactory factory, String path, int upgradeToVersion, bool singleInstance = true}) async {
     factory ??= databaseFactory;
     upgradeToVersion ??= _latestVersion;
     _log.info('Opening database $path');
@@ -29,6 +28,7 @@ class UserDb {
       path ?? await _defaultPath(),
       options: OpenDatabaseOptions(
         version: upgradeToVersion,
+        singleInstance: singleInstance,
         onConfigure: _onConfigure,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
@@ -56,6 +56,9 @@ class UserDb {
     await _onUpgrade(_db, await _db.getVersion(), version);
   }
 
+  // TODO used for tests; make unnecessary by injecting db
+  Database get dbForTest => _db;
+
   static Future<void> _onConfigure(Database db) async {
     // Enable foreign key checks.
     await db.execute('pragma foreign_keys = on');
@@ -76,6 +79,7 @@ class UserDb {
   static Future<void> _upgradeToVersion(Transaction txn, int version) {
     _log.info('Running migration for version $version');
     switch (version) {
+      // TODO pull out migrations to a separate file, in a `const List<Migration>`.
       case 1: return _upgradeToVersion1(txn);
       case 2: return _upgradeToVersion2(txn);
       case 3: return _upgradeToVersion3(txn);
@@ -115,7 +119,7 @@ class UserDb {
         location_lat float,
         location_lon float,
         name text,
-        lessons text,
+        lessons text, -- Format changed in version 6.
         foreign key (profile_id) references profiles(profile_id) on delete cascade
       )
     ''');
@@ -142,6 +146,7 @@ class UserDb {
 
   /// Adds unlocked_lesson_count to courses table.
   static Future<void> _upgradeToVersion4(Transaction txn) async {
+    // Since version 6, this column is no longer used.
     await txn.execute('''
       alter table courses add column unlocked_lesson_count integer
     ''');
@@ -220,6 +225,34 @@ class UserDb {
     await txn.execute('''
       create index knowledge_profile_id_species_id on knowledge(profile_id, species_id)
     ''');
+
+    final courses = await txn.query('courses', columns: <String>['course_id', 'lessons', 'unlocked_lesson_count']);
+    for (final course in courses) {
+      final courseId = course['course_id'] as int;
+      final lessons = jsonDecode(course['lessons'] as String) as List<dynamic>;
+      final unlockedLessonCount = course['unlocked_lesson_count'] as int;
+      final unlockedSpecies = <int>[];
+      final lockedSpecies = <int>[];
+      for (var i = 0; i < lessons.length; i++) {
+        final targetList = i < unlockedLessonCount ? unlockedSpecies : lockedSpecies;
+        final lesson = lessons[i] as Map<String, dynamic>;
+        final speciesIds = lesson['s'] as List<dynamic>;
+        for (final speciesId in speciesIds) {
+          targetList.add(speciesId as int);
+        }
+      }
+      await txn.update(
+        'courses',
+        <String, dynamic>{
+          'lessons': jsonEncode(<String, dynamic>{
+            'unlocked_species': unlockedSpecies,
+            'locked_species': lockedSpecies,
+          }),
+        },
+        where: 'course_id = ?',
+        whereArgs: <dynamic>[courseId],
+      );
+    }
   }
 
   /// Returns all profiles, ordered by descending last used timestamp.
@@ -302,12 +335,12 @@ class UserDb {
         whereArgs: <dynamic>[course.courseId]);
   }
 
-  Future<void> updateCourseUnlockedLessons(Course course) async {
-    await _db.update(
+  Future<Course> getCourse(int courseId) async {
+    final records = await _db.query(
         'courses',
-        <String, dynamic>{'unlocked_lesson_count': course.unlockedLessonCount},
         where: 'course_id = ?',
-        whereArgs: <dynamic>[course.courseId]);
+        whereArgs: <dynamic>[courseId]);
+    return await _courseFromMap(records.single);
   }
 
   /// Returns all courses in the profile.
@@ -367,41 +400,32 @@ class UserDb {
     'profile_id': course.profileId,
     'location_lat': course.location.lat,
     'location_lon': course.location.lon,
-    'lessons': json.encode(
-      course.lessons.map((lesson) => <String, dynamic>{
-        'i': lesson.index,
-        's': lesson.species.map((species) => species.speciesId).toList(),
-      }).toList()
-    ),
-    'unlocked_lesson_count': course.unlockedLessonCount,
+    'lessons': json.encode(<String, dynamic>{
+      'unlocked_species': course.unlockedSpecies.map((s) => s.speciesId).toList(),
+      'locked_species': course.lockedSpecies.map((s) => s.speciesId).toList(),
+    }),
   };
 
   Future<Course> _courseFromMap(Map<String, dynamic> map) async {
-    final lessons = <Lesson>[];
-    for (final lesson in json.decode(map['lessons'] as String) as List<dynamic>) {
+    final lessons = json.decode(map['lessons'] as String) as Map<String, dynamic>;
+    Future<List<Species>> parseSpeciesList(List<dynamic> speciesIds) async {
       final speciesList = <Species>[];
-      for (final speciesId in lesson['s'] as List<dynamic>) {
+      for (final speciesId in speciesIds) {
         final species = await _appDb.speciesOrNull(speciesId as int);
-        if (species == null) {
-          // This can happen if the species was removed from a subsequent version of the app.
-          continue;
+        if (species != null) {
+          speciesList.add(species);
         }
-        speciesList.add(species);
       }
-      if (speciesList.isEmpty) {
-        continue;
-      }
-      lessons.add(Lesson(
-        index: lesson['i'] as int,
-        species: speciesList.toBuiltList(),
-      ));
+      return speciesList;
     }
+    final unlockedSpecies = await parseSpeciesList(lessons['unlocked_species'] as List<dynamic>);
+    final lockedSpecies = await parseSpeciesList(lessons['locked_species'] as List<dynamic>);
     return Course(
       courseId: map['course_id'] as int,
       profileId: map['profile_id'] as int,
       location: LatLon(map['location_lat'] as double, map['location_lon'] as double),
-      lessons: lessons.toBuiltList(),
-      unlockedLessonCount: map['unlocked_lesson_count'] as int,
+      unlockedSpecies: unlockedSpecies,
+      lockedSpecies: lockedSpecies,
     );
   }
 

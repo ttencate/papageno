@@ -45,28 +45,16 @@ Future<RankedSpecies> rankSpecies(AppDb appDb, LatLon location) async {
 }
 
 Future<Course> createCourse(int profileId, LatLon location, RankedSpecies rankedSpecies) async {
-  final lessons = <Lesson>[];
-  final speciesInLesson = <Species>[];
-  for (final species in rankedSpecies.speciesList) {
-    speciesInLesson.add(species);
-    if (speciesInLesson.length >= _numSpeciesInLesson(lessons.length)) {
-      lessons.add(Lesson(index: lessons.length, species: BuiltList.of(speciesInLesson)));
-      speciesInLesson.clear();
-    }
-  }
-  // The last few species are omitted. This is on purpose; a lesson with just 1 new species would be silly.
-  // Since we ensure that there are at least 50 species, this doesn't really matter.
-
-  return Course(profileId: profileId, location: location, lessons: BuiltList.of(lessons));
+  const initialUnlockedSpeciesCount = 10;
+  return Course(
+    profileId: profileId,
+    location: location,
+    unlockedSpecies: rankedSpecies.speciesList.sublist(0, initialUnlockedSpeciesCount).toList(),
+    lockedSpecies: rankedSpecies.speciesList.sublist(initialUnlockedSpeciesCount).toList(),
+  );
 }
 
-int _numSpeciesInLesson(int index) {
-  return index == 0 ? 10 : 5;
-}
-
-Future<Quiz> createQuiz(AppDb appDb, UserDb userDb, Course course, Lesson lesson, [DateTime now]) async {
-  assert(course.lessons[lesson.index] == lesson);
-
+Future<Quiz> createQuiz(AppDb appDb, UserDb userDb, Course course, [DateTime now]) async {
   now ??= DateTime.now();
 
   const questionCount = 20;
@@ -76,18 +64,12 @@ Future<Quiz> createQuiz(AppDb appDb, UserDb userDb, Course course, Lesson lesson
 
   final random = Random();
 
-  final oldSpecies = <Species>[];
-  for (final oldLesson in course.lessons.take(lesson.index)) {
-    oldSpecies.addAll(oldLesson.species);
-  }
-  final newSpecies = lesson.species.asList();
-  final allSpecies = oldSpecies + newSpecies;
-  assert(allSpecies.length >= choiceCount);
+  final allSpecies = course.unlockedSpecies.toList();
 
   final knowledge = await userDb.knowledge(course.profileId);
 
   // Ask higher priority first.
-  final byPriority = (Species a, Species b) {
+  int byPriority(Species a, Species b) {
     final ka = knowledge.ofSpecies(a);
     final kb = knowledge.ofSpecies(b);
     if (ka == null && kb == null) {
@@ -99,25 +81,22 @@ Future<Quiz> createQuiz(AppDb appDb, UserDb userDb, Course course, Lesson lesson
     } else {
       return -ka.priority(now).compareTo(kb.priority(now));
     }
-  };
-  final newSpeciesBag = CyclicBag(newSpecies.sorted(byPriority));
-  final oldSpeciesBag = CyclicBag(oldSpecies.sorted(byPriority));
+  }
 
-  final allSpeciesBag = RandomBag(allSpecies);
+  final questionsBag = CyclicBag(allSpecies.sorted(byPriority));
+  final answersBag = RandomBag(allSpecies);
   final recordingsBags = <Species, RandomBag<Recording>>{};
 
   final questions = <Question>[];
   for (var i = 0; i < questionCount; i++) {
-    final answer = i < newSpeciesQuestionCount || oldSpecies.isEmpty ?
-        newSpeciesBag.next() :
-        oldSpeciesBag.next();
+    final answer = questionsBag.next();
     if (!recordingsBags.containsKey(answer)) {
       recordingsBags[answer] = RandomBag(await appDb.recordingsFor(answer));
     }
     final recording = recordingsBags[answer].next(random);
     final choices = <Species>[answer];
-    while (choices.length < choiceCount) {
-      final choice = allSpeciesBag.next(random);
+    while (choices.length < min(choiceCount, allSpecies.length)) {
+      final choice = answersBag.next(random);
       if (!choices.contains(choice)) {
         choices.add(choice);
       }
@@ -131,7 +110,7 @@ Future<Quiz> createQuiz(AppDb appDb, UserDb userDb, Course course, Lesson lesson
   }
   questions.shuffle(random);
 
-  return Quiz(lesson, questions.toBuiltList());
+  return Quiz(questions.toBuiltList());
 }
 
 Future<void> storeAnswer(UserDb userDb, Profile profile, Course course, Question question) async {
@@ -141,16 +120,4 @@ Future<void> storeAnswer(UserDb userDb, Profile profile, Course course, Question
       speciesKnowledge?.update(correct: question.isCorrect, answerTimestamp: question.answerTimestamp) ??
       SpeciesKnowledge.initial(question.answerTimestamp);
   await userDb.upsertSpeciesKnowledge(profile.profileId, question.correctAnswer.speciesId, newSpeciesKnowledge);
-}
-
-const minScorePercentToUnlockNextLesson = 90;
-
-Future<bool> maybeUnlockNextLesson(UserDb userDb, Course course, Quiz quiz) async {
-  if (quiz.lesson.index == course.lastUnlockedLesson.index && quiz.scorePercent >= minScorePercentToUnlockNextLesson) {
-    if (course.unlockNextLesson()) {
-      await userDb.updateCourseUnlockedLessons(course);
-      return true;
-    }
-  }
-  return false;
 }
