@@ -48,9 +48,9 @@ class _ProfilesPageState extends State<ProfilesPage> {
       if (profiles.isEmpty) {
         final profile = await _createAnonymousProfile();
         unawaited(_loadProfiles()); // Reload in the background.
-        unawaited(_openProfile(profile));
+        unawaited(_openProfile(profile, proceedAutomatically: true));
       } else if (profiles.length == 1) {
-        unawaited(_openProfile(profiles.single));
+        unawaited(_openProfile(profiles.single, proceedAutomatically: true));
       }
     }
   }
@@ -154,9 +154,9 @@ class _ProfilesPageState extends State<ProfilesPage> {
     }
   }
 
-  Future<void> _openProfile(Profile profile) async {
+  Future<void> _openProfile(Profile profile, {bool proceedAutomatically = false}) async {
     profile.settings = await Settings.create(_userDb, profile);
-    unawaited(Navigator.of(context).push(CoursesRoute(profile)));
+    unawaited(Navigator.of(context).push(CoursesRoute(profile, proceedAutomatically: proceedAutomatically)));
   }
 }
 
