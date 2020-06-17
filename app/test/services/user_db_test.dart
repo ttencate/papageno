@@ -9,8 +9,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'mock_app_db.dart';
 
 Question _makeQuestion(Recording recording, Species correctAnswer, Species givenAnswer, DateTime answerTimestamp) {
-  return Question(recording, <Species>[species1, species2, species3], correctAnswer)
-    ..answerWith(givenAnswer, answerTimestamp);
+  return Question(recording: recording, choices: <Species>[species1, species2, species3], correctAnswer: correctAnswer)
+      .answeredWith(givenAnswer, answerTimestamp);
 }
 
 DateTime _time({int days, int minutes}) {

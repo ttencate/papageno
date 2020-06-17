@@ -54,63 +54,65 @@ class Course {
   int get speciesCount => unlockedSpecies.length + lockedSpecies.length;
 }
 
+@immutable
 class Quiz {
-  final BuiltList<Question> questions;
+  /// The total number of questions in this [Quiz].
+  final int questionCount;
+  
+  /// The questions that are currently available.
+  /// Caution: may be shorter than [questionCount] because not all questions may have been generated yet.
+  /// Questions that are missing from this list are implicitly unanswered.
+  final BuiltList<Question> availableQuestions;
 
-  Quiz(this.questions);
+  Quiz(this.questionCount, this.availableQuestions);
 
-  int get questionCount => questions.length;
-
-  bool get isComplete => !questions.any((q) => !q.isAnswered);
+  bool get isComplete => availableQuestions.length == questionCount && !availableQuestions.any((q) => !q.isAnswered);
 
   /// Returns the index (0-based) of the first question that has not been answered yet.
   /// If all questions have been answered, returns [questionCount].
   int get firstUnansweredQuestionIndex {
-    final index = questions.indexWhere((question) => !question.isAnswered);
-    return index >= 0 ? index : questionCount;
+    final index = availableQuestions.indexWhere((question) => !question.isAnswered);
+    return index >= 0 ? index : availableQuestions.length;
   }
 
-  int get correctAnswerCount => questions.where((question) => question.isCorrect == true).length;
+  int get correctAnswerCount => availableQuestions.where((question) => question.isCorrect == true).length;
 
   int get scorePercent => correctAnswerCount * 100 ~/ questionCount;
 
   Set<Species> get fullyCorrectSpecies =>
-  questions
-      .map((question) => question.correctAnswer)
-      .toSet()
-    ..removeAll(incorrectQuestions.map((question) => question.correctAnswer))
-    ..removeAll(incorrectQuestions.map((question) => question.givenAnswer));
+      availableQuestions
+        .map((question) => question.correctAnswer)
+        .toSet()
+        ..removeAll(incorrectAnswers.map((question) => question.correctAnswer))
+        ..removeAll(incorrectAnswers.map((question) => question.givenAnswer));
 
-  List<Question> get correctQuestions => questions.where((question) => question.isCorrect == true).toList();
-  List<Question> get incorrectQuestions => questions.where((question) => question.isCorrect == false).toList();
+  List<Question> get correctAnswers => availableQuestions.where((question) => question.isCorrect == true).toList();
+  List<Question> get incorrectAnswers => availableQuestions.where((question) => question.isCorrect == false).toList();
 }
 
+@immutable
 class Question {
   final Recording recording;
   final List<Species> choices;
   final Species correctAnswer;
 
-  DateTime _answerTimestamp;
-  Species _givenAnswer;
+  final Species givenAnswer;
+  final DateTime answerTimestamp;
 
-  Question(this.recording, this.choices, this.correctAnswer) :
+  Question({@required this.recording, @required this.choices, @required this.correctAnswer, this.givenAnswer, this.answerTimestamp}) :
         assert(recording != null),
         assert(choices.isNotEmpty),
         assert(choices.contains(correctAnswer));
 
-  bool get isAnswered => _givenAnswer != null;
+  bool get isAnswered => givenAnswer != null;
 
-  bool get isCorrect => isAnswered ? _givenAnswer == correctAnswer : null;
+  bool get isCorrect => isAnswered ? givenAnswer == correctAnswer : null;
 
-  Species get givenAnswer => _givenAnswer;
-
-  DateTime get answerTimestamp => _answerTimestamp;
-
-  void answerWith(Species answer, [DateTime answerTimestamp]) {
-    assert(_givenAnswer == null);
-    assert(answer != null);
-    _givenAnswer = answer;
-    _answerTimestamp = answerTimestamp ?? DateTime.now();
+  Question answeredWith(Species givenAnswer, [DateTime answerTimestamp]) {
+    assert(this.givenAnswer == null);
+    assert(givenAnswer != null);
+    answerTimestamp = answerTimestamp ?? DateTime.now();
+    return Question(recording: recording, choices: choices, correctAnswer: correctAnswer, givenAnswer: givenAnswer, answerTimestamp: answerTimestamp);
   }
 
   @override

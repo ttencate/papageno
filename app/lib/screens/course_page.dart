@@ -3,12 +3,10 @@ import 'package:flutter/rendering.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
-import 'package:papageno/controller/controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/quiz_page.dart';
-import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
@@ -103,7 +101,7 @@ class _CoursePageState extends State<CoursePage> {
                   padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: RaisedButton(
                     visualDensity: VisualDensity(horizontal: VisualDensity.maximumDensity, vertical: VisualDensity.maximumDensity),
-                    onPressed: () { _startQuiz(course); },
+                    onPressed: course.unlockedSpecies.isEmpty ? null : () { _startQuiz(course); },
                     child: Text(strings.startQuiz.toUpperCase()),
                   ),
                 )
@@ -117,9 +115,7 @@ class _CoursePageState extends State<CoursePage> {
 
   Future<void> _startQuiz(Course course) async {
     unawaited(_userDb.markProfileUsed(widget.profile));
-    final appDb = Provider.of<AppDb>(context, listen: false);
-    final quiz = await createQuiz(appDb, _userDb, course);
-    final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, course, quiz));
+    final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, course));
     unawaited(_loadKnowledge());
 //    if (await maybeUnlockNextLesson(_userDb, course, quiz)) {
 //      setState(() {});

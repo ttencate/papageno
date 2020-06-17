@@ -6,13 +6,13 @@ import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
 import 'package:logging/logging.dart';
 import 'package:papageno/common/strings.g.dart';
-import 'package:papageno/controller/controller.dart';
+import 'package:papageno/controller/quiz_controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/app_model.dart' as model show Image; // Avoid conflict with Flutter's Image class.
+import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/attribution_dialog.dart';
 import 'package:papageno/services/app_db.dart';
-import 'package:papageno/model/settings.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
@@ -33,9 +33,8 @@ class QuizPageResult {
 class QuizPage extends StatefulWidget {
   final Profile profile;
   final Course course;
-  final Quiz quiz;
 
-  QuizPage(this.profile, this.course, this.quiz);
+  QuizPage(this.profile, this.course);
 
   @override
   State<StatefulWidget> createState() => _QuizPageState();
@@ -43,81 +42,102 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
 
+  QuizController _controller;
   PageController _pageController;
   int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _log.finer('Creating _QuizPageState for quiz ${quiz.questions.map((q) => q.correctAnswer.toString()).join(', ')}');
+    _log.finer('Creating _QuizPageState');
+    final appDb = Provider.of<AppDb>(context, listen: false);
+    final userDb = Provider.of<UserDb>(context, listen: false);
+    _controller = QuizController(appDb, userDb, widget.course);
     _pageController = PageController(initialPage: _currentPage);
   }
 
-  Quiz get quiz => widget.quiz;
+  @override
+  void dispose() {
+    _log.finer('Disposing _QuizPageState');
+    _pageController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
     return ChangeNotifierProvider<Settings>.value(
       value: widget.profile.settings,
-      child: WillPopScope(
-        onWillPop: _willPop,
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(
-              _currentPage < quiz.questionCount ?
-                strings.questionIndex(_currentPage + 1, quiz.questionCount) :
-                strings.quizResultsTitle,
+      child: StreamBuilder<Quiz>(
+        stream: _controller.quizUpdates,
+        builder: (context, snapshot) {
+          final quiz = snapshot.data;
+          return WillPopScope(
+            onWillPop: quiz?.isComplete ?? false ? null : _confirmPop,
+            child: Scaffold(
+              appBar: AppBar(
+                title: quiz == null ? null : Text(
+                  _currentPage < snapshot.data.questionCount ?
+                    strings.questionIndex(_currentPage + 1, quiz.questionCount) :
+                    strings.quizResultsTitle,
+                ),
+                // TODO show some sort of progress bar
+              ),
+              drawer: MenuDrawer(profile: widget.profile, course: widget.course),
+              body:
+                quiz == null ?
+                Center(child: CircularProgressIndicator()) :
+                PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) { setState(() { _currentPage = index; }); },
+                  scrollDirection: Axis.horizontal,
+                  physics: PageScrollPhysics(),
+                  // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
+                  // the `PageView` sometimes creates pages before they are visible, causing
+                  // https://github.com/ttencate/papageno/issues/58.
+                  // If we fix this by setting `itemCount` to `quiz.firstUnansweredQuestionIndex + 1`, then
+                  // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
+                  // (shouldn't keys prevent this?).
+                  itemCount: null,
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index > quiz.firstUnansweredQuestionIndex) {
+                      return null;
+                    }
+                    if (index < quiz.questionCount) {
+                      if (index >= quiz.availableQuestions.length) {
+                        return Center(child: CircularProgressIndicator());
+                      } else {
+                        final question = quiz.availableQuestions[index];
+                        return QuestionScreen(
+                          key: ObjectKey(index),
+                          question: question,
+                          onAnswer: (givenAnswer) {_answerQuestion(index, givenAnswer); },
+                          onProceed: () {_showNextQuestion(quiz); },
+                        );
+                      }
+                    } else {
+                      return QuizResult(
+                        quiz: quiz,
+                        onRetry: _restart,
+                        onBack: _back,
+                      );
+                    }
+                  },
+                ),
             ),
-            // TODO show some sort of progress bar
-          ),
-          drawer: MenuDrawer(profile: widget.profile, course: widget.course),
-          body: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) { setState(() { _currentPage = index; }); },
-            scrollDirection: Axis.horizontal,
-            physics: PageScrollPhysics(),
-            // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
-            // the `PageView` sometimes creates pages before they are visible, causing
-            // https://github.com/ttencate/papageno/issues/58.
-            // If we fix this by setting `itemCount` to `quiz.currentQuestionIndex + 1`, then
-            // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
-            // (shouldn't keys prevent this?).
-            itemCount: quiz.firstUnansweredQuestionIndex + 1,
-            itemBuilder: (BuildContext context, int index) {
-              if (index > quiz.firstUnansweredQuestionIndex) {
-                return null;
-              }
-              if (index < quiz.questionCount) {
-                return QuestionScreen(
-                  key: ObjectKey(quiz.questions[index]),
-                  question: quiz.questions[index],
-                  onAnswer: _storeAnswer,
-                  onProceed: _showNextQuestion,
-                );
-              } else {
-                return QuizResult(
-                  quiz: quiz,
-                  onRetry: _restart,
-                  onBack: _back,
-                );
-              }
-            },
-          ),
-        ),
+          );
+        },
       ),
     );
   }
   
-  Future<void> _storeAnswer(Question question) async {
-    _log.finer('Storing answer to question $question');
-    final userDb = Provider.of<UserDb>(context, listen: false);
-    await storeAnswer(userDb, widget.profile, widget.course, question);
-    // TODO: after answering a question, the state of the entire Quiz has changed. Refactor to make this call unnecessary.
-    setState(() {});
+  void _answerQuestion(int questionIndex, Species givenAnswer) {
+    _log.finer('Answering question $questionIndex with $givenAnswer');
+    _controller.answerQuestion(questionIndex, givenAnswer, DateTime.now());
   }
 
-  Future<void> _showNextQuestion() async {
+  Future<void> _showNextQuestion(Quiz quiz) async {
     _log.finer('_QuizScreenState._showNextQuestion() isComplete: ${quiz.isComplete}');
     final targetPage = quiz.isComplete ? quiz.questionCount : quiz.firstUnansweredQuestionIndex;
     _log.finer('Animating to page ${targetPage}');
@@ -135,36 +155,32 @@ class _QuizPageState extends State<QuizPage> {
     Navigator.of(context).pop(QuizPageResult(restart: false));
   }
 
-  Future<bool> _willPop() async {
-    if (quiz.isComplete) {
-      return true;
-    } else {
-      final strings = Strings.of(context);
-      final abortQuiz = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: Text(strings.abortQuizTitle),
-          content: Text(strings.abortQuizContent),
-          actions: <Widget>[
-            FlatButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(strings.no.toUpperCase()),
-            ),
-            FlatButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(strings.yes.toUpperCase()),
-            ),
-          ],
-        ),
-      );
-      return abortQuiz ?? false;
-    }
+  Future<bool> _confirmPop() async {
+    final strings = Strings.of(context);
+    final abortQuiz = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(strings.abortQuizTitle),
+        content: Text(strings.abortQuizContent),
+        actions: <Widget>[
+          FlatButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(strings.no.toUpperCase()),
+          ),
+          FlatButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(strings.yes.toUpperCase()),
+          ),
+        ],
+      ),
+    );
+    return abortQuiz ?? false;
   }
 }
 
 class QuestionScreen extends StatefulWidget {
   final Question question;
-  final void Function(Question) onAnswer;
+  final void Function(Species) onAnswer;
   final void Function() onProceed;
 
   QuestionScreen({Key key, @required this.question, this.onAnswer, this.onProceed}) :
@@ -366,16 +382,12 @@ class _QuestionScreenState extends State<QuestionScreen> {
     );
   }
 
-  void _choose(Species species) {
-    _log.finer('_QuestionScreenState._choose($species) for $_question');
+  void _choose(Species givenAnswer) {
+    _log.finer('_QuestionScreenState._choose($givenAnswer) for $_question');
     if (!_question.isAnswered) {
-      setState(() {
-        _log.finer('Answering question $_question');
-        _question.answerWith(species);
-      });
       _playerController.looping = false;
       if (widget.onAnswer != null) {
-        widget.onAnswer(_question);
+        widget.onAnswer(givenAnswer);
       }
     }
   }
@@ -494,7 +506,7 @@ class QuizResult extends StatelessWidget {
                   ),
                 ),
               ),
-              if (quiz.incorrectQuestions.isNotEmpty) Container(
+              if (quiz.incorrectAnswers.isNotEmpty) Container(
                 color: Colors.red.shade50,
                 child: Padding(
                   padding: EdgeInsets.all(16.0),
@@ -512,7 +524,7 @@ class QuizResult extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 8.0),
-                      for (final question in quiz.incorrectQuestions) Text(
+                      for (final question in quiz.incorrectAnswers) Text(
                         strings.confusionText(
                             question.correctAnswer.commonNameIn(primarySpeciesLanguageCode),
                             question.givenAnswer.commonNameIn(primarySpeciesLanguageCode)),
