@@ -166,6 +166,8 @@ class SpeciesKnowledge {
   /// as the previous one.
   int get halfStars => max(0, min((log(halflifeDays * 24.0) / log(2.0) + 1).floor(), 10));
 
+  EbisuModel get ebisuModel => _model;
+
   /// Returns the probability between 0 and 1 that the species is remembered at this moment.
   double recallProbability(DateTime now) => _model.predictRecall(_daysSinceAsked(now), exact: true);
 

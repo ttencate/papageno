@@ -34,7 +34,10 @@ createCourseButtonDisabled,Button text while button is disabled,Start course,Beg
 createCourseButtonEnabled,Button text when enough species were found,Start course (#{speciesCount} birds),Begin cursus (#{speciesCount} vogels)
 courseTitle,"Title of a course, containing GPS location; keep short",Birds near ${location},Vogels rondom ${location}
 courseDetails,Detail line about one course in a listing,"#{unlockedSpeciesCount} birds unlocked of #{totalSpeciesCount} total","#{unlockedSpeciesCount} vogels vrijgespeeld van #{totalSpeciesCount} in totaal"
+unlockedSpeciesHeading,Heading on course screen above species currently in this course,Unlocked birds in this course,Vrijgespeelde vogels in deze cursus
+lockedSpeciesHeading,Heading on course screen above species that can still be added to this course,Other birds in this region,Andere vogels in deze omgeving
 startQuiz,Button text for starting a quiz,Start practice,Oefening starten
+learningStats,Heading introducing statistics about how well a species has been learned,Learning stats for nerds,Leerstatistieken voor nerds
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
 quizResultsTitle,Title of screen with quiz results,Quiz results,Toetsuitslag
@@ -56,6 +59,7 @@ ok,Text for an OK button,OK,OK
 cancel,Text for a cancel button,Cancel,Annuleren
 yes,Text for confirmation button,Yes,Ja
 no,Text for rejection button,No,Nee
+close,Text for close button,Close,Sluiten
 speciesNameDisplay,Heading on the Settings screen,Display of bird names,Weergave van vogelnamen
 primarySpeciesNameLanguage,Setting for the language in which to display bird species names,First language (used for answers),Eerste taal (gebruikt voor antwoorden)
 secondarySpeciesNameLanguage,Setting for a second language in which to display bird species names,Second language,Tweede taal
@@ -92,6 +96,7 @@ language_es,Name of the Spanish language,Spanish,Spaans
 language_sv,Name of the Swedish language,Swedish,Zweeds
 language_th,Name of the Thai language,Thai,Thai
 language_uk,Name of the Ukrаiniаn language,Ukrаiniаn,Oekraïens
+scientificName,"Language tag for the scientific (""Latin"") name of a species",Scientific name,Wetenschappelijke naam
 aboutTitle,Title of the About screen,About Papageno,Over Papageno
 contributorsHeading,Heading in About screen,Contributors,Medewerkers
 applicationLicenseHeading,Heading in About screen,Application license,Applicatie-licensie

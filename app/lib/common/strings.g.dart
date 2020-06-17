@@ -88,8 +88,14 @@ abstract class Strings {
   String courseTitle(String location);
   /// Detail line about one course in a listing
   String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount);
+  /// Heading on course screen above species currently in this course
+  String get unlockedSpeciesHeading;
+  /// Heading on course screen above species that can still be added to this course
+  String get lockedSpeciesHeading;
   /// Button text for starting a quiz
   String get startQuiz;
+  /// Heading introducing statistics about how well a species has been learned
+  String get learningStats;
   /// Indicates current question number (starting from 1) and the total number of questions
   String questionIndex(int current, int total);
   /// Shown at the bottom of the screen when ready to continue to the next question
@@ -132,6 +138,8 @@ abstract class Strings {
   String get yes;
   /// Text for rejection button
   String get no;
+  /// Text for close button
+  String get close;
   /// Heading on the Settings screen
   String get speciesNameDisplay;
   /// Setting for the language in which to display bird species names
@@ -204,6 +212,8 @@ abstract class Strings {
   String get language_th;
   /// Name of the Ukrаiniаn language
   String get language_uk;
+  /// Language tag for the scientific ("Latin") name of a species
+  String get scientificName;
   /// Title of the About screen
   String get aboutTitle;
   /// Heading in About screen
@@ -299,7 +309,10 @@ abstract class Strings {
       case 'createCourseButtonEnabled': return createCourseButtonEnabled;
       case 'courseTitle': return courseTitle;
       case 'courseDetails': return courseDetails;
+      case 'unlockedSpeciesHeading': return unlockedSpeciesHeading;
+      case 'lockedSpeciesHeading': return lockedSpeciesHeading;
       case 'startQuiz': return startQuiz;
+      case 'learningStats': return learningStats;
       case 'questionIndex': return questionIndex;
       case 'tapInstructions': return tapInstructions;
       case 'quizResultsTitle': return quizResultsTitle;
@@ -321,6 +334,7 @@ abstract class Strings {
       case 'cancel': return cancel;
       case 'yes': return yes;
       case 'no': return no;
+      case 'close': return close;
       case 'speciesNameDisplay': return speciesNameDisplay;
       case 'primarySpeciesNameLanguage': return primarySpeciesNameLanguage;
       case 'secondarySpeciesNameLanguage': return secondarySpeciesNameLanguage;
@@ -357,6 +371,7 @@ abstract class Strings {
       case 'language_sv': return language_sv;
       case 'language_th': return language_th;
       case 'language_uk': return language_uk;
+      case 'scientificName': return scientificName;
       case 'aboutTitle': return aboutTitle;
       case 'contributorsHeading': return contributorsHeading;
       case 'applicationLicenseHeading': return applicationLicenseHeading;
@@ -440,7 +455,10 @@ class _Strings_en extends Strings {
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Start course (', speciesCount.toString(), ' birds)'].join();
   @override String courseTitle(String location) => <String>['Birds near ', location].join();
   @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' birds unlocked of ', totalSpeciesCount.toString(), ' total'].join();
+  @override String get unlockedSpeciesHeading => 'Unlocked birds in this course';
+  @override String get lockedSpeciesHeading => 'Other birds in this region';
   @override String get startQuiz => 'Start practice';
+  @override String get learningStats => 'Learning stats for nerds';
   @override String questionIndex(int current, int total) => <String>['Question ', current.toString(), ' of ', total.toString()].join();
   @override String get tapInstructions => 'Tap anywhere to continue';
   @override String get quizResultsTitle => 'Quiz results';
@@ -462,6 +480,7 @@ class _Strings_en extends Strings {
   @override String get cancel => 'Cancel';
   @override String get yes => 'Yes';
   @override String get no => 'No';
+  @override String get close => 'Close';
   @override String get speciesNameDisplay => 'Display of bird names';
   @override String get primarySpeciesNameLanguage => 'First language (used for answers)';
   @override String get secondarySpeciesNameLanguage => 'Second language';
@@ -498,6 +517,7 @@ class _Strings_en extends Strings {
   @override String get language_sv => 'Swedish';
   @override String get language_th => 'Thai';
   @override String get language_uk => 'Ukrаiniаn';
+  @override String get scientificName => 'Scientific name';
   @override String get aboutTitle => 'About Papageno';
   @override String get contributorsHeading => 'Contributors';
   @override String get applicationLicenseHeading => 'Application license';
@@ -560,7 +580,10 @@ class _Strings_nl extends _Strings_en {
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Begin cursus (', speciesCount.toString(), ' vogels)'].join();
   @override String courseTitle(String location) => <String>['Vogels rondom ', location].join();
   @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' vogels vrijgespeeld van ', totalSpeciesCount.toString(), ' in totaal'].join();
+  @override String get unlockedSpeciesHeading => 'Vrijgespeelde vogels in deze cursus';
+  @override String get lockedSpeciesHeading => 'Andere vogels in deze omgeving';
   @override String get startQuiz => 'Oefening starten';
+  @override String get learningStats => 'Leerstatistieken voor nerds';
   @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
   @override String get quizResultsTitle => 'Toetsuitslag';
@@ -582,6 +605,7 @@ class _Strings_nl extends _Strings_en {
   @override String get cancel => 'Annuleren';
   @override String get yes => 'Ja';
   @override String get no => 'Nee';
+  @override String get close => 'Sluiten';
   @override String get speciesNameDisplay => 'Weergave van vogelnamen';
   @override String get primarySpeciesNameLanguage => 'Eerste taal (gebruikt voor antwoorden)';
   @override String get secondarySpeciesNameLanguage => 'Tweede taal';
@@ -618,6 +642,7 @@ class _Strings_nl extends _Strings_en {
   @override String get language_sv => 'Zweeds';
   @override String get language_th => 'Thai';
   @override String get language_uk => 'Oekraïens';
+  @override String get scientificName => 'Wetenschappelijke naam';
   @override String get aboutTitle => 'Over Papageno';
   @override String get contributorsHeading => 'Medewerkers';
   @override String get applicationLicenseHeading => 'Applicatie-licensie';
