@@ -24,7 +24,7 @@ Future<void> main() async {
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    final formattedMessage = '${record.level.name}: ${record.time}: ${record.message}';
+    final formattedMessage = '${record.level.name} ${record.time} ${record.message} ${record.error ?? ''} ${record.stackTrace ?? ''}';
     print(formattedMessage); // ignore: avoid_print
     _logWriter.write(formattedMessage);
   });
