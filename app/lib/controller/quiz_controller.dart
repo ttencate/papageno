@@ -9,6 +9,7 @@ import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/random_utils.dart';
+import 'package:pedantic/pedantic.dart';
 
 final _log = Logger('QuizController');
 
@@ -33,56 +34,55 @@ class QuizController {
   final Course _course;
   final Random _random;
 
-  final _quizUpdatesController = StreamController<Quiz>.broadcast();
-  final _answersController = StreamController<_Answer>.broadcast();
+  final _questions = <Question>[];
+  Future<void> _questionsFuture;
+  var _answerCount = 0;
+
+  final _quizUpdatesController = StreamController<Quiz>();
+  final _answersController = StreamController<_Answer>();
 
   QuizController(AppDb appDb, UserDb userDb, Course course, {Random random}) :
       _appDb = appDb,
       _userDb = userDb,
       _course = course,
       _random = random ?? Random(DateTime.now().microsecondsSinceEpoch) {
-    _run();
+    _ensureQuestions();
+    _answersController.stream.listen(_onAnswer, onDone: _close);
   }
 
   Stream<Quiz> get quizUpdates => _quizUpdatesController.stream;
 
-  Future<void> _run() async {
-    final questionCount = _questionCount;
-    final questions = <Question>[];
-    void notify() {
-      _quizUpdatesController.add(Quiz(questionCount, questions.toBuiltList()));
+  Future<void> _ensureQuestions() async {
+    if (_questionsFuture != null) {
+      return;
     }
-    var answerCount = 0;
-    while (answerCount < questionCount) {
-      if (answerCount >= questions.length) {
+    if (_answerCount < _questionCount && _answerCount >= _questions.length) {
+      _questionsFuture = () async {
         final batch = await _generateQuestionBatch(_questionBatchSize);
-        questions.addAll(batch);
-        notify();
-      }
-
-      _Answer answer;
-      try {
-        answer = await _answersController.stream.first;
-      } catch (e) {
-        // Answer stream closed prematurely probably means that the controller was disposed.
-        _log.info('_answersController closed ($e)');
-        break;
-      }
-
-      if (answer.questionIndex >= questions.length) {
-        _log.severe('Answer ${answer.species} given to question ${answer.questionIndex} which was not in the list');
-      } else if (questions[answer.questionIndex].isAnswered) {
-        _log.severe('Tried to answer question ${answer.questionIndex} with ${answer.species} while it already has an answer');
-      } else {
-        answerCount++;
-        final answeredQuestion = questions[answer.questionIndex].answeredWith(answer.species, answer.timestamp);
-        questions[answer.questionIndex] = answeredQuestion;
-        await _storeAnswer(answeredQuestion);
-        notify();
-      }
+        _questions.addAll(batch);
+        _notify();
+        _questionsFuture = null;
+      }();
     }
-    _log.info('Closing _quizUpdatesController');
-    await _quizUpdatesController.close();
+  }
+
+  void _notify() {
+    _quizUpdatesController.add(Quiz(_questionCount, _questions.toBuiltList()));
+  }
+
+  Future<void> _onAnswer(_Answer answer) async {
+    if (answer.questionIndex >= _questions.length) {
+      _log.severe('Answer ${answer.species} given to question ${answer.questionIndex} which was not in the list');
+    } else if (_questions[answer.questionIndex].isAnswered) {
+      _log.info('Tried to answer question ${answer.questionIndex} with ${answer.species} while it already has an answer');
+    } else {
+      _answerCount++;
+      unawaited(_ensureQuestions());
+      final answeredQuestion = _questions[answer.questionIndex].answeredWith(answer.species, answer.timestamp);
+      _questions[answer.questionIndex] = answeredQuestion;
+      await _storeAnswer(answeredQuestion);
+      _notify();
+    }
   }
 
   void answerQuestion(int questionIndex, Species answer, DateTime answerTimestamp) {
@@ -92,6 +92,11 @@ class QuizController {
   void dispose() {
     _log.fine('QuizController.dispose()');
     _answersController.close();
+  }
+
+  void _close() {
+    _log.fine('QuizController._close()');
+    _quizUpdatesController.close();
   }
 
   Future<void> _storeAnswer(Question question) async {
