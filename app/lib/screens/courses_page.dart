@@ -71,7 +71,7 @@ class _CoursesPageState extends State<CoursesPage> {
                   children: ListTile.divideTiles(context: context, tiles: <Widget>[
                     for (final course in snapshot.data) ListTile(
                       title: Text(strings.courseName(course)),
-                      subtitle: Text(strings.courseDetails(course.unlockedSpecies.length, course.speciesCount)),
+                      subtitle: Text(strings.courseDetails(course.unlockedSpecies.length, course.localSpecies.length)),
                       onTap: () { _openCourse(course); },
                       trailing: IconButton(
                         icon: Icon(Icons.delete),

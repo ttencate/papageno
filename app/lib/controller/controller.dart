@@ -46,7 +46,7 @@ Future<Course> createCourse(int profileId, LatLon location, RankedSpecies ranked
   return Course(
     profileId: profileId,
     location: location,
+    localSpecies: rankedSpecies.speciesList.toList(),
     unlockedSpecies: rankedSpecies.speciesList.sublist(0, initialUnlockedSpeciesCount).toList(),
-    lockedSpecies: rankedSpecies.speciesList.sublist(initialUnlockedSpeciesCount).toList(),
   );
 }

@@ -402,7 +402,7 @@ class UserDb {
     'location_lon': course.location.lon,
     'lessons': json.encode(<String, dynamic>{
       'unlocked_species': course.unlockedSpecies.map((s) => s.speciesId).toList(),
-      'locked_species': course.lockedSpecies.map((s) => s.speciesId).toList(),
+      'local_species': course.localSpecies.map((s) => s.speciesId).toList(),
     }),
   };
 
@@ -419,13 +419,13 @@ class UserDb {
       return speciesList;
     }
     final unlockedSpecies = await parseSpeciesList(lessons['unlocked_species'] as List<dynamic>);
-    final lockedSpecies = await parseSpeciesList(lessons['locked_species'] as List<dynamic>);
+    final localSpecies = await parseSpeciesList(lessons['local_species'] as List<dynamic>);
     return Course(
       courseId: map['course_id'] as int,
       profileId: map['profile_id'] as int,
       location: LatLon(map['location_lat'] as double, map['location_lon'] as double),
       unlockedSpecies: unlockedSpecies,
-      lockedSpecies: lockedSpecies,
+      localSpecies: localSpecies,
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
+import 'package:papageno/screens/add_species_dialog.dart';
 import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
@@ -47,6 +48,7 @@ class _CoursePageState extends State<CoursePage> {
     final theme = Theme.of(context);
     final strings = Strings.of(context);
     final course = widget.course;
+    final unlockedSpecies = course.unlockedSpecies.toSet();
     return ChangeNotifierProvider<Settings>.value(
       value: widget.profile.settings,
       child: Scaffold(
@@ -78,6 +80,10 @@ class _CoursePageState extends State<CoursePage> {
                         knowledge: snapshot.data.ofSpecies(species),
                         locked: false,
                       ),
+                      FlatButton(
+                        onPressed: () { _addMoreSpecies(course, widget.profile.settings); },
+                        child: Text(strings.addSpeciesButton.toUpperCase()),
+                      ),
                       SizedBox(height: 8.0),
                       Container(
                         color: Colors.grey.shade200,
@@ -89,7 +95,7 @@ class _CoursePageState extends State<CoursePage> {
                           ),
                         ),
                       ),
-                      for (final species in course.lockedSpecies) _SpeciesItem(
+                      for (final species in course.localSpecies.where((s) => !unlockedSpecies.contains(s))) _SpeciesItem(
                         species: species,
                         knowledge: snapshot.data.ofSpecies(species),
                         locked: true,
@@ -124,6 +130,13 @@ class _CoursePageState extends State<CoursePage> {
     if (quizPageResult is QuizPageResult && quizPageResult.restart) {
       unawaited(_startQuiz(course));
     }
+  }
+
+  Future<void> _addMoreSpecies(Course course, Settings settings) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AddSpeciesDialog(course: course, settings: settings),
+    );
   }
 }
 

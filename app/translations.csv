@@ -36,6 +36,11 @@ courseTitle,"Title of a course, containing GPS location; keep short",Birds near 
 courseDetails,Detail line about one course in a listing,"#{unlockedSpeciesCount} birds unlocked of #{totalSpeciesCount} total","#{unlockedSpeciesCount} vogels vrijgespeeld van #{totalSpeciesCount} in totaal"
 unlockedSpeciesHeading,Heading on course screen above species currently in this course,Unlocked birds in this course,Vrijgespeelde vogels in deze cursus
 lockedSpeciesHeading,Heading on course screen above species that can still be added to this course,Other birds in this region,Andere vogels in deze omgeving
+addSpeciesButton,Button to add more species to the course,Add more birds,Meer vogels toevoegen
+addSpeciesTitle,Dialog title,Add birds,Vogels toevoegen
+addSpeciesText,Text in add species dialog,"The following #{speciesCount} birds are the next most common in this location. Would you like to add them?","De volgende #{speciesCount} vogels komen hierna het meest voor in deze omgeving. Wil je ze toevoegen?"
+chooseSpeciesToAddButton,Text of button to manually select species,Let me choose,Zelf kiezen
+addSelectedSpeciesButton,Text of button to actually add species,Add #{speciesCount} birds,#{speciesCount} vogels toevoegen
 startQuiz,Button text for starting a quiz,Start practice,Oefening starten
 learningStats,Heading introducing statistics about how well a species has been learned,Learning stats for nerds,Leerstatistieken voor nerds
 questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}

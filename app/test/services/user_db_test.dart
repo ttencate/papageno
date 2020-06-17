@@ -81,7 +81,7 @@ void main() {
 
         final course = await userDb.getCourse(1);
         expect(course.unlockedSpecies, [species3, species1]);
-        expect(course.lockedSpecies, [species2]);
+        expect(course.localSpecies, [species3, species1, species2]);
       });
     });
   });

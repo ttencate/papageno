@@ -46,12 +46,10 @@ class Course {
   int courseId;
   final int profileId;
   final LatLon location;
+  final List<Species> localSpecies;
   final List<Species> unlockedSpecies;
-  final List<Species> lockedSpecies;
 
-  Course({this.courseId, this.profileId, this.location, this.unlockedSpecies, this.lockedSpecies});
-
-  int get speciesCount => unlockedSpecies.length + lockedSpecies.length;
+  Course({this.courseId, this.profileId, this.location, this.localSpecies, this.unlockedSpecies});
 }
 
 @immutable
