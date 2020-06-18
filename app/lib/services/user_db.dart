@@ -22,10 +22,11 @@ class UserDb {
 
   static Future<UserDb> open({@required AppDb appDb, DatabaseFactory factory, String path, int upgradeToVersion, bool singleInstance = true}) async {
     factory ??= databaseFactory;
+    path ??= await _defaultPath();
     upgradeToVersion ??= _latestVersion;
     _log.info('Opening database $path');
     final db = await factory.openDatabase(
-      path ?? await _defaultPath(),
+      path,
       options: OpenDatabaseOptions(
         version: upgradeToVersion,
         singleInstance: singleInstance,
@@ -231,14 +232,17 @@ class UserDb {
       final courseId = course['course_id'] as int;
       final lessons = jsonDecode(course['lessons'] as String) as List<dynamic>;
       final unlockedLessonCount = course['unlocked_lesson_count'] as int;
+      final localSpecies = <int>[];
       final unlockedSpecies = <int>[];
-      final lockedSpecies = <int>[];
       for (var i = 0; i < lessons.length; i++) {
-        final targetList = i < unlockedLessonCount ? unlockedSpecies : lockedSpecies;
+        final unlocked = i < unlockedLessonCount;
         final lesson = lessons[i] as Map<String, dynamic>;
         final speciesIds = lesson['s'] as List<dynamic>;
         for (final speciesId in speciesIds) {
-          targetList.add(speciesId as int);
+          localSpecies.add(speciesId as int);
+          if (unlocked) {
+            unlockedSpecies.add(speciesId as int);
+          }
         }
       }
       await txn.update(
@@ -246,7 +250,7 @@ class UserDb {
         <String, dynamic>{
           'lessons': jsonEncode(<String, dynamic>{
             'unlocked_species': unlockedSpecies,
-            'locked_species': lockedSpecies,
+            'local_species': localSpecies,
           }),
         },
         where: 'course_id = ?',
