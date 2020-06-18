@@ -71,7 +71,11 @@ class _QuizPageState extends State<QuizPage> {
           final theme = Theme.of(context);
           final drawer = MenuDrawer(profile: widget.profile, course: widget.course);
           if (quiz == null) {
-            return Center(child: CircularProgressIndicator());
+            return Scaffold(
+              appBar: AppBar(),
+              drawer: drawer,
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
           return WillPopScope(
             onWillPop: quiz.isComplete ? null : _confirmPop,
@@ -226,6 +230,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
   Widget build(BuildContext context) {
     final locale = WidgetsBinding.instance.window.locale;
     final theme = Theme.of(context);
+    final strings = Strings.of(context);
     final textOnImageColor = Colors.white;
     final textOnImageShadows = <Shadow>[
       Shadow(blurRadius: 3.0),
@@ -330,13 +335,13 @@ class _QuestionScreenState extends State<QuestionScreen> {
               height: 56.0, // Same as ListTile
               child: Center(
                 child: AnimatedOpacity(
-                  key: GlobalObjectKey(_question),
                   opacity: _question.isAnswered ? 1.0 : 0.0,
                   duration: Duration(seconds: 3),
                   // TODO DelayedCurve is just a quick and dirty way to delay the start of the animation, but I'm sure there's a better way.
                   curve: _DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
                   child: Text(
-                    _question.isAnswered ? Strings.of(context).tapInstructions : '',
+                    // TODO see if screen readers do the right thing if we just leave the text here always
+                    _question.isAnswered ? strings.tapInstructions : '',
                     textScaleFactor: 1.25,
                     style: theme.textTheme.caption,
                   ),
