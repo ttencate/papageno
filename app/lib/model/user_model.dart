@@ -163,8 +163,12 @@ class Knowledge {
 
   Knowledge.none() : this(<Species, SpeciesKnowledge>{}.build());
 
-  SpeciesKnowledge ofSpecies(Species species) {
+  SpeciesKnowledge ofSpeciesOrNone(Species species) {
     return _ofSpecies[species] ?? SpeciesKnowledge.none();
+  }
+
+  SpeciesKnowledge ofSpeciesOrNull(Species species) {
+    return _ofSpecies[species];
   }
 
   Knowledge updated(Species species, SpeciesKnowledge speciesKnowledge) {
@@ -215,6 +219,9 @@ class SpeciesKnowledge {
       _lastAskedTimestampMs = map['last_asked_timestamp_ms'] as int;
   
   SpeciesKnowledge._internal(this.model, this._lastAskedTimestampMs);
+
+  /// True if and only if this species has never been asked before.
+  bool get isNone => model == null;
 
   /// Returns the estimated halflife (time to forget) for this species in days.
   double get halflifeDays => model?.modelToPercentileDecay(percentile: 0.5) ?? 0.0;

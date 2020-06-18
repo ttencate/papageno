@@ -57,14 +57,14 @@ void main() {
         await userDb.upgradeForTest(6);
 
         final knowledge1 = await userDb.knowledge(profileId1);
-        expect(knowledge1.ofSpecies(species1).recallProbability(now), greaterThan(knowledge1.ofSpecies(species2).recallProbability(now)));
-        expect(knowledge1.ofSpecies(species1).recallProbability(now), greaterThan(knowledge1.ofSpecies(species3).recallProbability(now)));
-        expect(knowledge1.ofSpecies(species2).recallProbability(now), greaterThan(knowledge1.ofSpecies(species3).recallProbability(now)));
+        expect(knowledge1.ofSpeciesOrNone(species1).recallProbability(now), greaterThan(knowledge1.ofSpeciesOrNone(species2).recallProbability(now)));
+        expect(knowledge1.ofSpeciesOrNone(species1).recallProbability(now), greaterThan(knowledge1.ofSpeciesOrNone(species3).recallProbability(now)));
+        expect(knowledge1.ofSpeciesOrNone(species2).recallProbability(now), greaterThan(knowledge1.ofSpeciesOrNone(species3).recallProbability(now)));
 
         final knowledge2 = await userDb.knowledge(profileId2);
-        expect(knowledge2.ofSpecies(species1).recallProbability(now), lessThan(knowledge1.ofSpecies(species3).recallProbability(now)));
-        expect(knowledge2.ofSpecies(species2).recallProbability(now), 0.0);
-        expect(knowledge2.ofSpecies(species3).recallProbability(now), 0.0);
+        expect(knowledge2.ofSpeciesOrNone(species1).recallProbability(now), lessThan(knowledge1.ofSpeciesOrNone(species3).recallProbability(now)));
+        expect(knowledge2.ofSpeciesOrNone(species2).recallProbability(now), 0.0);
+        expect(knowledge2.ofSpeciesOrNone(species3).recallProbability(now), 0.0);
       });
 
       test('converts courses', () async {

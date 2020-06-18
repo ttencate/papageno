@@ -111,8 +111,8 @@ class QuizController {
 
     // Ask higher priority first.
     int byPriority(Species a, Species b) {
-      final ka = knowledge.ofSpecies(a);
-      final kb = knowledge.ofSpecies(b);
+      final ka = knowledge.ofSpeciesOrNone(a);
+      final kb = knowledge.ofSpeciesOrNone(b);
       if (ka == null && kb == null) {
         return 0;
       } else if (ka == null) {

@@ -51,7 +51,7 @@ class KnowledgeController {
     _knowledgeFuture = _knowledgeFuture.then((knowledge) {
       _log.fine('Updating species knowledge after $question');
       final species = question.correctAnswer;
-      final speciesKnowledge = knowledge.ofSpecies(species);
+      final speciesKnowledge = knowledge.ofSpeciesOrNone(species);
       final newSpeciesKnowledge = speciesKnowledge.update(correct: question.isCorrect);
       final newKnowledge = knowledge.updated(species, newSpeciesKnowledge);
       unawaited(_userDb.upsertSpeciesKnowledge(profile.profileId, species.speciesId, newSpeciesKnowledge));

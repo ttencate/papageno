@@ -85,7 +85,7 @@ class _CoursePageState extends State<CoursePage> {
                           ),
                           for (final species in course.unlockedSpecies) _SpeciesItem(
                             species: species,
-                            knowledge: knowledge.ofSpecies(species),
+                            knowledge: knowledge.ofSpeciesOrNone(species),
                             locked: false,
                           ),
                           FlatButton(
@@ -105,7 +105,7 @@ class _CoursePageState extends State<CoursePage> {
                           ),
                           for (final species in course.localSpecies.where((s) => !unlockedSpecies.contains(s))) _SpeciesItem(
                             species: species,
-                            knowledge: knowledge.ofSpecies(species),
+                            knowledge: knowledge.ofSpeciesOrNull(species),
                             locked: true,
                           ),
                         ],
