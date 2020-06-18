@@ -114,14 +114,12 @@ abstract class Strings {
   String get quizResultsTitle;
   /// Text introducing a percentage showing how well the user scored on a quiz
   String get quizScore;
-  /// Text showing how well the user scored on a quiz
-  String quizScoreDetails(int correct, int total);
-  /// Text introducing birds that the user is good at
-  String get strongPoints;
-  /// Text introducing birds that the user is not good at
-  String get weakPoints;
-  /// Text describing a single incorrect answer
-  String confusionText(String correct, String wrong);
+  /// Text on end of quiz screen
+  String get recommendStop;
+  /// Text on end of quiz screen
+  String get recommendRetry;
+  /// Text on end of quiz screen
+  String get recommendAddSpecies;
   /// Text on button that retries this quiz once more
   String get retryQuizButton;
   /// Text on button that goes back to the previous screen
@@ -332,10 +330,9 @@ abstract class Strings {
       case 'tapInstructions': return tapInstructions;
       case 'quizResultsTitle': return quizResultsTitle;
       case 'quizScore': return quizScore;
-      case 'quizScoreDetails': return quizScoreDetails;
-      case 'strongPoints': return strongPoints;
-      case 'weakPoints': return weakPoints;
-      case 'confusionText': return confusionText;
+      case 'recommendStop': return recommendStop;
+      case 'recommendRetry': return recommendRetry;
+      case 'recommendAddSpecies': return recommendAddSpecies;
       case 'retryQuizButton': return retryQuizButton;
       case 'backButton': return backButton;
       case 'abortQuizTitle': return abortQuizTitle;
@@ -483,11 +480,10 @@ class _Strings_en extends Strings {
   @override String get tapInstructions => 'Tap anywhere to continue';
   @override String get quizResultsTitle => 'Quiz results';
   @override String get quizScore => 'Score:';
-  @override String quizScoreDetails(int correct, int total) => <String>['Correctly identified ', correct.toString(), ' out of ', total.toString(), ' birds'].join();
-  @override String get strongPoints => 'Strong points';
-  @override String get weakPoints => 'Weak points';
-  @override String confusionText(String correct, String wrong) => <String>['Took ', correct, ' to be ', wrong].join();
-  @override String get retryQuizButton => 'Have another go';
+  @override String get recommendStop => 'Bummer! Maybe let it sink in a little and pick it up later?';
+  @override String get recommendRetry => 'Not bad! But some more practice wouldn\'t hurt.';
+  @override String get recommendAddSpecies => 'Well done! You seem to be ready to start on some new birds!';
+  @override String get retryQuizButton => 'Practise some more';
   @override String get backButton => 'Back';
   @override String get abortQuizTitle => 'Abort quiz?';
   @override String get abortQuizContent => 'This will end the current quiz. Are you sure?';
@@ -613,11 +609,10 @@ class _Strings_nl extends _Strings_en {
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
   @override String get quizResultsTitle => 'Toetsuitslag';
   @override String get quizScore => 'Score:';
-  @override String quizScoreDetails(int correct, int total) => <String>[correct.toString(), ' van ', total.toString(), ' vogels juist geïdentificeerd'].join();
-  @override String get strongPoints => 'Sterke punten';
-  @override String get weakPoints => 'Zwakke punten';
-  @override String confusionText(String correct, String wrong) => <String>['Dacht dat een ', correct, ' een ', wrong, ' was'].join();
-  @override String get retryQuizButton => 'Nog eens proberen';
+  @override String get recommendStop => 'Jammer! Misschien even laten bezinken en later verder?';
+  @override String get recommendRetry => 'Niet gek! Maar een beetje extra oefening zou geen kwaad kunnen.';
+  @override String get recommendAddSpecies => 'Knap werk! Zo te zien ben je klaar voor wat nieuwe vogels!';
+  @override String get retryQuizButton => 'Meer oefenen';
   @override String get backButton => 'Terug';
   @override String get abortQuizTitle => 'Toets beëindigen?';
   @override String get abortQuizContent => 'Hiermee wordt de huidige toets beëindigd. Weet je het zeker?';

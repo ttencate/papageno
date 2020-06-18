@@ -9,7 +9,6 @@ import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/add_species_dialog.dart';
-import 'package:papageno/screens/quiz_page.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
@@ -134,15 +133,15 @@ class _CoursePageState extends State<CoursePage> {
     // TODO move into a controller, then stop storing _userDb
     unawaited(_userDb.markProfileUsed(widget.profile));
 
-    final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, _knowledgeController, course)) ?? QuizPageResult.back;
+    final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, _knowledgeController, course)) ?? AfterQuizOption.stop;
 
     switch (quizPageResult) {
-      case QuizPageResult.back:
+      case AfterQuizOption.stop:
         break;
-      case QuizPageResult.restart:
+      case AfterQuizOption.retry:
         unawaited(_startQuiz(course));
         break;
-      case QuizPageResult.addSpecies:
+      case AfterQuizOption.addSpecies:
         unawaited(_addMoreSpecies(course));
         break;
     }

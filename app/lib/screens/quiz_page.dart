@@ -25,12 +25,6 @@ import 'package:provider/provider.dart';
 
 final _log = Logger('QuizPage');
 
-enum QuizPageResult {
-  back,
-  restart,
-  addSpecies,
-}
-
 class QuizPage extends StatefulWidget {
   final Profile profile;
   final KnowledgeController knowledgeController;
@@ -121,8 +115,9 @@ class _QuizPageState extends State<QuizPage> {
                     } else {
                       return QuizResult(
                         quiz: quiz,
-                        onRetry: _restart,
-                        onBack: _back,
+                        onRetry: () { Navigator.of(context).pop(AfterQuizOption.retry); },
+                        onBack: () { Navigator.of(context).pop(AfterQuizOption.stop); },
+                        onAddSpecies: () { Navigator.of(context).pop(AfterQuizOption.addSpecies); },
                       );
                     }
                   },
@@ -147,14 +142,6 @@ class _QuizPageState extends State<QuizPage> {
         targetPage,
         duration: Duration(milliseconds: 400),
         curve: Curves.ease);
-  }
-
-  void _restart() {
-    Navigator.of(context).pop(QuizPageResult.restart);
-  }
-
-  void _back() {
-    Navigator.of(context).pop(QuizPageResult.back);
   }
 
   Future<bool> _confirmPop() async {
@@ -442,8 +429,9 @@ class QuizResult extends StatelessWidget {
   final Quiz quiz;
   final void Function() onRetry;
   final void Function() onBack;
+  final void Function() onAddSpecies;
 
-  const QuizResult({Key key, this.quiz, this.onRetry, this.onBack}) : super(key: key);
+  const QuizResult({Key key, this.quiz, this.onRetry, this.onBack, this.onAddSpecies}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -464,7 +452,7 @@ class QuizResult extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       strings.quizScore,
-                      style: theme.textTheme.headline4,
+                      style: theme.textTheme.headline5,
                       textAlign: TextAlign.center,
                     ),
                     Text(
@@ -472,65 +460,50 @@ class QuizResult extends StatelessWidget {
                       style: theme.textTheme.headline1.copyWith(fontSize: 92.0),
                       textAlign: TextAlign.center,
                     ),
-                    Text(
-                      strings.quizScoreDetails(quiz.correctAnswerCount, quiz.questionCount),
-                      style: theme.textTheme.subtitle1,
-                      textAlign: TextAlign.center,
-                    ),
                   ],
                 ),
               ),
-              if (quiz.fullyCorrectSpecies.isNotEmpty) Container(
+              if (quiz.alwaysCorrectSpecies.isNotEmpty) Container(
                 color: Colors.green.shade50,
                 child: Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          AnswerIcon(correct: true),
-                          SizedBox(width: 4.0),
-                          Text(
-                            strings.strongPoints,
-                            style: theme.textTheme.headline6,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        quiz.fullyCorrectSpecies
-                            .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
-                            .sorted()
-                            .join(', '),
+                      AnswerIcon(correct: true),
+                      SizedBox(width: 8.0),
+                      Expanded(
+                        child: Text(
+                          quiz.alwaysCorrectSpecies
+                              .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
+                              .sorted()
+                              .join(', '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              if (quiz.incorrectAnswers.isNotEmpty) Container(
+              if (quiz.sometimesIncorrectSpecies.isNotEmpty) Container(
                 color: Colors.red.shade50,
                 child: Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          AnswerIcon(correct: false),
-                          SizedBox(width: 4.0),
-                          Text(
-                            strings.weakPoints,
-                            style: theme.textTheme.headline6,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8.0),
-                      for (final question in quiz.incorrectAnswers) Text(
-                        strings.confusionText(
-                            question.correctAnswer.commonNameIn(primarySpeciesLanguageCode),
-                            question.givenAnswer.commonNameIn(primarySpeciesLanguageCode)),
-                        style: theme.textTheme.bodyText2,
+                      AnswerIcon(correct: false),
+                      SizedBox(width: 8.0),
+                      Expanded(
+                        child: Text(
+                          quiz.sometimesIncorrectSpecies
+                              .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
+                              .sorted()
+                              .join(', '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -541,22 +514,55 @@ class QuizResult extends StatelessWidget {
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            children: <Widget>[
-              FlatButton(
-                onPressed: onBack,
-                child: Text(strings.backButton.toUpperCase()),
-              ),
-              Spacer(),
-              RaisedButton(
-                onPressed: onRetry,
-                child: Text(strings.retryQuizButton.toUpperCase()),
-              ),
-            ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _recommendationActions(quiz.recommendation, strings),
           ),
         ),
       ],
     );
   }
 
+  List<Widget> _recommendationActions(AfterQuizRecommendation recommendation, Strings strings) {
+    Widget raisedButton(void Function() onPressed, String text) {
+      return RaisedButton(onPressed: onPressed, child: Text(text.toUpperCase()));
+    }
+    Widget flatButton(void Function() onPressed, String text) {
+      return FlatButton(onPressed: onPressed, child: Text(text.toUpperCase()));
+    }
+    switch (recommendation) {
+      case AfterQuizRecommendation.stop:
+        return <Widget>[
+          Text(strings.recommendStop),
+          SizedBox(height: 8.0),
+          flatButton(onRetry, strings.retryQuizButton),
+          raisedButton(onBack, strings.backButton),
+        ];
+      case AfterQuizRecommendation.strongRetry:
+        return <Widget>[
+          Text(strings.recommendRetry),
+          SizedBox(height: 8.0),
+          raisedButton(onRetry, strings.retryQuizButton),
+          flatButton(onBack, strings.backButton),
+        ];
+      case AfterQuizRecommendation.weakRetry:
+        return <Widget>[
+          Text(strings.recommendRetry),
+          SizedBox(height: 8.0),
+          raisedButton(onRetry, strings.retryQuizButton),
+          flatButton(onAddSpecies, strings.addSpeciesButton),
+          flatButton(onBack, strings.backButton),
+        ];
+      case AfterQuizRecommendation.addSpecies:
+        return <Widget>[
+          Text(strings.recommendAddSpecies),
+          SizedBox(height: 8.0),
+          raisedButton(onAddSpecies, strings.addSpeciesButton),
+          flatButton(onRetry, strings.retryQuizButton),
+          flatButton(onBack, strings.backButton),
+        ];
+    }
+    assert(false);
+    return <Widget>[];
+  }
 }

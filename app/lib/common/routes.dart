@@ -35,7 +35,7 @@ class CourseRoute extends MaterialPageRoute<void> {
       super(builder: (context) => CoursePage(profile, course));
 }
 
-class QuizRoute extends MaterialPageRoute<QuizPageResult> {
+class QuizRoute extends MaterialPageRoute<AfterQuizOption> {
   QuizRoute(Profile profile, KnowledgeController knowledgeController, Course course) :
       super(builder: (context) => QuizPage(profile, knowledgeController, course));
 }

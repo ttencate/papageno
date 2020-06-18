@@ -52,6 +52,26 @@ class Course {
   Course({this.courseId, this.profileId, this.location, this.localSpecies, this.unlockedSpecies});
 }
 
+enum AfterQuizOption {
+  /// Stop now.
+  stop,
+  /// Try the same quiz again.
+  retry,
+  /// Stop and add more species.
+  addSpecies,
+}
+
+enum AfterQuizRecommendation {
+  /// Results aren't great yet, but there has been enough practice for now.
+  stop,
+  /// Results not great but should improve if tried again.
+  strongRetry,
+  /// Results not great, but good enough to add some birds if really wanted.
+  weakRetry,
+  /// Results are great, more species should be added.
+  addSpecies,
+}
+
 @immutable
 class Quiz {
   /// The total number of questions in this [Quiz].
@@ -77,15 +97,32 @@ class Quiz {
 
   int get scorePercent => correctAnswerCount * 100 ~/ questionCount;
 
-  Set<Species> get fullyCorrectSpecies =>
+  Set<Species> get alwaysCorrectSpecies =>
       availableQuestions
-        .map((question) => question.correctAnswer)
-        .toSet()
-        ..removeAll(incorrectAnswers.map((question) => question.correctAnswer))
-        ..removeAll(incorrectAnswers.map((question) => question.givenAnswer));
+          .map((question) => question.correctAnswer)
+          .toSet()
+          ..removeAll(incorrectQuestions.map((question) => question.correctAnswer))
+          ..removeAll(incorrectQuestions.map((question) => question.givenAnswer));
 
-  List<Question> get correctAnswers => availableQuestions.where((question) => question.isCorrect == true).toList();
-  List<Question> get incorrectAnswers => availableQuestions.where((question) => question.isCorrect == false).toList();
+  Set<Species> get sometimesIncorrectSpecies =>
+      incorrectQuestions.map((question) => question.correctAnswer)
+          .toSet()
+          ..addAll(incorrectQuestions.map((question) => question.givenAnswer));
+  
+  List<Question> get correctQuestions => availableQuestions.where((question) => question.isCorrect == true).toList();
+  List<Question> get incorrectQuestions => availableQuestions.where((question) => question.isCorrect == false).toList();
+
+  AfterQuizRecommendation get recommendation {
+    // TODO recommend stop if the worst recallProbability is still fairly large (say >50%)
+    final score = scorePercent;
+    if (score < 60) {
+      return AfterQuizRecommendation.strongRetry;
+    } else if (score < 80) {
+      return AfterQuizRecommendation.weakRetry;
+    } else {
+      return AfterQuizRecommendation.addSpecies;
+    }
+  }
 }
 
 @immutable
