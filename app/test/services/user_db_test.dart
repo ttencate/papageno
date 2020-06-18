@@ -63,8 +63,8 @@ void main() {
 
         final knowledge2 = await userDb.knowledge(profileId2);
         expect(knowledge2.ofSpecies(species1).recallProbability(now), lessThan(knowledge1.ofSpecies(species3).recallProbability(now)));
-        expect(knowledge2.ofSpecies(species2), null);
-        expect(knowledge2.ofSpecies(species3), null);
+        expect(knowledge2.ofSpecies(species2).recallProbability(now), 0.0);
+        expect(knowledge2.ofSpecies(species3).recallProbability(now), 0.0);
       });
 
       test('converts courses', () async {

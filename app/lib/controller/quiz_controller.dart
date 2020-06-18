@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:logging/logging.dart';
+import 'package:papageno/controller/knowledge_controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
@@ -21,93 +22,83 @@ final _log = Logger('QuizController');
 /// Questions are generated in batches, where a batch cannot contain the same species more than once.
 /// This prevents over-quizzing on a particular species.
 class QuizController {
+  static const _choiceCount = 4;
+
   /// Number of batches in a quiz.
-  static const _questionBatchCount = 3;
+  final int questionBatchCount;
   /// Size of a batch. Should be greater than the number of species unlocked at a time (currently 5),
   /// otherwise only new species will be asked at the start of a new quiz.
-  static const _questionBatchSize = 2;
-  static const _questionCount = _questionBatchCount * _questionBatchSize;
-  static const _choiceCount = 4;
+  final int questionBatchSize;
+  /// Total number of questions in the quiz.
+  final int questionCount;
 
   final AppDb _appDb;
   final UserDb _userDb;
+  final KnowledgeController _knowledgeController;
   final Course _course;
   final Random _random;
 
   final _questions = <Question>[];
   Future<void> _questionsFuture;
   var _answerCount = 0;
+  final _recordingsBags = <Species, RandomBag<Recording>>{};
 
   final _quizUpdatesController = StreamController<Quiz>();
-  final _answersController = StreamController<_Answer>();
 
-  QuizController(AppDb appDb, UserDb userDb, Course course, {Random random}) :
+  QuizController(AppDb appDb, UserDb userDb, KnowledgeController knowledgeController, Course course, {Random random, this.questionBatchCount = 3, this.questionBatchSize = 8}) :
       _appDb = appDb,
       _userDb = userDb,
+      _knowledgeController = knowledgeController,
       _course = course,
-      _random = random ?? Random(DateTime.now().microsecondsSinceEpoch) {
+      _random = random ?? Random(DateTime.now().microsecondsSinceEpoch),
+      questionCount = questionBatchCount * questionBatchSize
+  {
     _ensureQuestions();
-    _answersController.stream.listen(_onAnswer, onDone: _close);
   }
 
   Stream<Quiz> get quizUpdates => _quizUpdatesController.stream;
+
+  void answerQuestion(int questionIndex, Species givenAnswer, DateTime answerTimestamp) {
+    if (questionIndex >= _questions.length) {
+      _log.severe('Answer ${givenAnswer} given to question ${questionIndex} which was not in the list');
+      return;
+    }
+    if (_questions[questionIndex].isAnswered) {
+      _log.info('Tried to answer question ${questionIndex} with ${givenAnswer} while it already has an answer');
+      return;
+    }
+
+    _answerCount++;
+    final answeredQuestion = _questions[questionIndex].answeredWith(givenAnswer, answerTimestamp);
+    _questions[questionIndex] = answeredQuestion;
+    _notifyListeners();
+
+    unawaited(_userDb.insertQuestion(_course.profileId, _course.courseId, answeredQuestion));
+    unawaited(_knowledgeController.updateSpeciesKnowledge(answeredQuestion));
+    unawaited(_ensureQuestions());
+  }
+
+  void dispose() {
+    _log.fine('QuizController.dispose()');
+    _quizUpdatesController.close();
+  }
 
   Future<void> _ensureQuestions() async {
     if (_questionsFuture != null) {
       return;
     }
-    if (_answerCount < _questionCount && _answerCount >= _questions.length) {
+    if (_answerCount < questionCount && _answerCount >= _questions.length) {
       _questionsFuture = () async {
-        final batch = await _generateQuestionBatch(_questionBatchSize);
+        final batch = await _generateQuestionBatch(min(questionBatchSize, questionCount - _answerCount));
         _questions.addAll(batch);
-        _notify();
+        _notifyListeners();
         _questionsFuture = null;
       }();
     }
   }
 
-  void _notify() {
-    _quizUpdatesController.add(Quiz(_questionCount, _questions.toBuiltList()));
-  }
-
-  Future<void> _onAnswer(_Answer answer) async {
-    if (answer.questionIndex >= _questions.length) {
-      _log.severe('Answer ${answer.species} given to question ${answer.questionIndex} which was not in the list');
-    } else if (_questions[answer.questionIndex].isAnswered) {
-      _log.info('Tried to answer question ${answer.questionIndex} with ${answer.species} while it already has an answer');
-    } else {
-      _answerCount++;
-      unawaited(_ensureQuestions());
-      final answeredQuestion = _questions[answer.questionIndex].answeredWith(answer.species, answer.timestamp);
-      _questions[answer.questionIndex] = answeredQuestion;
-      await _storeAnswer(answeredQuestion);
-      _notify();
-    }
-  }
-
-  void answerQuestion(int questionIndex, Species answer, DateTime answerTimestamp) {
-    _answersController.add(_Answer(questionIndex, answer, answerTimestamp));
-  }
-
-  void dispose() {
-    _log.fine('QuizController.dispose()');
-    _answersController.close();
-  }
-
-  void _close() {
-    _log.fine('QuizController._close()');
-    _quizUpdatesController.close();
-  }
-
-  Future<void> _storeAnswer(Question question) async {
-    assert(question.isAnswered);
-
-    await _userDb.insertQuestion(_course.profileId, _course.courseId, question);
-    final speciesKnowledge = await _userDb.speciesKnowledgeOrNull(_course.profileId, question.correctAnswer.speciesId);
-    final newSpeciesKnowledge =
-        speciesKnowledge?.update(correct: question.isCorrect, answerTimestamp: question.answerTimestamp) ??
-            SpeciesKnowledge.initial(question.answerTimestamp);
-    await _userDb.upsertSpeciesKnowledge(_course.profileId, question.correctAnswer.speciesId, newSpeciesKnowledge);
+  void _notifyListeners() {
+    _quizUpdatesController.add(Quiz(questionCount, _questions.toBuiltList()));
   }
 
   Future<List<Question>> _generateQuestionBatch(int count) async {
@@ -116,7 +107,7 @@ class QuizController {
 
     final now = DateTime.now();
     final allSpecies = _course.unlockedSpecies.toList();
-    final knowledge = await _userDb.knowledge(_course.profileId);
+    final knowledge = await _knowledgeController.updatedKnowledge;
 
     // Ask higher priority first.
     int byPriority(Species a, Species b) {
@@ -135,15 +126,14 @@ class QuizController {
 
     final questionsBag = CyclicBag(allSpecies.sorted(byPriority));
     final answersBag = RandomBag(allSpecies);
-    final recordingsBags = <Species, RandomBag<Recording>>{};
 
     final questions = <Question>[];
     for (var i = 0; i < count; i++) {
       final correctAnswer = questionsBag.next();
-      if (!recordingsBags.containsKey(correctAnswer)) {
-        recordingsBags[correctAnswer] = RandomBag(await _appDb.recordingsFor(correctAnswer));
+      if (!_recordingsBags.containsKey(correctAnswer)) {
+        _recordingsBags[correctAnswer] = RandomBag(await _appDb.recordingsFor(correctAnswer));
       }
-      final recording = recordingsBags[correctAnswer].next(_random);
+      final recording = _recordingsBags[correctAnswer].next(_random);
       final choices = <Species>[correctAnswer];
       while (choices.length < min(_choiceCount, allSpecies.length)) {
         final choice = answersBag.next(_random);
@@ -164,12 +154,4 @@ class QuizController {
     _log.fine('Generated new batch of questions in ${stopwatch.elapsedMilliseconds} ms');
     return questions;
   }
-}
-
-class _Answer {
-  final int questionIndex;
-  final Species species;
-  final DateTime timestamp;
-
-  _Answer(this.questionIndex, this.species, this.timestamp);
 }

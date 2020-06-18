@@ -66,7 +66,10 @@ class EbisuModel {
   ///
   /// The default is set to `false` for computational efficiency.
   double predictRecall(double tNow, {bool exact = false}) {
-    assert(tNow > 0.0);
+    assert(tNow >= 0.0);
+    if (tNow == 0.0) {
+      return exact ? 1.0 : 0.0;
+    }
     final dt = tNow / time;
     final ret = logBetaRatio(alpha + dt, alpha, beta);
     return exact ? exp(ret) : ret;

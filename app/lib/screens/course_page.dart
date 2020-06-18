@@ -3,6 +3,8 @@ import 'package:flutter/rendering.dart';
 import 'package:papageno/common/routes.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/common/strings_extensions.dart';
+import 'package:papageno/controller/course_controller.dart';
+import 'package:papageno/controller/knowledge_controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
@@ -25,118 +27,135 @@ class CoursePage extends StatefulWidget {
 }
 
 class _CoursePageState extends State<CoursePage> {
-
   UserDb _userDb;
-  Future<Knowledge> _knowledge;
+  CourseController _courseController;
+  KnowledgeController _knowledgeController;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _userDb = Provider.of<UserDb>(context);
-    _loadKnowledge();
+  void initState() {
+    super.initState();
+    _userDb = Provider.of<UserDb>(context, listen: false);
+    _courseController = CourseController(course: widget.course, userDb: _userDb);
+    _knowledgeController = KnowledgeController(profile: widget.profile, userDb: _userDb);
   }
 
-  Future<Knowledge> _loadKnowledge() async {
-    setState(() {
-      _knowledge = _userDb.knowledge(widget.profile.profileId);
-    });
-    return await _knowledge;
+  @override
+  void dispose() {
+    _knowledgeController.dispose();
+    _courseController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final strings = Strings.of(context);
-    final course = widget.course;
-    final unlockedSpecies = course.unlockedSpecies.toSet();
     return ChangeNotifierProvider<Settings>.value(
       value: widget.profile.settings,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(strings.courseName(course)),
-        ),
-        drawer: MenuDrawer(profile: widget.profile, course: widget.course),
-        body: FutureBuilder<Knowledge>(
-          future: _knowledge,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return Center(child: CircularProgressIndicator());
-            }
-            return Column(
-              children: <Widget>[
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                        child: Text(
-                          strings.unlockedSpeciesHeading.toUpperCase(),
-                          style: theme.textTheme.subtitle2,
-                        ),
-                      ),
-                      for (final species in course.unlockedSpecies) _SpeciesItem(
-                        species: species,
-                        knowledge: snapshot.data.ofSpecies(species),
-                        locked: false,
-                      ),
-                      FlatButton(
-                        onPressed: () { _addMoreSpecies(course, widget.profile.settings); },
-                        child: Text(strings.addSpeciesButton.toUpperCase()),
-                      ),
-                      SizedBox(height: 8.0),
-                      Container(
-                        color: Colors.grey.shade200,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 16.0, top: 16.0, right: 16.0, bottom: 8.0),
-                          child: Text(
-                            strings.lockedSpeciesHeading.toUpperCase(),
-                            style: theme.textTheme.subtitle2,
+      child: StreamBuilder<Course>(
+        stream: _courseController.courseUpdates,
+        initialData: _courseController.course,
+        builder: (context, snapshot) {
+          final course = snapshot.data;
+          final unlockedSpecies = course.unlockedSpecies.toSet();
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(strings.courseName(course)),
+            ),
+            drawer: MenuDrawer(profile: widget.profile, course: widget.course),
+            body: StreamBuilder<Knowledge>(
+              stream: _knowledgeController.knowledgeUpdates,
+              initialData: _knowledgeController.knowledge,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                final knowledge = snapshot.data;
+                return Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                            child: Text(
+                              strings.unlockedSpeciesHeading.toUpperCase(),
+                              style: theme.textTheme.subtitle2,
+                            ),
                           ),
-                        ),
+                          for (final species in course.unlockedSpecies) _SpeciesItem(
+                            species: species,
+                            knowledge: knowledge.ofSpecies(species),
+                            locked: false,
+                          ),
+                          FlatButton(
+                            onPressed: () { _addMoreSpecies(course); },
+                            child: Text(strings.addSpeciesButton.toUpperCase()),
+                          ),
+                          SizedBox(height: 8.0),
+                          Container(
+                            color: Colors.grey.shade200,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 16.0, top: 16.0, right: 16.0, bottom: 8.0),
+                              child: Text(
+                                strings.lockedSpeciesHeading.toUpperCase(),
+                                style: theme.textTheme.subtitle2,
+                              ),
+                            ),
+                          ),
+                          for (final species in course.localSpecies.where((s) => !unlockedSpecies.contains(s))) _SpeciesItem(
+                            species: species,
+                            knowledge: knowledge.ofSpecies(species),
+                            locked: true,
+                          ),
+                        ],
                       ),
-                      for (final species in course.localSpecies.where((s) => !unlockedSpecies.contains(s))) _SpeciesItem(
-                        species: species,
-                        knowledge: snapshot.data.ofSpecies(species),
-                        locked: true,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: RaisedButton(
+                        visualDensity: VisualDensity(horizontal: VisualDensity.maximumDensity, vertical: VisualDensity.maximumDensity),
+                        onPressed: course.unlockedSpecies.isEmpty ? null : () { _startQuiz(course); },
+                        child: Text(strings.startQuiz.toUpperCase()),
                       ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: RaisedButton(
-                    visualDensity: VisualDensity(horizontal: VisualDensity.maximumDensity, vertical: VisualDensity.maximumDensity),
-                    onPressed: course.unlockedSpecies.isEmpty ? null : () { _startQuiz(course); },
-                    child: Text(strings.startQuiz.toUpperCase()),
-                  ),
-                )
-              ],
-            );
-          },
-        ),
+                    )
+                  ],
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
 
   Future<void> _startQuiz(Course course) async {
+    // TODO move into a controller, then stop storing _userDb
     unawaited(_userDb.markProfileUsed(widget.profile));
-    final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, course));
-    unawaited(_loadKnowledge());
-//    if (await maybeUnlockNextLesson(_userDb, course, quiz)) {
-//      setState(() {});
-//      // TODO show a nice message!
-//    }
-    if (quizPageResult is QuizPageResult && quizPageResult.restart) {
-      unawaited(_startQuiz(course));
+
+    final quizPageResult = await Navigator.of(context).push(QuizRoute(widget.profile, _knowledgeController, course)) ?? QuizPageResult.back;
+
+    switch (quizPageResult) {
+      case QuizPageResult.back:
+        break;
+      case QuizPageResult.restart:
+        unawaited(_startQuiz(course));
+        break;
+      case QuizPageResult.addSpecies:
+        unawaited(_addMoreSpecies(course));
+        break;
     }
   }
 
-  Future<void> _addMoreSpecies(Course course, Settings settings) async {
-    await showDialog<void>(
+  Future<void> _addMoreSpecies(Course course) async {
+    final newSpecies = await showDialog<List<Species>>(
       context: context,
-      builder: (context) => AddSpeciesDialog(course: course, settings: settings),
+      builder: (context) => AddSpeciesDialog(course: course, settings: widget.profile.settings),
     );
+    if (newSpecies != null) {
+      await _courseController.addSpecies(newSpecies);
+    }
   }
 }
 
@@ -175,7 +194,7 @@ class _SpeciesItem extends StatelessWidget {
                 ),
                 SizedBox(width: 16.0),
                 if (knowledge != null) _StarRating(
-                  starCount: 5,
+                  starCount: SpeciesKnowledge.maxStarCount,
                   filledHalfStars: knowledge.halfStars,
                   size: 16.0,
                 ),
@@ -239,6 +258,7 @@ class _SpeciesDetailsDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = Strings.of(context);
     final locale = WidgetsBinding.instance.window.locale;
+    final now = DateTime.now();
     return AlertDialog(
       insetPadding: EdgeInsets.all(16.0),
       title: Row(
@@ -270,12 +290,14 @@ class _SpeciesDetailsDialog extends StatelessWidget {
             keyText: strings.scientificName,
             value: Text(species.scientificName, softWrap: true, style: TextStyle(fontStyle: FontStyle.italic)),
           ),
-          _KeyValueRow(
+          if (knowledge.model != null) _KeyValueRow(
             keyText: strings.learningStats,
             value: Text(
-                'α = ${knowledge.ebisuModel.alpha.toStringAsFixed(1)}, '
-                'β = ${knowledge.ebisuModel.beta.toStringAsFixed(1)}, '
-                'h = ${knowledge.ebisuModel.time.toStringAsFixed(4)}'),
+                'α = ${knowledge.model.alpha.toStringAsFixed(1)}, '
+                'β = ${knowledge.model.beta.toStringAsFixed(1)}, '
+                't = ${knowledge.model.time.toStringAsFixed(4)}\n'
+                'Δ = ${knowledge.daysSinceAsked(now).toStringAsFixed(3)}, '
+                'p = ${(knowledge.recallProbability(now) * 100).toStringAsFixed(2)}%'),
           ),
         ],
       ),

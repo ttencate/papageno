@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
 import 'package:logging/logging.dart';
 import 'package:papageno/common/strings.g.dart';
+import 'package:papageno/controller/knowledge_controller.dart';
 import 'package:papageno/controller/quiz_controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/app_model.dart' as model show Image; // Avoid conflict with Flutter's Image class.
@@ -24,17 +25,18 @@ import 'package:provider/provider.dart';
 
 final _log = Logger('QuizPage');
 
-class QuizPageResult {
-  final bool restart;
-
-  QuizPageResult({@required this.restart});
+enum QuizPageResult {
+  back,
+  restart,
+  addSpecies,
 }
 
 class QuizPage extends StatefulWidget {
   final Profile profile;
+  final KnowledgeController knowledgeController;
   final Course course;
 
-  QuizPage(this.profile, this.course);
+  QuizPage(this.profile, this.knowledgeController, this.course);
 
   @override
   State<StatefulWidget> createState() => _QuizPageState();
@@ -52,7 +54,7 @@ class _QuizPageState extends State<QuizPage> {
     _log.finer('Creating _QuizPageState');
     final appDb = Provider.of<AppDb>(context, listen: false);
     final userDb = Provider.of<UserDb>(context, listen: false);
-    _controller = QuizController(appDb, userDb, widget.course);
+    _controller = QuizController(appDb, userDb, widget.knowledgeController, widget.course);
     _pageController = PageController(initialPage: _currentPage);
   }
 
@@ -148,11 +150,11 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _restart() {
-    Navigator.of(context).pop(QuizPageResult(restart: true));
+    Navigator.of(context).pop(QuizPageResult.restart);
   }
 
   void _back() {
-    Navigator.of(context).pop(QuizPageResult(restart: false));
+    Navigator.of(context).pop(QuizPageResult.back);
   }
 
   Future<bool> _confirmPop() async {

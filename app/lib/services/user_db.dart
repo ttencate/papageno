@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:built_collection/built_collection.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:papageno/model/app_model.dart';
@@ -199,9 +200,8 @@ class UserDb {
       final givenSpeciesId = record['given_species_id'] as int;
       final correct = givenSpeciesId == correctSpeciesId;
       final answerTimestamp = DateTime.fromMillisecondsSinceEpoch((record['answer_timestamp'] as double).round());
-      profile[correctSpeciesId] = profile.containsKey(correctSpeciesId) ?
-        profile[correctSpeciesId].update(correct: correct, answerTimestamp: answerTimestamp) :
-        SpeciesKnowledge.initial(answerTimestamp);
+      profile[correctSpeciesId] = (profile[correctSpeciesId] ?? SpeciesKnowledge.none())
+          .update(correct: correct, answerTimestamp: answerTimestamp);
     }
 
     for (final entry in profiles.entries) {
@@ -347,6 +347,14 @@ class UserDb {
     return await _courseFromMap(records.single);
   }
 
+  Future<void> updateCourse(Course course) async {
+    await _db.update(
+        'courses',
+        _courseToMap(course),
+        where: 'course_id = ?',
+        whereArgs: <dynamic>[course.courseId]);
+  }
+
   /// Returns all courses in the profile.
   Future<List<Course>> courses(int profileId) async {
     final records = await _db.query(
@@ -366,7 +374,7 @@ class UserDb {
         'knowledge',
         where: 'profile_id = ?',
         whereArgs: <dynamic>[profileId]);
-    final bySpecies = <Species, SpeciesKnowledge>{};
+    final bySpecies = MapBuilder<Species, SpeciesKnowledge>();
     for (final record in records) {
       final species = await _appDb.speciesOrNull(record['species_id'] as int);
       if (species == null) {
@@ -374,16 +382,16 @@ class UserDb {
       }
       bySpecies[species] = SpeciesKnowledge.fromMap(record);
     }
-    return Knowledge(bySpecies);
+    return Knowledge(bySpecies.build());
   }
 
-  Future<SpeciesKnowledge> speciesKnowledgeOrNull(int profileId, int speciesId) async {
+  Future<SpeciesKnowledge> speciesKnowledge(int profileId, int speciesId) async {
     final records = await _db.query(
         'knowledge',
         where: 'profile_id = ? and species_id = ?',
         whereArgs: <dynamic>[profileId, speciesId]);
     if (records.isEmpty) {
-      return null;
+      return SpeciesKnowledge.none();
     }
     return SpeciesKnowledge.fromMap(records.single);
   }

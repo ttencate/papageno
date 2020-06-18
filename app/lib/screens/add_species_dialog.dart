@@ -6,7 +6,6 @@ import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/utils/string_utils.dart';
-import 'package:provider/provider.dart';
 
 /// A dialog that prompts the user to select some species to add to the course.
 /// Pops the [Navigator] with a nonempty `List<Species>`, or `null` if cancelled.

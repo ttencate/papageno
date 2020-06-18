@@ -3,6 +3,7 @@
 /// Using a class for each route type is much nicer!
 
 import 'package:flutter/material.dart';
+import 'package:papageno/controller/knowledge_controller.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/about_page.dart';
@@ -35,8 +36,8 @@ class CourseRoute extends MaterialPageRoute<void> {
 }
 
 class QuizRoute extends MaterialPageRoute<QuizPageResult> {
-  QuizRoute(Profile profile, Course course) :
-      super(builder: (context) => QuizPage(profile, course));
+  QuizRoute(Profile profile, KnowledgeController knowledgeController, Course course) :
+      super(builder: (context) => QuizPage(profile, knowledgeController, course));
 }
 
 class SettingsRoute extends MaterialPageRoute<void> {

@@ -114,18 +114,26 @@ class Question {
   }
 
   @override
-  String toString() => 'Question(correctAnswer: $correctAnswer, givenAnswer: $givenAnswer)';
+  String toString() => 'Question(correctAnswer: $correctAnswer, givenAnswer: $givenAnswer, isCorrect: $isCorrect)';
 }
 
 /// Represents how much the user knows about each species.
 @immutable
 class Knowledge {
-  final Map<Species, SpeciesKnowledge> _ofSpecies;
+  final BuiltMap<Species, SpeciesKnowledge> _ofSpecies;
 
   Knowledge(this._ofSpecies);
 
+  Knowledge.none() : this(<Species, SpeciesKnowledge>{}.build());
+
   SpeciesKnowledge ofSpecies(Species species) {
-    return _ofSpecies[species];
+    return _ofSpecies[species] ?? SpeciesKnowledge.none();
+  }
+
+  Knowledge updated(Species species, SpeciesKnowledge speciesKnowledge) {
+    final builder = _ofSpecies.toBuilder();
+    builder[species] = speciesKnowledge;
+    return Knowledge(builder.build());
   }
 
   @override
@@ -140,61 +148,79 @@ class SpeciesKnowledge {
   static const _initialHalflifeDays = 10.0 / _minutesPerDay;
   static const _initialAlpha = 3.0;
 
+  // The first half star is easy to get by just improving very slightly on the initial halflife.
+  // The remaining 9 half stars at this rate require a halflife of about 30 days.
+  // That is still no guarantee for great recall a year later, but the halflife won't be extended to that duration
+  // until the user has actually used the app for that much time (and then some), which would be demoralizing.
+  static const _firstHalfStarAtDays = _initialHalflifeDays * 1.1;
+  static const _halfStarExponent = 2.5;
+  static const maxStarCount = 5;
+  static const maxHalfStarCount = 2 * maxStarCount;
+
   /// The underlying Ebisu model. Time is in days.
-  final EbisuModel _model;
+  /// This is `null` if the species has never been encountered before.
+  final EbisuModel model;
+
+  /// When the species was last quizzed on.
+  /// This is 0 if and only if [model] is `null`.
   final int _lastAskedTimestampMs;
 
-  SpeciesKnowledge.initial(DateTime creationTimestamp) :
-      _model = EbisuModel(time: _initialHalflifeDays, alpha: _initialAlpha),
-      _lastAskedTimestampMs = creationTimestamp.millisecondsSinceEpoch;
+  SpeciesKnowledge.none() :
+      model = null,
+      _lastAskedTimestampMs = 0;
 
   SpeciesKnowledge.fromMap(Map<String, dynamic> map) :
-      _model = EbisuModel(
+      model = EbisuModel(
         time: map['ebisu_time'] as double,
         alpha: map['ebisu_alpha'] as double,
         beta: map['ebisu_beta'] as double,
       ),
       _lastAskedTimestampMs = map['last_asked_timestamp_ms'] as int;
   
-  SpeciesKnowledge._internal(this._model, this._lastAskedTimestampMs);
+  SpeciesKnowledge._internal(this.model, this._lastAskedTimestampMs);
 
   /// Returns the estimated halflife (time to forget) for this species in days.
-  double get halflifeDays => _model.modelToPercentileDecay(percentile: 0.5);
+  double get halflifeDays => model?.modelToPercentileDecay(percentile: 0.5) ?? 0.0;
 
   /// Returns how many half stars (out of 5 whole stars, i.e. 10 half stars) this species gets.
-  /// The first half star is earned at a halflife is 1 hour; each next half star takes twice as much
-  /// as the previous one.
-  int get halfStars => max(0, min((log(halflifeDays * 24.0) / log(2.0) + 1).floor(), 10));
-
-  EbisuModel get ebisuModel => _model;
+  /// The first half star is earned at a particular halflife;
+  /// each next half star takes a particular factor as much as the previous one.
+  int get halfStars =>
+      halflifeDays <= 0 ?
+      0 :
+      max(0, min((log(halflifeDays / _firstHalfStarAtDays) / log(_halfStarExponent) + 1).floor(), maxHalfStarCount));
 
   /// Returns the probability between 0 and 1 that the species is remembered at this moment.
-  double recallProbability(DateTime now) => _model.predictRecall(_daysSinceAsked(now), exact: true);
+  double recallProbability(DateTime now) => model?.predictRecall(daysSinceAsked(now), exact: true) ?? 0.0;
 
   /// Returns a number that represents how important it is to ask about this species now (greater is higher priority).
   /// The number is not meaningful by itself, only in comparisons.
-  double priority(DateTime now) => -_model.predictRecall(_daysSinceAsked(now));
+  double priority(DateTime now) => -(model?.predictRecall(daysSinceAsked(now)) ?? double.negativeInfinity);
   
   SpeciesKnowledge update({@required bool correct, DateTime answerTimestamp}) {
     answerTimestamp ??= DateTime.now();
-    var newModel = _model;
-    try {
-      newModel = _model.updateRecall(correct ? 1 : 0, 1, _daysSinceAsked(answerTimestamp));
-    } catch (ex) {
-      _log.warning('Failed to update Ebishu model', ex);
+    EbisuModel newModel;
+    if (model == null) {
+      newModel = EbisuModel(time: _initialHalflifeDays, alpha: _initialAlpha);
+    } else {
+      try {
+        newModel = model.updateRecall(correct ? 1 : 0, 1, daysSinceAsked(answerTimestamp));
+      } catch (ex) {
+        _log.warning('Failed to update Ebishu model', ex);
+      }
     }
     return SpeciesKnowledge._internal(newModel, answerTimestamp.millisecondsSinceEpoch);
   }
 
-  double _daysSinceAsked(DateTime now) => (now.millisecondsSinceEpoch - _lastAskedTimestampMs) / _millisecondsPerDay;
+  double daysSinceAsked(DateTime now) => max(0.0, (now.millisecondsSinceEpoch - _lastAskedTimestampMs) / _millisecondsPerDay);
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-    'ebisu_time': _model.time,
-    'ebisu_alpha': _model.alpha,
-    'ebisu_beta': _model.beta,
+    'ebisu_time': model.time,
+    'ebisu_alpha': model.alpha,
+    'ebisu_beta': model.beta,
     'last_asked_timestamp_ms': _lastAskedTimestampMs,
   };
 
   @override
-  String toString() => '$_model @ ${DateTime.fromMillisecondsSinceEpoch(_lastAskedTimestampMs).toIso8601String()}';
+  String toString() => '$model @ ${DateTime.fromMillisecondsSinceEpoch(_lastAskedTimestampMs).toIso8601String()}';
 }
