@@ -62,66 +62,75 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = Strings.of(context);
     return ChangeNotifierProvider<Settings>.value(
       value: widget.profile.settings,
       child: StreamBuilder<Quiz>(
         stream: _controller.quizUpdates,
         builder: (context, snapshot) {
           final quiz = snapshot.data;
+          final theme = Theme.of(context);
+          final drawer = MenuDrawer(profile: widget.profile, course: widget.course);
+          if (quiz == null) {
+            return Center(child: CircularProgressIndicator());
+          }
           return WillPopScope(
-            onWillPop: quiz?.isComplete ?? false ? null : _confirmPop,
-            child: Scaffold(
-              appBar: AppBar(
-                title: quiz == null ? null : Text(
-                  _currentPage < snapshot.data.questionCount ?
-                    strings.questionIndex(_currentPage + 1, quiz.questionCount) :
-                    strings.quizResultsTitle,
+            onWillPop: quiz.isComplete ? null : _confirmPop,
+            // Keep the system's status bar green, because having it transparent on top of the photo is too visually noisy.
+            child: Container(
+              color: theme.primaryColor,
+              child: SafeArea(
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (index) { setState(() { _currentPage = index; }); },
+                        scrollDirection: Axis.horizontal,
+                        physics: PageScrollPhysics(),
+                        // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
+                        // the `PageView` sometimes creates pages before they are visible, causing
+                        // https://github.com/ttencate/papageno/issues/58.
+                        // If we fix this by setting `itemCount` to `quiz.firstUnansweredQuestionIndex + 1`, then
+                        // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
+                        // (shouldn't keys prevent this?).
+                        itemCount: null,
+                        itemBuilder: (BuildContext context, int index) {
+                          if (index > quiz.firstUnansweredQuestionIndex) {
+                            return null;
+                          }
+                          if (index < quiz.questionCount) {
+                            if (index >= quiz.availableQuestions.length) {
+                              return Center(child: CircularProgressIndicator());
+                            } else {
+                              final question = quiz.availableQuestions[index];
+                              return QuestionScreen(
+                                key: ObjectKey(index),
+                                drawer: drawer,
+                                question: question,
+                                onAnswer: (givenAnswer) {_answerQuestion(index, givenAnswer); },
+                                onProceed: () { _showNextQuestion(quiz); },
+                              );
+                            }
+                          } else {
+                            return QuizResult(
+                              quiz: quiz,
+                              drawer: drawer,
+                              onRetry: () { Navigator.of(context).pop(AfterQuizOption.retry); },
+                              onBack: () { Navigator.of(context).pop(AfterQuizOption.stop); },
+                              onAddSpecies: () { Navigator.of(context).pop(AfterQuizOption.addSpecies); },
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                    if (_currentPage < quiz.questionCount) LinearProgressIndicator(
+                      value: quiz.firstUnansweredQuestionIndex / quiz.questionCount,
+                      valueColor: AlwaysStoppedAnimation(theme.primaryColorDark),
+                      backgroundColor: theme.backgroundColor,
+                    ),
+                  ],
                 ),
-                // TODO show some sort of progress bar
               ),
-              drawer: MenuDrawer(profile: widget.profile, course: widget.course),
-              body:
-                quiz == null ?
-                Center(child: CircularProgressIndicator()) :
-                PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) { setState(() { _currentPage = index; }); },
-                  scrollDirection: Axis.horizontal,
-                  physics: PageScrollPhysics(),
-                  // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
-                  // the `PageView` sometimes creates pages before they are visible, causing
-                  // https://github.com/ttencate/papageno/issues/58.
-                  // If we fix this by setting `itemCount` to `quiz.firstUnansweredQuestionIndex + 1`, then
-                  // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
-                  // (shouldn't keys prevent this?).
-                  itemCount: null,
-                  itemBuilder: (BuildContext context, int index) {
-                    if (index > quiz.firstUnansweredQuestionIndex) {
-                      return null;
-                    }
-                    if (index < quiz.questionCount) {
-                      if (index >= quiz.availableQuestions.length) {
-                        return Center(child: CircularProgressIndicator());
-                      } else {
-                        final question = quiz.availableQuestions[index];
-                        return QuestionScreen(
-                          key: ObjectKey(index),
-                          question: question,
-                          onAnswer: (givenAnswer) {_answerQuestion(index, givenAnswer); },
-                          onProceed: () {_showNextQuestion(quiz); },
-                        );
-                      }
-                    } else {
-                      return QuizResult(
-                        quiz: quiz,
-                        onRetry: () { Navigator.of(context).pop(AfterQuizOption.retry); },
-                        onBack: () { Navigator.of(context).pop(AfterQuizOption.stop); },
-                        onAddSpecies: () { Navigator.of(context).pop(AfterQuizOption.addSpecies); },
-                      );
-                    }
-                  },
-                ),
             ),
           );
         },
@@ -169,10 +178,11 @@ class _QuizPageState extends State<QuizPage> {
 
 class QuestionScreen extends StatefulWidget {
   final Question question;
+  final Widget drawer;
   final void Function(Species) onAnswer;
   final void Function() onProceed;
 
-  QuestionScreen({Key key, @required this.question, this.onAnswer, this.onProceed}) :
+  QuestionScreen({Key key, @required this.question, @required this.drawer, this.onAnswer, this.onProceed}) :
         assert(question != null),
         super(key: key);
 
@@ -215,7 +225,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
   @override
   Widget build(BuildContext context) {
     final locale = WidgetsBinding.instance.window.locale;
-    final instructions = _question.isAnswered ? Strings.of(context).tapInstructions : '';
     final theme = Theme.of(context);
     final textOnImageColor = Colors.white;
     final textOnImageShadows = <Shadow>[
@@ -226,110 +235,116 @@ class _QuestionScreenState extends State<QuestionScreen> {
     // TODO alternative layout for landscape orientation
     return GestureDetector(
       onTap: _question.isAnswered ? widget.onProceed : null,
-      child: Column(
-        children: <Widget>[
-          Expanded(
-            child: RevealingImage(
-              image: Stack(
-                fit: StackFit.expand,
-                alignment: Alignment.center,
-                children: <Widget>[
-                  if (_image == null) Container(),
-                  if (_image != null) material.Image(
-                    image: AssetImage(join('assets', 'images', _image.fileName)),
-                    fit: BoxFit.cover,
-                  ),
-                  if (_image != null) ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 8.0,
-                        sigmaY: 8.0,
-                      ),
-                      child: material.Image(
-                        image: AssetImage(join('assets', 'images', _image.fileName)),
-                        fit: BoxFit.contain,
-                      ),
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0.0, // Prevents shadow.
+          actions: <Widget>[
+            if (_question.isAnswered) IconButton(
+              icon: Icon(Icons.info_outline),
+              onPressed: _showAttribution,
+            ),
+          ],
+        ),
+        drawer: widget.drawer,
+        body: Column(
+          children: <Widget>[
+            Expanded(
+              child: RevealingImage(
+                image: Stack(
+                  fit: StackFit.expand,
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    if (_image == null) Container(),
+                    if (_image != null) material.Image(
+                      image: AssetImage(join('assets', 'images', _image.fileName)),
+                      fit: BoxFit.cover,
                     ),
-                  ),
-                  Positioned(
-                    left: 0.0,
-                    right: 0.0,
-                    bottom: 0.0,
-                    child: Container(
-                      color: Colors.black.withOpacity(0.2),
-                      alignment: Alignment.center,
-                      padding: EdgeInsets.all(2.0),
-                      child: Column(
-                        children: <Widget>[
-                          Text(
-                            _question.correctAnswer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
-                            style: theme.textTheme.headline6.copyWith(
-                              color: textOnImageColor,
-                              shadows: textOnImageShadows,
-                            ),
-                          ),
-                          if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) Text(
-                            _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
-                            style: theme.textTheme.headline6.copyWith(
-                              color: textOnImageColor,
-                              shadows: textOnImageShadows,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          if (settings.showScientificName.value) Text(
-                            _question.correctAnswer.scientificName.capitalize(),
-                            style: theme.textTheme.caption.copyWith(
-                              fontStyle: FontStyle.italic,
-                              color: textOnImageColor,
-                              shadows: textOnImageShadows,
-                            ),
-                          ),
-                        ],
+                    if (_image != null) ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: 8.0,
+                          sigmaY: 8.0,
+                        ),
+                        child: material.Image(
+                          image: AssetImage(join('assets', 'images', _image.fileName)),
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    right: 0.0,
-                    top: 0.0,
-                    child: IconButton(
-                      icon: Icon(Icons.info_outline),
-                      iconSize: 32.0,
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      color: Colors.white.withOpacity(0.5),
-                      onPressed: _showAttribution,
+                    Positioned(
+                      left: 0.0,
+                      right: 0.0,
+                      bottom: 0.0,
+                      child: Container(
+                        color: Colors.black.withOpacity(0.2),
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.all(2.0),
+                        child: Column(
+                          children: <Widget>[
+                            Text(
+                              _question.correctAnswer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                              style: theme.textTheme.headline6.copyWith(
+                                color: textOnImageColor,
+                                shadows: textOnImageShadows,
+                              ),
+                            ),
+                            if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) Text(
+                              _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                              style: theme.textTheme.headline6.copyWith(
+                                color: textOnImageColor,
+                                shadows: textOnImageShadows,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                            if (settings.showScientificName.value) Text(
+                              _question.correctAnswer.scientificName.capitalize(),
+                              style: theme.textTheme.caption.copyWith(
+                                fontStyle: FontStyle.italic,
+                                color: textOnImageColor,
+                                shadows: textOnImageShadows,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                revealed: _question.isAnswered,
               ),
-              revealed: _question.isAnswered,
             ),
-          ),
-          Player(
-            key: GlobalObjectKey(_question.recording),
-            controller: _playerController,
-            audioFile: 'assets/sounds/${_question.recording.fileName}',
-          ),
-          Divider(height: 0.0),
-          for (var widget in ListTile.divideTiles(
-            context: context,
-            tiles: _question.choices.map(_buildChoice),
-          )) widget,
-          Divider(height: 0.0),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Center(
-              child: AnimatedOpacity(
-                key: GlobalObjectKey(_question),
-                opacity: _question.isAnswered ? 1.0 : 0.0,
-                duration: Duration(seconds: 3),
-                // TODO DelayedCurve is just a quick and dirty way to delay the start of the animation, but I'm sure there's a better way.
-                curve: _DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
-                child: Text(instructions, style: theme.textTheme.caption),
-              )
+            Player(
+              key: GlobalObjectKey(_question.recording),
+              controller: _playerController,
+              audioFile: 'assets/sounds/${_question.recording.fileName}',
             ),
-          )
-        ],
+            Divider(height: 0.0),
+            for (var widget in ListTile.divideTiles(
+              context: context,
+              tiles: _question.choices.map(_buildChoice),
+            )) widget,
+            Divider(height: 0.0),
+            SizedBox(
+              height: 56.0, // Same as ListTile
+              child: Center(
+                child: AnimatedOpacity(
+                  key: GlobalObjectKey(_question),
+                  opacity: _question.isAnswered ? 1.0 : 0.0,
+                  duration: Duration(seconds: 3),
+                  // TODO DelayedCurve is just a quick and dirty way to delay the start of the animation, but I'm sure there's a better way.
+                  curve: _DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
+                  child: Text(
+                    _question.isAnswered ? Strings.of(context).tapInstructions : '',
+                    textScaleFactor: 1.25,
+                    style: theme.textTheme.caption,
+                  ),
+                )
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -360,10 +375,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
 //        ),
       ),
       child: ListTile(
-        dense: true,
         title: Text(
           species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
-          textScaleFactor: 1.5,
+          textScaleFactor: 1.25,
         ),
         trailing: icon,
         onTap: _question.isAnswered ? null : () { _choose(species); },
@@ -427,11 +441,12 @@ class _DelayedCurve extends Curve {
 
 class QuizResult extends StatelessWidget {
   final Quiz quiz;
+  final Widget drawer;
   final void Function() onRetry;
   final void Function() onBack;
   final void Function() onAddSpecies;
 
-  const QuizResult({Key key, this.quiz, this.onRetry, this.onBack, this.onAddSpecies}) : super(key: key);
+  const QuizResult({Key key, @required this.quiz, @required this.drawer, @required this.onRetry, @required this.onBack, @required this.onAddSpecies}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -440,86 +455,92 @@ class QuizResult extends StatelessWidget {
     final settings = Provider.of<Settings>(context);
     final locale = WidgetsBinding.instance.window.locale;
     final primarySpeciesLanguageCode = settings.primarySpeciesLanguage.value.resolve(locale);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        Expanded(
-          child: ListView(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  children: <Widget>[
-                    Text(
-                      strings.quizScore,
-                      style: theme.textTheme.headline5,
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      '${quiz.scorePercent}%',
-                      style: theme.textTheme.headline1.copyWith(fontSize: 92.0),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              if (quiz.alwaysCorrectSpecies.isNotEmpty) Container(
-                color: Colors.green.shade50,
-                child: Padding(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(strings.quizResultsTitle),
+      ),
+      drawer: drawer,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Expanded(
+            child: ListView(
+              children: <Widget>[
+                Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  child: Column(
                     children: <Widget>[
-                      AnswerIcon(correct: true),
-                      SizedBox(width: 8.0),
-                      Expanded(
-                        child: Text(
-                          quiz.alwaysCorrectSpecies
-                              .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
-                              .sorted()
-                              .join(', '),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(
+                        strings.quizScore,
+                        style: theme.textTheme.headline5,
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        '${quiz.scorePercent}%',
+                        style: theme.textTheme.headline1.copyWith(fontSize: 92.0),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-              ),
-              if (quiz.sometimesIncorrectSpecies.isNotEmpty) Container(
-                color: Colors.red.shade50,
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      AnswerIcon(correct: false),
-                      SizedBox(width: 8.0),
-                      Expanded(
-                        child: Text(
-                          quiz.sometimesIncorrectSpecies
-                              .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
-                              .sorted()
-                              .join(', '),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                if (quiz.alwaysCorrectSpecies.isNotEmpty) Container(
+                  color: Colors.green.shade50,
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        AnswerIcon(correct: true),
+                        SizedBox(width: 8.0),
+                        Expanded(
+                          child: Text(
+                            quiz.alwaysCorrectSpecies
+                                .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
+                                .sorted()
+                                .join(', '),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+                if (quiz.sometimesIncorrectSpecies.isNotEmpty) Container(
+                  color: Colors.red.shade50,
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        AnswerIcon(correct: false),
+                        SizedBox(width: 8.0),
+                        Expanded(
+                          child: Text(
+                            quiz.sometimesIncorrectSpecies
+                                .map((species) => species.commonNameIn(primarySpeciesLanguageCode))
+                                .sorted()
+                                .join(', '),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: _recommendationActions(quiz.recommendation, strings),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: _recommendationActions(quiz.recommendation, strings),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -43,7 +43,6 @@ chooseSpeciesToAddButton,Text of button to manually select species,Let me choose
 addSelectedSpeciesButton,Text of button to actually add species,Add #{speciesCount} birds,#{speciesCount} vogels toevoegen
 startQuiz,Button text for starting a quiz,Start practice,Oefening starten
 learningStats,Heading introducing statistics about how well a species has been learned,Learning stats for nerds,Leerstatistieken voor nerds
-questionIndex,Indicates current question number (starting from 1) and the total number of questions,Question #{current} of #{total},Vraag #{current} van #{total}
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
 quizResultsTitle,Title of screen with quiz results,Quiz results,Toetsuitslag
 quizScore,Text introducing a percentage showing how well the user scored on a quiz,Score:,Score:

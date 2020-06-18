@@ -106,8 +106,6 @@ abstract class Strings {
   String get startQuiz;
   /// Heading introducing statistics about how well a species has been learned
   String get learningStats;
-  /// Indicates current question number (starting from 1) and the total number of questions
-  String questionIndex(int current, int total);
   /// Shown at the bottom of the screen when ready to continue to the next question
   String get tapInstructions;
   /// Title of screen with quiz results
@@ -326,7 +324,6 @@ abstract class Strings {
       case 'addSelectedSpeciesButton': return addSelectedSpeciesButton;
       case 'startQuiz': return startQuiz;
       case 'learningStats': return learningStats;
-      case 'questionIndex': return questionIndex;
       case 'tapInstructions': return tapInstructions;
       case 'quizResultsTitle': return quizResultsTitle;
       case 'quizScore': return quizScore;
@@ -476,7 +473,6 @@ class _Strings_en extends Strings {
   @override String addSelectedSpeciesButton(int speciesCount) => <String>['Add ', speciesCount.toString(), ' birds'].join();
   @override String get startQuiz => 'Start practice';
   @override String get learningStats => 'Learning stats for nerds';
-  @override String questionIndex(int current, int total) => <String>['Question ', current.toString(), ' of ', total.toString()].join();
   @override String get tapInstructions => 'Tap anywhere to continue';
   @override String get quizResultsTitle => 'Quiz results';
   @override String get quizScore => 'Score:';
@@ -605,7 +601,6 @@ class _Strings_nl extends _Strings_en {
   @override String addSelectedSpeciesButton(int speciesCount) => <String>[speciesCount.toString(), ' vogels toevoegen'].join();
   @override String get startQuiz => 'Oefening starten';
   @override String get learningStats => 'Leerstatistieken voor nerds';
-  @override String questionIndex(int current, int total) => <String>['Vraag ', current.toString(), ' van ', total.toString()].join();
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
   @override String get quizResultsTitle => 'Toetsuitslag';
   @override String get quizScore => 'Score:';
