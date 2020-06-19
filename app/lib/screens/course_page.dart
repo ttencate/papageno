@@ -57,6 +57,7 @@ class _CoursePageState extends State<CoursePage> {
         builder: (context, snapshot) {
           final course = snapshot.data;
           final unlockedSpecies = course.unlockedSpecies.toSet();
+          final lockedSpecies = course.localSpecies.where((s) => !unlockedSpecies.contains(s));
           return Scaffold(
             appBar: AppBar(
               title: Text(strings.courseName(course)),
@@ -80,7 +81,7 @@ class _CoursePageState extends State<CoursePage> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                             child: Text(
-                              strings.unlockedSpeciesHeading.toUpperCase(),
+                              strings.unlockedSpeciesHeading(course.unlockedSpecies.length).toUpperCase(),
                               style: theme.textTheme.subtitle2,
                             ),
                           ),
@@ -99,12 +100,12 @@ class _CoursePageState extends State<CoursePage> {
                             child: Padding(
                               padding: const EdgeInsets.only(left: 16.0, top: 16.0, right: 16.0, bottom: 8.0),
                               child: Text(
-                                strings.lockedSpeciesHeading.toUpperCase(),
+                                strings.lockedSpeciesHeading(lockedSpecies.length).toUpperCase(),
                                 style: theme.textTheme.subtitle2,
                               ),
                             ),
                           ),
-                          for (final species in course.localSpecies.where((s) => !unlockedSpecies.contains(s))) _SpeciesItem(
+                          for (final species in lockedSpecies) _SpeciesItem(
                             species: species,
                             knowledge: knowledge.ofSpeciesOrNull(species),
                             locked: true,

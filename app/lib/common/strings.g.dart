@@ -89,9 +89,9 @@ abstract class Strings {
   /// Detail line about one course in a listing
   String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount);
   /// Heading on course screen above species currently in this course
-  String get unlockedSpeciesHeading;
+  String unlockedSpeciesHeading(int speciesCount);
   /// Heading on course screen above species that can still be added to this course
-  String get lockedSpeciesHeading;
+  String lockedSpeciesHeading(int speciesCount);
   /// Button to add more species to the course
   String get addSpeciesButton;
   /// Dialog title
@@ -467,8 +467,8 @@ class _Strings_en extends Strings {
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Start course (', speciesCount.toString(), ' birds)'].join();
   @override String courseTitle(String location) => <String>['Birds near ', location].join();
   @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' birds unlocked of ', totalSpeciesCount.toString(), ' total'].join();
-  @override String get unlockedSpeciesHeading => 'Unlocked birds in this course';
-  @override String get lockedSpeciesHeading => 'Other birds in this region';
+  @override String unlockedSpeciesHeading(int speciesCount) => <String>['Unlocked birds in this course (', speciesCount.toString(), ')'].join();
+  @override String lockedSpeciesHeading(int speciesCount) => <String>['Other birds in this region (', speciesCount.toString(), ')'].join();
   @override String get addSpeciesButton => 'Add more birds';
   @override String get addSpeciesTitle => 'Add birds';
   @override String addSpeciesText(int speciesCount) => <String>['The following ', speciesCount.toString(), ' birds are the next most common in this location. Would you like to add them?'].join();
@@ -596,8 +596,8 @@ class _Strings_nl extends _Strings_en {
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Begin cursus (', speciesCount.toString(), ' vogels)'].join();
   @override String courseTitle(String location) => <String>['Vogels rondom ', location].join();
   @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' vogels vrijgespeeld van ', totalSpeciesCount.toString(), ' in totaal'].join();
-  @override String get unlockedSpeciesHeading => 'Vrijgespeelde vogels in deze cursus';
-  @override String get lockedSpeciesHeading => 'Andere vogels in deze omgeving';
+  @override String unlockedSpeciesHeading(int speciesCount) => <String>['Vrijgespeelde vogels in deze cursus (', speciesCount.toString(), ')'].join();
+  @override String lockedSpeciesHeading(int speciesCount) => <String>['Andere vogels in deze omgeving (', speciesCount.toString(), ')'].join();
   @override String get addSpeciesButton => 'Meer vogels toevoegen';
   @override String get addSpeciesTitle => 'Vogels toevoegen';
   @override String addSpeciesText(int speciesCount) => <String>['De volgende ', speciesCount.toString(), ' vogels komen hierna het meest voor in deze omgeving. Wil je ze toevoegen?'].join();
