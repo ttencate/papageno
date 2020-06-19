@@ -270,7 +270,7 @@ class _SpeciesDetailsDialog extends StatelessWidget {
               softWrap: true,
             ),
           ),
-          _StarRating(starCount: 5, filledHalfStars: knowledge.halfStars, size: 16.0),
+          if (knowledge != null) _StarRating(starCount: 5, filledHalfStars: knowledge.halfStars, size: 16.0),
         ],
       ),
       scrollable: true,
@@ -289,7 +289,7 @@ class _SpeciesDetailsDialog extends StatelessWidget {
             keyText: strings.scientificName,
             value: Text(species.scientificName, softWrap: true, style: TextStyle(fontStyle: FontStyle.italic)),
           ),
-          if (knowledge.model != null) _KeyValueRow(
+          if (knowledge?.model != null) _KeyValueRow(
             keyText: strings.learningStats,
             value: Text(
                 'α = ${knowledge.model.alpha.toStringAsFixed(1)}, '
