@@ -11,6 +11,7 @@ import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/add_species_dialog.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
+import 'package:papageno/widgets/chain_item_builder.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:provider/provider.dart';
@@ -57,7 +58,7 @@ class _CoursePageState extends State<CoursePage> {
         builder: (context, snapshot) {
           final course = snapshot.data;
           final unlockedSpecies = course.unlockedSpecies.toSet();
-          final lockedSpecies = course.localSpecies.where((s) => !unlockedSpecies.contains(s));
+          final lockedSpecies = course.localSpecies.where((s) => !unlockedSpecies.contains(s)).toList();
           return Scaffold(
             appBar: AppBar(
               title: Text(strings.courseName(course)),
@@ -75,42 +76,58 @@ class _CoursePageState extends State<CoursePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Expanded(
-                      child: ListView(
+                      child: ListView.builder(
                         padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                            child: Text(
-                              strings.unlockedSpeciesHeading(course.unlockedSpecies.length).toUpperCase(),
-                              style: theme.textTheme.subtitle2,
-                            ),
-                          ),
-                          for (final species in course.unlockedSpecies) _SpeciesItem(
-                            species: species,
-                            knowledge: knowledge.ofSpeciesOrNone(species),
-                            locked: false,
-                          ),
-                          FlatButton(
-                            onPressed: () { _addMoreSpecies(course); },
-                            child: Text(strings.addSpeciesButton.toUpperCase()),
-                          ),
-                          SizedBox(height: 8.0),
-                          Container(
-                            color: Colors.grey.shade200,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 16.0, top: 16.0, right: 16.0, bottom: 8.0),
-                              child: Text(
-                                strings.lockedSpeciesHeading(lockedSpecies.length).toUpperCase(),
-                                style: theme.textTheme.subtitle2,
+                        itemBuilder: ChainItemBuilder(
+                          sections: <ChainSection>[
+                            ChainSection.single(
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                child: Text(
+                                  strings.unlockedSpeciesHeading(course.unlockedSpecies.length).toUpperCase(),
+                                  style: theme.textTheme.subtitle2,
+                                ),
                               ),
                             ),
-                          ),
-                          for (final species in lockedSpecies) _SpeciesItem(
-                            species: species,
-                            knowledge: knowledge.ofSpeciesOrNull(species),
-                            locked: true,
-                          ),
-                        ],
+                            ChainSection.listBuilder<Species>(
+                              course.unlockedSpecies,
+                              (context, species) =>_SpeciesItem(
+                                species: species,
+                                knowledge: knowledge.ofSpeciesOrNone(species),
+                                locked: false,
+                              ),
+                            ),
+                            ChainSection.single(
+                              FlatButton(
+                                onPressed: () { _addMoreSpecies(course); },
+                                child: Text(strings.addSpeciesButton.toUpperCase()),
+                              ),
+                            ),
+                            ChainSection.single(
+                              SizedBox(height: 8.0),
+                            ),
+                            ChainSection.single(
+                              Container(
+                                color: Colors.grey.shade200,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 16.0, top: 16.0, right: 16.0, bottom: 8.0),
+                                  child: Text(
+                                    strings.lockedSpeciesHeading(lockedSpecies.length).toUpperCase(),
+                                    style: theme.textTheme.subtitle2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            ChainSection.listBuilder<Species>(
+                              lockedSpecies,
+                              (context, species) => _SpeciesItem(
+                                species: species,
+                                knowledge: knowledge.ofSpeciesOrNull(species),
+                                locked: true,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     Material(
