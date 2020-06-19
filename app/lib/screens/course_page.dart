@@ -71,6 +71,7 @@ class _CoursePageState extends State<CoursePage> {
                 }
                 final knowledge = snapshot.data;
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Expanded(
                       child: ListView(
@@ -111,12 +112,17 @@ class _CoursePageState extends State<CoursePage> {
                         ],
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: RaisedButton(
-                        visualDensity: VisualDensity(horizontal: VisualDensity.maximumDensity, vertical: VisualDensity.maximumDensity),
-                        onPressed: course.unlockedSpecies.isEmpty ? null : () { _startQuiz(course); },
-                        child: Text(strings.startQuiz.toUpperCase()),
+                    Material(
+                      elevation: 16.0,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Center(
+                          child: RaisedButton(
+                            visualDensity: VisualDensity(horizontal: VisualDensity.maximumDensity, vertical: VisualDensity.maximumDensity),
+                            onPressed: course.unlockedSpecies.isEmpty ? null : () { _startQuiz(course); },
+                            child: Text(strings.startQuiz.toUpperCase()),
+                          ),
+                        ),
                       ),
                     )
                   ],
