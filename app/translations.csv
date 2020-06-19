@@ -42,6 +42,7 @@ addSpeciesText,Text in add species dialog,"The following #{speciesCount} birds a
 chooseSpeciesToAddButton,Text of button to manually select species,Let me choose,Zelf kiezen
 addSelectedSpeciesButton,Text of button to actually add species,Add #{speciesCount} birds,#{speciesCount} vogels toevoegen
 startQuiz,Button text for starting a quiz,Start practice,Oefening starten
+starRatingExplanation,Text in species details dialog,"To earn more stars, identify this bird correctly and don't misidentify any other birds as this one, over a longer period of time.","Om meer sterren te verdienen: identificeer deze vogel correct en identificeer geen andere vogels foutief als deze, gedurende een langere tijd."
 learningStats,Heading introducing statistics about how well a species has been learned,Learning stats for nerds,Leerstatistieken voor nerds
 tapInstructions,Shown at the bottom of the screen when ready to continue to the next question,Tap anywhere to continue,Tik ergens om verder te gaan
 quizResultsTitle,Title of screen with quiz results,Quiz results,Toetsuitslag

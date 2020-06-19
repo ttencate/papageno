@@ -104,6 +104,8 @@ abstract class Strings {
   String addSelectedSpeciesButton(int speciesCount);
   /// Button text for starting a quiz
   String get startQuiz;
+  /// Text in species details dialog
+  String get starRatingExplanation;
   /// Heading introducing statistics about how well a species has been learned
   String get learningStats;
   /// Shown at the bottom of the screen when ready to continue to the next question
@@ -323,6 +325,7 @@ abstract class Strings {
       case 'chooseSpeciesToAddButton': return chooseSpeciesToAddButton;
       case 'addSelectedSpeciesButton': return addSelectedSpeciesButton;
       case 'startQuiz': return startQuiz;
+      case 'starRatingExplanation': return starRatingExplanation;
       case 'learningStats': return learningStats;
       case 'tapInstructions': return tapInstructions;
       case 'quizResultsTitle': return quizResultsTitle;
@@ -472,6 +475,7 @@ class _Strings_en extends Strings {
   @override String get chooseSpeciesToAddButton => 'Let me choose';
   @override String addSelectedSpeciesButton(int speciesCount) => <String>['Add ', speciesCount.toString(), ' birds'].join();
   @override String get startQuiz => 'Start practice';
+  @override String get starRatingExplanation => 'To earn more stars, identify this bird correctly and don\'t misidentify any other birds as this one, over a longer period of time.';
   @override String get learningStats => 'Learning stats for nerds';
   @override String get tapInstructions => 'Tap anywhere to continue';
   @override String get quizResultsTitle => 'Quiz results';
@@ -600,6 +604,7 @@ class _Strings_nl extends _Strings_en {
   @override String get chooseSpeciesToAddButton => 'Zelf kiezen';
   @override String addSelectedSpeciesButton(int speciesCount) => <String>[speciesCount.toString(), ' vogels toevoegen'].join();
   @override String get startQuiz => 'Oefening starten';
+  @override String get starRatingExplanation => 'Om meer sterren te verdienen: identificeer deze vogel correct en identificeer geen andere vogels foutief als deze, gedurende een langere tijd.';
   @override String get learningStats => 'Leerstatistieken voor nerds';
   @override String get tapInstructions => 'Tik ergens om verder te gaan';
   @override String get quizResultsTitle => 'Toetsuitslag';

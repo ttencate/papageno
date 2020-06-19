@@ -255,6 +255,7 @@ class _SpeciesDetailsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final strings = Strings.of(context);
     final locale = WidgetsBinding.instance.window.locale;
     final now = DateTime.now();
@@ -277,6 +278,13 @@ class _SpeciesDetailsDialog extends StatelessWidget {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          if (knowledge != null && knowledge.halfStars < SpeciesKnowledge.maxHalfStarCount) Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              strings.starRatingExplanation,
+              style: theme.textTheme.caption,
+            ),
+          ),
           _KeyValueRow(
             keyText: strings.languageSettingName(settings.primarySpeciesLanguage.value).capitalize(),
             value: Text(species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(), softWrap: true),
