@@ -44,7 +44,7 @@ class LogWriter {
   /// must already exist, otherwise the logger goes into the [closed] state.
   LogWriter({@required String directory, this.maxSizeBytes}) :
     _current = File(path.join(directory, currentFileName)),
-    _previous = File(path.join(directory, currentFileName))
+    _previous = File(path.join(directory, previousFileName))
   {
     try {
       _writer = _current.openSync(mode: FileMode.append);
