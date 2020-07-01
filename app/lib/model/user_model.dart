@@ -115,9 +115,9 @@ class Quiz {
   AfterQuizRecommendation get recommendation {
     // TODO recommend stop if the worst recallProbability is still fairly large (say >50%)
     final score = scorePercent;
-    if (score < 60) {
+    if (score < 80) {
       return AfterQuizRecommendation.strongRetry;
-    } else if (score < 80) {
+    } else if (score < 90) {
       return AfterQuizRecommendation.weakRetry;
     } else {
       return AfterQuizRecommendation.addSpecies;
