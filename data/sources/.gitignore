@@ -1,5 +1,8 @@
 # Too big for Git (95 GB). Use ebd_download.sh to fetch it in chunks.
 ebird
 
+# Ignore until feature/habitats can get merged. Will probably get a merge conflict here.
+mcd.h5
+
 # LibreOffice lock files
 .~lock.*#
