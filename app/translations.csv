@@ -33,8 +33,8 @@ courseSpecies,Shown on the course creation screen above a list of bird names,Com
 createCourseButtonDisabled,Button text while button is disabled,Start course,Begin cursus
 createCourseButtonEnabled,Button text when enough species were found,Start course (#{speciesCount} birds),Begin cursus (#{speciesCount} vogels)
 courseTitle,"Title of a course, containing GPS location; keep short",Birds near ${location},Vogels rondom ${location}
-courseDetails,Detail line about one course in a listing,"#{unlockedSpeciesCount} birds unlocked of #{totalSpeciesCount} total","#{unlockedSpeciesCount} vogels vrijgespeeld van #{totalSpeciesCount} in totaal"
-unlockedSpeciesHeading,Heading on course screen above species currently in this course,Unlocked birds in this course (#{speciesCount}),Vrijgespeelde vogels in deze cursus (#{speciesCount})
+courseDetails,Detail line about one course in a listing,"#{unlockedSpeciesCount} birds in course, out of #{totalSpeciesCount}","#{unlockedSpeciesCount} vogels in cursus, van de #{totalSpeciesCount}"
+unlockedSpeciesHeading,Heading on course screen above species currently in this course,Birds in this course (#{speciesCount}),Vogels in deze cursus (#{speciesCount})
 lockedSpeciesHeading,Heading on course screen above species that can still be added to this course,Other birds in this region (#{speciesCount}),Andere vogels in deze omgeving (#{speciesCount})
 addSpeciesButton,Button to add more species to the course,Add more birds,Meer vogels toevoegen
 addSpeciesTitle,Dialog title,Add birds,Vogels toevoegen
