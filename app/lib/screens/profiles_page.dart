@@ -48,9 +48,9 @@ class _ProfilesPageState extends State<ProfilesPage> {
       if (profiles.isEmpty) {
         final profile = await _createAnonymousProfile();
         unawaited(_loadProfiles()); // Reload in the background.
-        unawaited(_openProfile(profile, proceedAutomatically: true));
+        unawaited(_openProfileCourses(profile));
       } else if (profiles.length == 1) {
-        unawaited(_openProfile(profiles.single, proceedAutomatically: true));
+        unawaited(_openProfileCourses(profiles.single));
       }
     }
   }
@@ -84,7 +84,7 @@ class _ProfilesPageState extends State<ProfilesPage> {
                   for (final profile in snapshot.data) ListTile(
                     title: Text(strings.profileName(profile)),
                     subtitle: Text(strings.profileLastUsed(strings.profileLastUsedDate(profile))),
-                    onTap: () { _openProfile(profile); },
+                    onTap: () { _openProfileCourses(profile); },
                     trailing: IconButton(
                       icon: Icon(Icons.edit),
                       onPressed: () { _editProfile(profile); },
@@ -154,9 +154,9 @@ class _ProfilesPageState extends State<ProfilesPage> {
     }
   }
 
-  Future<void> _openProfile(Profile profile, {bool proceedAutomatically = false}) async {
+  Future<void> _openProfileCourses(Profile profile) async {
     profile.settings = await Settings.create(_userDb, profile);
-    unawaited(Navigator.of(context).push(CoursesRoute(profile, proceedAutomatically: proceedAutomatically)));
+    unawaited(Navigator.of(context).push(CoursesRoute(profile, proceedAutomatically: true)));
   }
 }
 
