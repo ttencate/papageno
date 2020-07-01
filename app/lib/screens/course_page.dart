@@ -327,6 +327,7 @@ class _SpeciesDetailsDialog extends StatelessWidget {
                 'α = ${knowledge.model.alpha.toStringAsFixed(1)}, '
                 'β = ${knowledge.model.beta.toStringAsFixed(1)}, '
                 't = ${knowledge.model.time.toStringAsFixed(4)}\n'
+                'h = ${knowledge.model.modelToPercentileDecay(percentile: 0.5).toStringAsFixed(4)}, '
                 'Δ = ${knowledge.daysSinceAsked(now).toStringAsFixed(3)}, '
                 'p = ${(knowledge.recallProbability(now) * 100).toStringAsFixed(2)}%'),
           ),

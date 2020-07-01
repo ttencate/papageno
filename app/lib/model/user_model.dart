@@ -189,12 +189,10 @@ class SpeciesKnowledge {
   static const _initialHalflifeDays = 10.0 / _minutesPerDay;
   static const _initialAlpha = 3.0;
 
-  // The first half star is easy to get by just improving very slightly on the initial halflife.
-  // The remaining 9 half stars at this rate require a halflife of about 30 days.
-  // That is still no guarantee for great recall a year later, but the halflife won't be extended to that duration
-  // until the user has actually used the app for that much time (and then some), which would be demoralizing.
-  static const _firstHalfStarAtDays = _initialHalflifeDays * 1.1;
-  static const _halfStarExponent = 2.5;
+  // Tweaked by hand to "feel right".
+  static const _firstHalfStarAtDays = 60.0 / _minutesPerDay;
+  static const _halfStarExponent = 1.9;
+
   static const maxStarCount = 5;
   static const maxHalfStarCount = 2 * maxStarCount;
 
@@ -227,12 +225,11 @@ class SpeciesKnowledge {
   double get halflifeDays => model?.modelToPercentileDecay(percentile: 0.5) ?? 0.0;
 
   /// Returns how many half stars (out of 5 whole stars, i.e. 10 half stars) this species gets.
-  /// The first half star is earned at a particular halflife;
-  /// each next half star takes a particular factor as much as the previous one.
+  /// This is a monomial function of the predicted halflife.
   int get halfStars =>
       halflifeDays <= 0 ?
       0 :
-      max(0, min((log(halflifeDays / _firstHalfStarAtDays) / log(_halfStarExponent) + 1).floor(), maxHalfStarCount));
+      max(0, min((pow(halflifeDays / _firstHalfStarAtDays, 1.0 / _halfStarExponent)).floor(), maxHalfStarCount));
 
   /// Returns the probability between 0 and 1 that the species is remembered at this moment.
   double recallProbability(DateTime now) => model?.predictRecall(daysSinceAsked(now), exact: true) ?? 0.0;
