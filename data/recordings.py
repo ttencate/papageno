@@ -4,6 +4,7 @@ Classes representing metadata about audio recordings.
 
 import collections
 import csv
+import logging
 import os.path
 
 from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, Date, Enum, JSON, ForeignKey
@@ -86,25 +87,38 @@ class RecordingOverrides:
     top of the automatic recording selection algorithm.
     '''
 
+    FILE_NAME = os.path.join(os.path.dirname(__file__), 'recording_overrides.csv')
+
     def __init__(self):
-        self._overrides = []
-        with open(os.path.join(os.path.dirname(__file__), 'recording_overrides.csv')) as f:
+        self._overrides = {}
+        with open(RecordingOverrides.FILE_NAME, 'rt') as f:
             for row in csv.DictReader(f):
                 override = RecordingOverride(**row)
-                self._overrides.append(override)
+                self._overrides[override.recording_id] = override
+        logging.info(f'Loaded {len(self._overrides)} recording overrides')
 
     def __iter__(self):
-        return iter(self._overrides)
+        return iter(self._overrides.values())
 
     def __get__(self, recording_id):
-        try:
-            return next(o for o in self._overrides if o.recording_id == recording_id)
-        except StopIteration:
-            return None
+        return self._overrides.get(recording_id, None)
+
+    def set(self, recording_id, status, reason):
+        self._overrides[recording_id] = RecordingOverride(recording_id, status, reason)
+
+    def save(self):
+        with open(RecordingOverrides.FILE_NAME, 'wt') as f:
+            w = csv.DictWriter(f, RecordingOverride.fields())
+            w.writeheader()
+            # Always write sorted to make order reproducible.
+            for key in sorted(self._overrides.keys()):
+                w.writerow(self._overrides[key].to_dict())
 
 
-RecordingOverride = collections.namedtuple('RecordingOverride', (
-    'recording_id',
-    'status',
-    'reason',
-))
+class RecordingOverride(collections.namedtuple('RecordingOverride', ('recording_id', 'status', 'reason'))):
+    @classmethod
+    def fields(cls):
+        return RecordingOverride._fields
+
+    def to_dict(self):
+        return self._asdict()
