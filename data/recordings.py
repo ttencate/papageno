@@ -2,6 +2,10 @@
 Classes representing metadata about audio recordings.
 '''
 
+import collections
+import csv
+import os.path
+
 from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, Date, Enum, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -74,3 +78,33 @@ class SelectedRecording(Base):
 
     recording_id = Column(String, ForeignKey('recordings.recording_id'),
                           primary_key=True, index=True, nullable=False)
+
+
+class RecordingOverrides:
+    '''
+    Wrapper around recording_overrides.csv, which specifies manual overrides on
+    top of the automatic recording selection algorithm.
+    '''
+
+    def __init__(self):
+        self._overrides = []
+        with open(os.path.join(os.path.dirname(__file__), 'recording_overrides.csv')) as f:
+            for row in csv.DictReader(f):
+                override = RecordingOverride(**row)
+                self._overrides.append(override)
+
+    def __iter__(self):
+        return iter(self._overrides)
+
+    def __get__(self, recording_id):
+        try:
+            return next(o for o in self._overrides if o.recording_id == recording_id)
+        except StopIteration:
+            return None
+
+
+RecordingOverride = collections.namedtuple('RecordingOverride', (
+    'recording_id',
+    'status',
+    'reason',
+))

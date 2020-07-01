@@ -1,0 +1,25 @@
+recording_id,status,reason
+xc:101524,blacklist,"Too short, not representative"
+xc:154082,blacklist,Consistently gives internal server error (500)
+xc:164009,blacklist,Too many background species
+xc:184537,blacklist,Recording artifact
+xc:188272,blacklist,Too many background species
+xc:239375,blacklist,Trouble with trimming
+xc:269285,blacklist,Too short and not very representative
+xc:281173,blacklist,Not representative
+xc:305936,blacklist,Not representative
+xc:381956,blacklist,Too many background species
+xc:406339,blacklist,Not representative
+xc:444806,blacklist,Not representative
+xc:46773,blacklist,Missing file (404)
+xc:46803,blacklist,Not representative
+xc:468691,blacklist,Not representative
+xc:48067,blacklist,Not representative
+xc:505432,blacklist,This is a WAV file! They support those?!
+xc:536580,blacklist,Noise filtering artifacts
+xc:540071,blacklist,Decoding error in pydub
+xc:540072,blacklist,Decoding error in pydub
+xc:541538,blacklist,Too many background species
+xc:541547,blacklist,Too many background species
+xc:541963,blacklist,Too many background species
+xc:541964,blacklist,Too many background species

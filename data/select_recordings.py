@@ -11,7 +11,7 @@ from sqlalchemy.orm import joinedload
 
 import analysis
 import progress
-from recordings import Recording, SelectedRecording
+from recordings import Recording, SelectedRecording, RecordingOverrides
 from species import Species, SelectedSpecies
 
 
@@ -40,9 +40,9 @@ def main(args, session):
         .order_by(SelectedSpecies.ranking)\
         .all()
 
-    logging.info('Loading recording blacklist')
-    with open(os.path.join(os.path.dirname(__file__), 'recordings_blacklist.txt')) as f:
-        blacklisted_recording_ids = list(filter(None, (line.partition('#')[0].strip() for line in f)))
+    logging.info('Loading recording overrides')
+    recording_overrides = RecordingOverrides()
+    blacklisted_recording_ids = [o.recording_id for o in recording_overrides if o.status == 'blacklist']
 
     logging.info('Selecting best recordings for each species')
     # Not parallelized, because it's mostly database work.
