@@ -470,7 +470,7 @@ elections, so there is no perfect solution, only different tradeoffs.
 Finally, the IDs of selected recordings are stored in `master.db`. At the time
 of writing, for the 800 selected species, we have 2764 recordings in total.
 
-### `store_audio_files`
+### `trim_recordings`
 
 This stage produces the final audio files in Ogg/Vorbis format for inclusion in
 the app. It mostly consists of obvious steps like fetching MP3, downmixing
@@ -509,6 +509,11 @@ The result is encoded as Ogg/Vorbis at quality level 1.0, which works out to
 around 80 kbps. There is some audible loss in quality when listening through
 headphones, but sound quality remains acceptable, and this relatively low
 quality lets us include more recordings and species.
+
+### `store_recordings`
+
+This stage simply copies the trimmed recordings into the app's assets
+directory.
 
 The resulting file size of the 2764 selected recordings is what makes up the
 bulk of the app: 108 MB.

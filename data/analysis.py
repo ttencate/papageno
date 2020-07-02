@@ -47,7 +47,7 @@ def sonogram_quality(recording_id, sonogram):
     '''
     try:
         full_img = imageio.imread(sonogram, pilmode='L')
-    except Exception as ex:
+    except Exception as ex: # pylint: disable=broad-except
         logging.error(f'Error decoding sonogram of {len(sonogram)} bytes '
                       f'of recording {recording_id}: {ex}')
         return -999999

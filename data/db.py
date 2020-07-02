@@ -65,5 +65,5 @@ def create_session(file_name):
     return _session_factory(bind=_create_engine(file_name))
 
 
-def create_master_schema(session):
+def create_master_schema(session): # pylint: disable=redefined-outer-name
     Base.metadata.create_all(session.connection().engine)

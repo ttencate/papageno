@@ -122,6 +122,12 @@ class RecordingOverrides:
 
 
 class RecordingOverride(collections.namedtuple('RecordingOverride', ('recording_id', 'status', 'reason'))):
+    '''
+    Contains data about a single override.
+
+    status: one of '' (default), 'blacklist' (do not select) or 'goldlist' (force select)
+    '''
+
     @classmethod
     def fields(cls):
         return RecordingOverride._fields

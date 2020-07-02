@@ -20,7 +20,6 @@ import os.path
 import math
 
 import progress
-from recordings import Recording
 from species import Species
 from regions import Region
 
@@ -70,11 +69,12 @@ def main(args, session):
                             and 'sp.' not in scientific_name_clements.split(' ') # Only genus, not species.
                             and 'x' not in scientific_name_clements.split(' ') # Hybrids.
                             and 'undescribed' not in scientific_name_clements # Undescribed forms.
-                            ):
+                       ):
                         # This happens a fair bit; in the "IOC vs other lists"
                         # these rows are typically reddish brown, indicating
                         # "species not recognized by IOC".
-                        logging.warning(f'Scientific name {scientific_name_clements} not found (probably recognized by Clements but not IOC)')
+                        logging.warning(f'Scientific name {scientific_name_clements} not found '
+                                        '(probably recognized by Clements but not IOC)')
                         warned_scientific_names.add(scientific_name_clements)
                     continue
                 species_weight_by_scientific_name[scientific_name] = num_observations

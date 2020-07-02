@@ -2,17 +2,14 @@
 Fetches image metadata from Wikipedia (WikiMedia Commons).
 '''
 
-import io
 import json
 import logging
 import multiprocessing
-import os.path
 import re
 import signal
 import urllib.parse
 
 from bs4 import BeautifulSoup, NavigableString
-import PIL
 
 import fetcher
 import progress
@@ -23,7 +20,7 @@ from species import Species
 _fetcher = None
 
 
-class ParseError(RuntimeError):
+class _ParseError(RuntimeError):
     pass
 
 
@@ -83,7 +80,7 @@ def _parse_wiki_page(parsetree):
             return None
         template = title_element.parent
         if template.name != 'template':
-            raise ParseError(f'Template title {title} found in tag {template.name}')
+            raise _ParseError(f'Template title {title} found in tag {template.name}')
         return template
     def _key_value(template, key):
         name = template.find('name', string=_loose_match(key))
@@ -91,7 +88,7 @@ def _parse_wiki_page(parsetree):
             return None
         part = name.parent
         if part.name != 'part':
-            raise ParseError(f'Part name {key} found in tag {part.name}')
+            raise _ParseError(f'Part name {key} found in tag {part.name}')
         value = part.find('value')
         # https://en.wikipedia.org/wiki/Chestnut-sided_warbler
         for comment in value.find_all('comment'):
@@ -104,12 +101,12 @@ def _parse_wiki_page(parsetree):
         return value.get_text().strip()
 
     speciesbox = (_find_template(soup, 'speciesbox')
-        # https://en.wikipedia.org/wiki/Hoogerwerf%27s_pheasant
-        or _find_template(soup, 'subspeciesbox')
-        # https://en.wikipedia.org/wiki/Barolo_shearwater
-        or _find_template(soup, 'Taxobox')
-        # https://en.wikipedia.org/wiki/Royal_flycatcher
-        or _find_template(soup, 'Automatic Taxobox'))
+                  # https://en.wikipedia.org/wiki/Hoogerwerf%27s_pheasant
+                  or _find_template(soup, 'subspeciesbox')
+                  # https://en.wikipedia.org/wiki/Barolo_shearwater
+                  or _find_template(soup, 'Taxobox')
+                  # https://en.wikipedia.org/wiki/Royal_flycatcher
+                  or _find_template(soup, 'Automatic Taxobox'))
 
     genus = _key_value_text(speciesbox, 'genus')
     species = _key_value_text(speciesbox, 'species')
@@ -125,7 +122,7 @@ def _parse_wiki_page(parsetree):
             # https://en.wikipedia.org/wiki/Kelp_gull
             css_image_crop = _find_template(image_value, 'css image crop')
             if not css_image_crop:
-                raise ParseError(f'Unexpected contents of speciesbox image attribute: {image_value}')
+                raise _ParseError(f'Unexpected contents of speciesbox image attribute: {image_value}')
             image_page_name = _key_value_text(css_image_crop, 'image')
     if image_page_name:
         # https://en.wikipedia.org/wiki/Marmora%27s_warbler
@@ -141,7 +138,7 @@ def _parse_wiki_page(parsetree):
 def _parse_license(image_info):
     def info_field(key):
         return image_info['extmetadata'].get(key, {}).get('value', None)
-    
+
     license_name = info_field('LicenseShortName')
     if license_name == 'PD':
         license_name = 'Public domain'
@@ -167,7 +164,7 @@ def _process_image(species):
     Entry point for parallel processing.
     '''
 
-    global _fetcher
+    global _fetcher # pylint: disable=global-statement
     if not _fetcher:
         _fetcher = fetcher.Fetcher('wp_pages', pool_size=1)
 
@@ -239,7 +236,7 @@ def add_args(parser):
 
 
 def main(args, session):
-    global _args
+    global _args # pylint: disable=global-statement
     _args = args
 
     logging.info('Deleting existing image records')

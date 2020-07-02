@@ -2,8 +2,7 @@
 Classes for bird photos.
 '''
 
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String
 
 from base import Base
 

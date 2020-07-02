@@ -4,9 +4,7 @@ Selects recordings to use for each selected species.
 
 import collections
 import logging
-import os.path
 
-from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 
 import analysis
@@ -60,8 +58,10 @@ def select_recordings(session, species, recording_overrides, assume_deleted=Fals
         for type_ in recording.types:
             num_recordings_by_type[type_] += 1
     types = list(num_recordings_by_type.keys())
-    logging.debug(f'Most occurring types for {scientific_name}: '
-                  f'{", ".join(f"{t}: {c}" for c, t in sorted(((c, t) for t, c in num_recordings_by_type.items()), reverse=True)[:10])}')
+    logging.debug('Most occurring types for {scientific_name}: %s',
+                  ', '.join(f'{t}: {c}' for c, t in sorted(
+                      ((c, t) for t, c in num_recordings_by_type.items()),
+                      reverse=True)[:10]))
 
     selected_recordings = []
     num_selected_recordings_by_type = collections.defaultdict(int)
@@ -92,7 +92,7 @@ def select_recordings(session, species, recording_overrides, assume_deleted=Fals
             if type_ in recordings[index].types:
                 recording = recordings[index]
                 break
-        
+
         # No more recordings of this type? Stop trying to represent it better.
         if not recording:
             types.remove(type_)
@@ -101,15 +101,19 @@ def select_recordings(session, species, recording_overrides, assume_deleted=Fals
         # Select recording and update counters.
         select_recording(recording)
 
-    logging.debug(f'Selected {num_selected_recordings} of  {species.scientific_name} '
-                  f'of types {", ".join(f"{t}: {c}" for c, t in sorted(((c, t) for t, c in num_selected_recordings_by_type.items() if c > 0), reverse=True))}')
+    logging.debug('Selected %d recordings of %s of types %s',
+                  num_selected_recordings,
+                  species.scientific_name,
+                  ', '.join(f'{t}: {c}' for c, t in sorted(
+                      ((c, t) for t, c in num_selected_recordings_by_type.items() if c > 0),
+                      reverse=True)))
 
 
-def add_args(parser):
+def add_args(_parser):
     pass
 
 
-def main(args, session):
+def main(_args, session):
     logging.info('Deleting all recording selections')
     session.query(SelectedRecording).delete()
 

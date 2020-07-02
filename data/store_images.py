@@ -4,15 +4,11 @@ them for use in the app.
 '''
 
 import io
-import json
 import logging
 import multiprocessing
 import os.path
-import re
 import signal
-import urllib.parse
 
-from bs4 import BeautifulSoup
 import PIL
 
 import fetcher
@@ -24,18 +20,12 @@ from species import Species, SelectedSpecies
 _fetcher = None
 
 
-def _fetch_image(domain, image_page_name):
-    image_info = _fetch_image_info(image_page_name)
-    url = image_info['url']
-    return _fetcher.fetch_cached(url)
-
-
 def _process_image(image):
     '''
     Entry point for parallel processing.
     '''
 
-    global _fetcher
+    global _fetcher # pylint: disable=global-statement
     if not _fetcher:
         _fetcher = fetcher.Fetcher('wp_images', pool_size=1)
 
@@ -85,7 +75,7 @@ def add_args(parser):
 
 
 def main(args, session):
-    global _args
+    global _args # pylint: disable=global-statement
     _args = args
 
     logging.info('Fetching image records for selected species')

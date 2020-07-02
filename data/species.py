@@ -2,7 +2,7 @@
 Classes that represent species and lists of species.
 '''
 
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
 from base import Base

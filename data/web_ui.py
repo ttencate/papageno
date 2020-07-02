@@ -13,11 +13,10 @@ import sys
 from flask import Flask, request, abort, render_template
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from sqlalchemy.sql.expression import text
 
 import analysis
 import db
-from recordings import Recording, SelectedRecording, RecordingOverride, RecordingOverrides
+from recordings import Recording, SelectedRecording, RecordingOverrides
 from species import Species, SelectedSpecies
 from select_recordings import select_recordings
 

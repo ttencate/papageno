@@ -38,7 +38,8 @@ _STAGES = [
     'select_species',
     'analyze_recordings',
     'select_recordings',
-    'store_audio_files',
+    'trim_recordings',
+    'store_recordings',
     'store_images',
     'store_database',
 ]

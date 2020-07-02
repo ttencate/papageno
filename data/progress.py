@@ -12,7 +12,7 @@ _enabled = True
 
 
 def disable():
-    global _enabled
+    global _enabled # pylint: disable=global-statement
     _enabled = False
 
 

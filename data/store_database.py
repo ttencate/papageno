@@ -7,12 +7,12 @@ import os
 import os.path
 import re
 
-from sqlalchemy import Table, Column, Integer, Float, String, LargeBinary, ForeignKey, MetaData
+from sqlalchemy import Table, Column, Integer, Float, String, LargeBinary, MetaData
 
 import db
 from images import Image
 from recordings import Recording, SelectedRecording
-from species import Species, SelectedSpecies, CommonName, LANGUAGE_CODES
+from species import Species, SelectedSpecies, LANGUAGE_CODES
 from regions import Region
 
 
@@ -51,7 +51,7 @@ def _encode_weights(weights_by_species_id):
     )
 
 
-def main(args, session):
+def main(_args, session):
     app_db_file = os.path.join(os.path.dirname(__file__), '..', 'app', 'assets', 'app.db')
     try:
         os.remove(app_db_file)
@@ -100,7 +100,7 @@ def main(args, session):
     }
 
     logging.info('Inserting selected species')
-    out.execute(out_species.insert(), [
+    out.execute(out_species.insert(), [ # pylint: disable=no-value-for-parameter
         {
             'species_id': s.species_id,
             'scientific_name': s.scientific_name,
@@ -113,7 +113,7 @@ def main(args, session):
     ])
 
     logging.info('Inserting selected recordings')
-    out.execute(out_recordings.insert(), [
+    out.execute(out_recordings.insert(), [ # pylint: disable=no-value-for-parameter
         {
             'recording_id': r.recording_id,
             'species_id': s.species_id,
@@ -129,7 +129,7 @@ def main(args, session):
     ])
 
     logging.info('Inserting images for selected species')
-    out.execute(out_images.insert(), [
+    out.execute(out_images.insert(), [ # pylint: disable=no-value-for-parameter
         {
             'species_id': i.species_id,
             'file_name': f'{s.scientific_name.replace(" ", "_")}.webp',
@@ -144,7 +144,7 @@ def main(args, session):
     ])
 
     logging.info('Inserting nonempty regions')
-    out.execute(out_regions.insert(), [
+    out.execute(out_regions.insert(), [ # pylint: disable=no-value-for-parameter
         {
             'region_id': r.region_id,
             'centroid_lat': r.centroid_lat,
@@ -156,8 +156,8 @@ def main(args, session):
             }),
         }
         for r in session.query(Region)\
-            .filter(Region.species_weight_by_scientific_name != None,
-                    Region.species_weight_by_scientific_name != [])
+        .filter(Region.species_weight_by_scientific_name != None, # pylint: disable=singleton-comparison
+                Region.species_weight_by_scientific_name != [])
         if any(
             scientific_name in selected_species_ids_by_scientific_name
             for scientific_name in r.species_weight_by_scientific_name)

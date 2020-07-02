@@ -1,8 +1,8 @@
 '''
-Fetches all selected recordings from xeno-canto. Any permanent errors should be
-manually added to `recordings_blacklist.txt` and then `select_recordings`
-should be re-run to select alternative recordings or drop that species
-altogether.
+Fetches all selected recordings from xeno-canto and trims them according to
+various settings. Any permanent errors should be manually added to
+`recording_overrides.csv` and then `select_recordings` should be re-run to
+select alternative recordings.
 '''
 
 import io
@@ -11,7 +11,6 @@ import multiprocessing.pool
 import os
 import os.path
 import signal
-import sys
 
 import numpy as np
 import pydub
@@ -59,9 +58,9 @@ def _otsu_threshold(array):
 
     threshold = bin_edges[best_bin_edge]
     if _args.debug_otsu_threshold:
-        import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt # pylint: disable=import-outside-toplevel
         logging.info(f'Histogram from {bin_edges[0]} to {bin_edges[-1]}, Otsu threshold at {threshold}')
-        fig, ax1 = plt.subplots()
+        _fig, ax1 = plt.subplots()
         ax1.hist(bin_edges[:-1], bin_edges, weights=hist, color=(0.1, 0.2, 1.0))
         ax2 = ax1.twinx()
         ax2.plot(bin_edges[:-1], qualities, color=(1.0, 0.2, 0.1))
@@ -88,6 +87,7 @@ def _detect_utterances(sound, max_gap_ms=100):
     utterances = []
     utterance_start = None
     silence_ms = None
+    ms = None
     for ms, loudness in enumerate(loudnesses):
         if loudness >= utterance_threshold:
             if utterance_start is None:
@@ -109,20 +109,18 @@ def _detect_utterances(sound, max_gap_ms=100):
     return utterances
 
 
-def _process_recording(recording):
+def trim_recording(recording):
     '''
     Entry point for parallel processing.
     '''
 
-    global _fetcher
+    global _fetcher # pylint: disable=global-statement
     if not _fetcher:
-        _fetcher = fetcher.Fetcher('audio_files', pool_size=1)
+        _fetcher = fetcher.Fetcher('recordings', pool_size=1)
 
-    # Android hates colons in file names in a really nonobvious way:
-    # https://stackoverflow.com/questions/52245654/failed-to-open-file-permission-denied
-    output_file_name = f'{recording.recording_id.replace(":", "_")}.ogg'
-    full_output_file_name = os.path.join(_args.audio_file_output_dir, output_file_name)
-    if os.path.exists(full_output_file_name) and not _args.recreate_audio_files and not _args.debug_recording_ids:
+    output_file_name = f'{recording.recording_id}.ogg'
+    full_output_file_name = os.path.join(_args.trimmed_recordings_dir, output_file_name)
+    if os.path.exists(full_output_file_name) and not _args.retrim_recordings and not _args.debug_recording_ids:
         return output_file_name
 
     try:
@@ -133,7 +131,7 @@ def _process_recording(recording):
 
     try:
         sound = pydub.AudioSegment.from_file(io.BytesIO(data), 'mp3')
-    except Exception as ex:
+    except Exception as ex: # pylint: disable=broad-except
         # These errors can get extremely long.
         logging.error(f'Failed to decode audio file for {recording.url} '
                       f'(cache file {_fetcher.cache_file_name(recording.audio_url)}): {str(ex)[:5000]}')
@@ -165,9 +163,9 @@ def _process_recording(recording):
     # to help to avoid including (unlabelled) background species and other
     # noise.
     for i, start_utterance in enumerate(utterances[:3]):
-        start_ms = max(0, utterances[i][0] - padding_duration)
+        start_ms = max(0, start_utterance[0] - padding_duration)
         utterance_duration = 0
-        for j, end_utterance in enumerate(utterances[i:]):
+        for end_utterance in utterances[i:]:
             utterance_duration += end_utterance[1] - end_utterance[0]
             end_ms = min(len(sound), end_utterance[1] + padding_duration)
             total_duration = end_ms - start_ms
@@ -204,9 +202,9 @@ def _process_recording(recording):
     sound = pydub.effects.normalize(sound)
 
     if _args.debug_utterances:
-        import subprocess
-        import tempfile
-        from PIL import Image, ImageDraw
+        import subprocess # pylint: disable=import-outside-toplevel
+        import tempfile # pylint: disable=import-outside-toplevel
+        from PIL import Image, ImageDraw # pylint: disable=import-outside-toplevel
         sonogram_data = _fetcher.fetch_cached(recording.sonogram_url_full)
         sonogram = Image.open(io.BytesIO(sonogram_data))
         draw = ImageDraw.Draw(sonogram, mode='RGBA')
@@ -224,7 +222,7 @@ def _process_recording(recording):
             highlight(s, e, (128, 255, 128, 64))
         with tempfile.NamedTemporaryFile() as f:
             sonogram.save(f, format='png')
-            subprocess.run(['eog', f.name])
+            subprocess.run(['eog', f.name], check=False)
 
     if _args.debug_recording_ids:
         return None
@@ -237,14 +235,14 @@ def _process_recording(recording):
 
 def add_args(parser):
     parser.add_argument(
-        '--audio_file_output_dir',
-        default=os.path.join(os.path.dirname(__file__), '..', 'app', 'assets', 'sounds'),
-        help='Directory to write compressed and trimmed audio files for recordings to')
+        '--trimmed_recordings_dir',
+        default=os.path.join(os.path.dirname(__file__), 'cache', 'trimmed_recordings'),
+        help='Directory to write compressed and trimmed recordings to')
     parser.add_argument(
-        '--recreate_audio_files', action='store_true',
+        '--retrim_recordings', action='store_true',
         help='Overwrite files instead of assuming they are up to date')
     parser.add_argument(
-        '--audio_process_jobs', type=int, default=8,
+        '--trim_recordings_process_jobs', type=int, default=8,
         help='Number of parallel fetches to run; do not set too high or else '
         'the XenoCanto server might get upset!')
     parser.add_argument(
@@ -267,7 +265,8 @@ def add_args(parser):
         help='Sample rate in Hz of output audio')
     parser.add_argument(
         '--audio_quality', type=float, default=1.0,
-        help='OGG/Vorbis quality level of output audio between 0.0 and 10.0 (should go down to -2.0, but negative values seem to end up as 3.0)')
+        help='OGG/Vorbis quality level of output audio between 0.0 and 10.0 '
+             '(should go down to -2.0, but negative values seem to end up as 3.0)')
     parser.add_argument(
         '--debug_recording_ids', type=str, default=None,
         help='Process only the given recording IDs (comma separated), do not store results, and show debug windows')
@@ -283,7 +282,7 @@ _args = None
 
 
 def main(args, session):
-    global _args
+    global _args # pylint: disable=global-statement
     _args = args
 
     if args.debug_recording_ids:
@@ -294,29 +293,18 @@ def main(args, session):
             .all()
         for recording in recordings:
             logging.info(f'Processing recording {recording.recording_id}')
-            _process_recording(recording)
+            trim_recording(recording)
         return
 
     logging.info('Loading selected recordings')
     selected_recordings = session.query(Recording).join(SelectedRecording).all()
 
-    logging.info('Listing existing audio files')
-    old_audio_files = set(os.listdir(args.audio_file_output_dir))
-
-    logging.info('Fetching and processing audio files')
+    logging.info('Fetching and trimming recordings')
     # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python#35134329
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    with multiprocessing.pool.Pool(args.image_process_jobs) as pool:
+    with multiprocessing.pool.Pool(args.trim_recordings_process_jobs) as pool:
         signal.signal(signal.SIGINT, original_sigint_handler)
-        for output_file_name in progress.percent(
+        for _output_file_name in progress.percent(
                 pool.imap(_process_recording, selected_recordings),
                 len(selected_recordings)):
-            if output_file_name:
-                old_audio_files.discard(output_file_name)
-
-    logging.info(f'Deleting {len(old_audio_files)} old audio files')
-    for old_audio_file in old_audio_files:
-        try:
-            os.remove(os.path.join(args.audio_file_output_dir, old_audio_file))
-        except OSError as ex:
-            logging.warning(f'Could not delete {old_audio_file}: {ex}')
+            pass

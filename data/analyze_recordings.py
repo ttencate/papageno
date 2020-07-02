@@ -2,18 +2,14 @@
 Analyzes sound quality of all recordings of selected species.
 '''
 
-import hashlib
 import logging
-import os.path
 import multiprocessing.pool
 import signal
-
-from sqlalchemy.orm import joinedload
 
 import analysis
 import fetcher
 import progress
-from recordings import Recording, SonogramAnalysis, SelectedRecording
+from recordings import Recording, SonogramAnalysis
 from species import Species, SelectedSpecies
 
 
@@ -26,7 +22,7 @@ def _analyze(recording):
     recording_id, sonogram_url_small = recording
     try:
         # Create one fetcher per process.
-        global _sonogram_fetcher
+        global _sonogram_fetcher # pylint: disable=global-statement
         if not _sonogram_fetcher:
             _sonogram_fetcher = fetcher.Fetcher(cache_group='xc_sonograms_small', pool_size=1)
 
@@ -34,10 +30,7 @@ def _analyze(recording):
         try:
             sonogram = _sonogram_fetcher.fetch_cached(sonogram_url_small)
         except fetcher.FetchError as ex:
-            if ex.is_not_found():
-                logging.warning(f'Sonogram for recording {recording_id} was not found')
-            else:
-                raise ex
+            logging.warning(f'Sonogram for recording {recording_id} could not be fetched', exc_info=True)
 
         sonogram_quality = -999999
         if sonogram:
@@ -68,7 +61,7 @@ def main(args, session):
     recordings = session.query(Recording)\
         .join(Species, Species.scientific_name == Recording.scientific_name)\
         .join(SelectedSpecies)\
-        .filter(Recording.sonogram_url_small != None,
+        .filter(Recording.sonogram_url_small != None, # pylint: disable=singleton-comparison
                 Recording.sonogram_url_small != '',
                 ~Recording.sonogram_analysis.has())\
         .all()

@@ -11,6 +11,9 @@ import urllib3
 
 
 class FetchError(RuntimeError):
+    '''
+    Raised when a file could not be fetched from the internet.
+    '''
 
     def __init__(self, url):
         super().__init__(f'Error fetching "{url}"')
@@ -28,7 +31,7 @@ class Cache:
         self._levels = levels
 
     def clear(self):
-        raise NotImplemented(f'Just remove {self._path} yourself for now')
+        raise NotImplementedError(f'Just remove {self._path} yourself for now')
 
     def __getitem__(self, key):
         try:
