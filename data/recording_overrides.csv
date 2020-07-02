@@ -1,25 +1,54 @@
 recording_id,status,reason
 xc:101524,blacklist,"Too short, not representative"
+xc:127766,blacklist,Not representative
+xc:129472,blacklist,Trimming includes background noise
+xc:130063,blacklist,Trim selects wrong part
+xc:143468,blacklist,Background species
+xc:149382,blacklist,Not representative
 xc:154082,blacklist,Consistently gives internal server error (500)
 xc:164009,blacklist,Too many background species
 xc:184537,blacklist,Recording artifact
 xc:188272,blacklist,Too many background species
+xc:210817,blacklist,Background noises
+xc:217672,blacklist,Trimming selects wrong part
 xc:239375,blacklist,Trouble with trimming
 xc:269285,blacklist,Too short and not very representative
+xc:269762,blacklist,Background species
+xc:269763,blacklist,background species
 xc:281173,blacklist,Not representative
+xc:299936,blacklist,Background species
+xc:303360,blacklist,Background species
 xc:305936,blacklist,Not representative
+xc:322210,blacklist,Trimming selects too much
+xc:327881,blacklist,Not representative
+xc:353814,blacklist,Trim selects wrong part
+xc:376671,blacklist,"Too short, harsh"
 xc:381956,blacklist,Too many background species
+xc:385854,goldlist,
+xc:391705,blacklist,Background species
+xc:400069,blacklist,Not representative
 xc:406339,blacklist,Not representative
+xc:436507,blacklist,Background noises
 xc:444806,blacklist,Not representative
+xc:446270,blacklist,Not representative
+xc:448655,blacklist,Background species
+xc:454684,blacklist,Trimmed too short
+xc:462611,blacklist,Noisy
 xc:46773,blacklist,Missing file (404)
 xc:46803,blacklist,Not representative
 xc:468691,blacklist,Not representative
 xc:48067,blacklist,Not representative
+xc:481799,blacklist,Trim selects wrong part
+xc:488832,blacklist,Too much noise filtering
 xc:505432,blacklist,This is a WAV file! They support those?!
+xc:505631,blacklist,Too noisy
+xc:513867,blacklist,Background noise
 xc:536580,blacklist,Noise filtering artifacts
 xc:540071,blacklist,Decoding error in pydub
 xc:540072,blacklist,Decoding error in pydub
+xc:540929,goldlist,More recognizable than calls
 xc:541538,blacklist,Too many background species
 xc:541547,blacklist,Too many background species
 xc:541963,blacklist,Too many background species
 xc:541964,blacklist,Too many background species
+xc:92264,blacklist,Not representative
