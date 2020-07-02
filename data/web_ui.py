@@ -10,7 +10,7 @@ import logging
 import os.path
 import sys
 
-from flask import Flask, request, abort, render_template
+from flask import Flask, request, abort, render_template, send_file
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
@@ -19,6 +19,7 @@ import db
 from recordings import Recording, SelectedRecording, RecordingOverrides
 from species import Species, SelectedSpecies
 from select_recordings import select_recordings
+from trim_recordings import trim_recording
 
 
 app = Flask(__name__)
@@ -109,6 +110,13 @@ def _species_route(scientific_name):
         group_size_limit=group_size_limit,
         selected_recordings_by_id=selected_recordings_by_id,
         recording_overrides=recording_overrides)
+
+
+@app.route('/trimmed_recordings/<string:recording_id>')
+def _trimmed_recording_route(recording_id):
+    recording = session.query(Recording).filter(Recording.recording_id == recording_id).one()
+    file_name = trim_recording(recording, skip_if_exists=True)
+    return send_file(file_name, mimetype='audio/ogg')
 
 
 @app.route('/recording_override/<string:recording_id>', methods=['POST'])

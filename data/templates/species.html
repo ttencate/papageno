@@ -38,7 +38,8 @@
               <img src="{{recording.sonogram_url_small}}" width="240" height="80">
             </div>
             <div>
-              <button class="play-button" data-audio-url="{{recording.audio_url}}" style="width: 40px; height: 80px; border: 0; padding: 0; cursor: pointer;">▶</button>
+              <button class="play-button" data-audio-url="{{recording.audio_url}}" title="Play full recording">▶</button><br>
+              <button class="play-button" data-audio-url="/trimmed_recordings/{{recording.recording_id}}" title="Play trimmed recording">▶</button>
             </div>
           </div>
         {% endfor %}
@@ -85,6 +86,13 @@
     button:hover {
       background: #eee;
     }
+    .play-button {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+    }
   </style>
 
   <script>
@@ -122,6 +130,10 @@
     for (const button of document.getElementsByClassName('play-button')) {
       button.addEventListener('click', onPlayClick)
     }
+    audioPlayer.addEventListener('error', function(error) {
+      stop()
+      alert(`Failed to play audio file ${audioPlayer.src}`)
+    })
 
     function onRecordingBoxChanged(event) {
       event.preventDefault()
