@@ -1,9 +1,8 @@
-<head>
-  <title>{{species.common_name('nl')}}</title>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-</head>
+{% extends '_base.html' %}
 
-<body>
+{% block title %}{{species.common_name('nl')}}{% endblock %}
+
+{% block content %}
   <h2><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</h2>
 
   <div style="display: flex; flex-direction: row; justify-content: space-between;">
@@ -15,11 +14,11 @@
           {% set recording_override = recording_overrides[recording.recording_id] %}
           <div class="recording-box
                       {% if selected_recording %}selected{% endif %}
-                      {% if recording_override.status %}has-override{% endif %}
+                      {% if recording_override.status %}has-override override-status-{{recording_override.status}}{% endif %}
                       {% if recording.recording_id == highlight_recording_id %}highlighted{% endif %}"
                data-recording-id="{{recording.recording_id}}">
             <div style="width: 200px;">
-              <a href="https://www.xeno-canto.org/{{recording.recording_id.split(':')[1]}}">{{recording.recording_id}}</a><br>
+              <a href="https://www.xeno-canto.org/{{recording.recording_id.split(':')[1]}}">{{recording.recording_id}}</a>{% if selected_recording %}&ensp;(selected){% endif %}<br>
               <small>
                 <abbr title="Recording duration">{{recording.length_seconds}} s</abbr>&emsp;
                 <abbr title="Recording quality">{{recording.quality}}</abbr>&emsp;
@@ -27,15 +26,17 @@
                 <abbr title="Computed quality from sonogram">{{"{:,.0f}".format(recording.sonogram_analysis.sonogram_quality)}}</abbr>
               </small><br>
               {{recording.type}}<br>
-              <select class="override-status" autocomplete="off">
-                <option value=""></option>
-                <option value="blacklist" {% if recording_override.status == 'blacklist' %}selected{% endif %}>blacklist</option>
-                <option value="goldlist" {% if recording_override.status == 'goldlist' %}selected{% endif %}>goldlist</option>
-              </select><br>
-              <div class="show-on-override">
-                <input class="override-reason" value="{{ recording_override.reason }}" autocomplete="off"><br>
-                <input type="submit" class="override-submit" value="Save">
-              </div>
+              <form action="/recording_overrides/{{recording.recording_id}}" method="POST">
+                <select class="override-status" name="status" autocomplete="off">
+                  <option value=""></option>
+                  <option value="blacklist" {% if recording_override.status == 'blacklist' %}selected{% endif %}>blacklist</option>
+                  <option value="goldlist" {% if recording_override.status == 'goldlist' %}selected{% endif %}>goldlist</option>
+                </select><br>
+                <div class="show-on-override">
+                  <input class="override-reason" name="reason" value="{{ recording_override.reason }}" autocomplete="off"><br>
+                  <input type="submit" class="override-submit" value="Save">
+                </div>
+              </form>
             </div>
             <div>
               <img src="{{recording.sonogram_url_small}}" width="240" height="80">
@@ -53,12 +54,15 @@
   <a href="?group_size_limit={{group_size_limit + 30}}">Load 30 more</a>
 
   <audio id="audio-player">
+{% endblock %}
 
+{% block head %}
   <style>
     .recording-box {
       display: flex;
       flex-direction: row;
-      background: #def;
+      background: #f8fbff;
+      border: 4px solid white;
       padding: 8px;
       margin-bottom: 8px;
     }
@@ -68,11 +72,17 @@
     .recording-box > *:first-child {
       margin-left: 0;
     }
+    .recording-box.override-status-blacklist {
+      background: #ddd;
+    }
+    .recording-box.override-status-goldlist {
+      background: #ffd;
+    }
     .recording-box.selected {
-      background: #efd;
+      border-color: #464;
     }
     .recording-box.highlighted {
-      background: #ffd;
+      box-shadow: 0 0 8px #ff4;
     }
     .show-on-override {
       display: none;
@@ -80,17 +90,11 @@
     .has-override .show-on-override {
       display: block;
     }
-    select {
+    .override-status {
       width: 100%;
     }
-    input {
+    .override-reason {
       width: 100%;
-    }
-    button {
-      background: #f8f8f8;
-    }
-    button:hover {
-      background: #eee;
     }
     .play-button {
       width: 40px;
@@ -100,7 +104,9 @@
       cursor: pointer;
     }
   </style>
+{% endblock %}
 
+{% block script %}
   <script>
     const audioPlayer = document.getElementById('audio-player')
     audioPlayer.addEventListener('playing', onPlaying)
@@ -147,40 +153,8 @@
         this.classList.add('has-override')
       }
     }
-    function onRecordingBoxClicked(event) {
-      event.preventDefault()
-      const recordingId = this.dataset.recordingId
-      if (event.target.classList.contains('override-submit')) {
-        const url = `/recording_override/${recordingId}`
-        const data = {
-          status: this.querySelector('.override-status').value,
-          reason: this.querySelector('.override-reason').value,
-        }
-        post(url, data, function() {
-          window.location.reload()
-        })
-      }
-    }
     for (const recordingBox of document.getElementsByClassName('recording-box')) {
       recordingBox.addEventListener('change', onRecordingBoxChanged)
-      recordingBox.addEventListener('click', onRecordingBoxClicked)
-    }
-
-    function post(url, data, done) {
-      const request = new XMLHttpRequest()
-      request.addEventListener('readystatechange', () => {
-        if (request.readyState == XMLHttpRequest.DONE) {
-          if (request.status != 200) {
-            alert(`Request to ${url} returned status code ${request.status}`)
-          } else {
-            done()
-          }
-        }
-      })
-      request.open('POST', url)
-      request.setRequestHeader('Content-Type', 'application/json')
-      request.send(JSON.stringify(data))
     }
   </script>
-
-</body>
+{% endblock %}

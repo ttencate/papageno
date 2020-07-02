@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- Suppress favicon requests -->
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        font-family: Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+      }
+      nav {
+        position: fixed;
+        width: 100%;
+        background-color: #eee;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        margin: -16px;
+        padding: 8px 16px;
+        border-bottom: 1px solid #ccc;
+      }
+      main {
+        margin-top: 40px;
+      }
+      form {
+        display: inline;
+      }
+      button {
+        background: #f8f8f8;
+      }
+      button:hover {
+        background: #eee;
+      }
+    </style>
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <nav>
+      <a href="/">Home</a> |
+      <a href="/species">Species list</a> |
+      <form action="/recordings" method="GET">
+        Recording ID: <input name="recording_id"> <input type="submit" value="View">
+      </form>
+    </nav>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+    {% block script %}{% endblock %}
+  </body>
+</html>

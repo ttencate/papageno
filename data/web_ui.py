@@ -138,10 +138,10 @@ def _trimmed_recording_route(recording_id):
     return send_file(file_name, mimetype='audio/ogg')
 
 
-@app.route('/recording_override/<string:recording_id>', methods=['POST'])
-def _recording_override_route(recording_id):
-    status = request.json['status']
-    reason = request.json['reason']
+@app.route('/recording_overrides/<string:recording_id>', methods=['POST'])
+def _recording_overrides_route(recording_id):
+    status = request.form['status']
+    reason = request.form['reason']
     if not session.query(Recording).filter(Recording.recording_id == recording_id).one_or_none():
         abort(404)
 
@@ -158,7 +158,7 @@ def _recording_override_route(recording_id):
     select_recordings(session, species, recording_overrides)
     session.commit()
 
-    return ''
+    return redirect(f'/species/{species.scientific_name}')
 
 
 def main():

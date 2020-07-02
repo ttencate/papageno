@@ -1,11 +1,17 @@
-<h1>Papageno data browser and editor</h1>
+{% extends '_base.html' %}
 
-<h2>Species</h2>
+{% block title %}Papageno data browser and editor{% endblock %}
 
-<a href="/species">Species list</a>
+{% block content %}
+  <h1>Papageno data browser and editor</h1>
 
-<h2>Recordings</h2>
+  <h2>Species</h2>
 
-<form action="/recordings" method="GET">
-  Recording ID: <input name="recording_id"> <input type="submit" value="View">
-</form>
+  <a href="/species">Species list</a>
+
+  <h2>Recordings</h2>
+
+  <form action="/recordings" method="GET">
+    Recording ID: <input name="recording_id"> <input type="submit" value="View">
+  </form>
+{% endblock %}
