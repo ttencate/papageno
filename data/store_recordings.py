@@ -9,14 +9,10 @@ import shutil
 
 import progress
 from recordings import Recording, SelectedRecording
+from trim_recordings import TRIMMED_RECORDINGS_DIR
 
 
 def add_args(parser):
-    # Arg added by trim_recordings stage.
-    # parser.add_argument(
-    #     '--trimmed_recordings_dir',
-    #     default=os.path.join(os.path.dirname(__file__), 'cache', 'trimmed_recordings'),
-    #     help='Where to find trimmed recording files')
     parser.add_argument(
         '--assets_recordings_dir',
         default=os.path.join(os.path.dirname(__file__), '..', 'app', 'assets', 'sounds'),
@@ -41,7 +37,7 @@ def main(args, session):
     logging.info('Copying trimmed recordings')
     for selected_recording in progress.percent(selected_recordings):
         input_file_name = os.path.join(
-            args.trimmed_recordings_dir,
+            TRIMMED_RECORDINGS_DIR,
             f'{selected_recording.recording_id}.ogg')
         # Android hates colons in file names in a really nonobvious way:
         # https://stackoverflow.com/questions/52245654/failed-to-open-file-permission-denied
