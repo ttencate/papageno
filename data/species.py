@@ -52,6 +52,9 @@ class Species(Base):
     scientific_name = Column(String, unique=True, index=True, nullable=False)
     scientific_name_clements = Column(String, index=True)
 
+    common_names = relationship('CommonName', back_populates='species')
+    selected_species = relationship('SelectedSpecies', back_populates='species', uselist=False)
+
     def common_name(self, language_code):
         for common_name in self.common_names:
             if common_name.language_code == language_code:
@@ -72,9 +75,6 @@ class CommonName(Base):
     species = relationship('Species', back_populates='common_names')
 
 
-Species.common_names = relationship('CommonName', back_populates='species')
-
-
 class SelectedSpecies(Base):
     '''
     A table of all species ids that were selected to be included in the app.
@@ -84,3 +84,5 @@ class SelectedSpecies(Base):
     species_id = Column(String, ForeignKey('species.species_id'),
                         primary_key=True, index=True, nullable=False)
     ranking = Column(Integer, nullable=False)
+
+    species = relationship('Species', back_populates='selected_species', uselist=False)

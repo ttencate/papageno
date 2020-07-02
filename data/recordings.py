@@ -50,6 +50,9 @@ class Recording(Base):
     bird_seen = Column(Boolean)
     playback_used = Column(Boolean)
 
+    selected_recording = relationship('SelectedRecording', back_populates='recording', uselist=False)
+    sonogram_analysis = relationship('SonogramAnalysis', back_populates='recording', uselist=False)
+
     @property
     def types(self):
         return list(filter(None, map(str.strip, self.type.lower().split(','))))
@@ -65,10 +68,7 @@ class SonogramAnalysis(Base):
                           primary_key=True, index=True, nullable=False)
     sonogram_quality = Column(Float, nullable=False)
 
-    recording = relationship('Recording', back_populates='sonogram_analysis')
-
-
-Recording.sonogram_analysis = relationship('SonogramAnalysis', back_populates='recording', uselist=False)
+    recording = relationship('Recording', back_populates='sonogram_analysis', uselist=False)
 
 
 class SelectedRecording(Base):
@@ -79,6 +79,8 @@ class SelectedRecording(Base):
 
     recording_id = Column(String, ForeignKey('recordings.recording_id'),
                           primary_key=True, index=True, nullable=False)
+
+    recording = relationship('Recording', back_populates='selected_recording', uselist=False)
 
 
 class RecordingOverrides:
@@ -100,8 +102,8 @@ class RecordingOverrides:
     def __iter__(self):
         return iter(self._overrides.values())
 
-    def __get__(self, recording_id):
-        return self._overrides.get(recording_id, None)
+    def __getitem__(self, recording_id):
+        return self._overrides.get(recording_id, RecordingOverride(recording_id, '', ''))
 
     def set(self, recording_id, status, reason):
         self._overrides[recording_id] = RecordingOverride(recording_id, status, reason)

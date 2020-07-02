@@ -5,6 +5,7 @@ Launches a web server serving a UI through which recordings and species can be
 manually selected.
 '''
 
+import argparse
 import logging
 import os.path
 import sys
@@ -18,6 +19,7 @@ import analysis
 import db
 from recordings import Recording, SelectedRecording, RecordingOverride, RecordingOverrides
 from species import Species, SelectedSpecies
+from select_recordings import select_recordings
 
 
 app = Flask(__name__)
@@ -116,18 +118,36 @@ def _recording_override_route(recording_id):
     reason = request.json['reason']
     if not session.query(Recording).filter(Recording.recording_id == recording_id).one_or_none():
         abort(404)
+
     if status:
         logging.info(f'Setting override for {recording_id} to {status} ({reason})')
         recording_overrides.set(recording_id, status, reason)
-        recording_overrides.save()
     else:
         logging.info(f'Removing override for {recording_id}')
         recording_overrides.delete(recording_id)
-        recording_overrides.save()
+    recording_overrides.save()
+
+    recording = session.query(Recording).filter(Recording.recording_id == recording_id).one()
+    species = session.query(Species).filter(Species.scientific_name == recording.scientific_name).one()
+    select_recordings(session, species, recording_overrides)
+    session.commit()
+
     return ''
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        '--log_level', default='info', choices=['debug', 'info', 'warning', 'error', 'critical'],
+        help='Verbosity of logging')
+    parser.add_argument(
+        '--watch', action='store_true',
+        help='Automatically restart the server if source code or templates are changed')
+    args = parser.parse_args()
+
+    log_level = getattr(logging, args.log_level.upper())
+    logging.basicConfig(level=log_level)
+
     global session # pylint: disable=global-statement
     global recording_overrides # pylint: disable=global-statement
     session = db.create_session(os.path.join(os.path.dirname(__file__), 'master.db'))
@@ -137,7 +157,7 @@ def main():
     port = 8080
     logging.info(f'Launching web server on http://{host}:{port}/')
     # Database session is not thread safe, so we need to disable threading here.
-    app.run(host=host, port=port, debug=True, threaded=False)
+    app.run(host=host, port=port, debug=args.watch, threaded=False)
 
 
 if __name__ == '__main__':

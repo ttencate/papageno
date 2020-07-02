@@ -1,5 +1,6 @@
 <head>
   <title>{{species.common_name('nl')}}</title>
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 
 <body>
@@ -11,9 +12,8 @@
         <h3>{{group|title}} - {{group_sizes[group]}}</h3>
         {% for recording in recordings %}
           {% set selected_recording = selected_recordings_by_id[recording.recording_id] %}
-          <!-- Brackets don't seem to call __get__ from Jinja? -->
-          {% set recording_override = recording_overrides.__get__(recording.recording_id) %}
-          <div class="recording-box {% if selected_recording %}selected{% endif %} {% if recording_override %}has-override{% endif %}"
+          {% set recording_override = recording_overrides[recording.recording_id] %}
+          <div class="recording-box {% if selected_recording %}selected{% endif %} {% if recording_override.status %}has-override{% endif %}"
                data-recording-id="{{recording.recording_id}}">
             <div style="width: 200px;">
               <a href="https://www.xeno-canto.org/{{recording.recording_id.split(':')[1]}}">{{recording.recording_id}}</a><br>
@@ -27,6 +27,7 @@
               <select class="override-status" autocomplete="off">
                 <option value=""></option>
                 <option value="blacklist" {% if recording_override.status == 'blacklist' %}selected{% endif %}>blacklist</option>
+                <option value="goldlist" {% if recording_override.status == 'goldlist' %}selected{% endif %}>goldlist</option>
               </select><br>
               <div class="show-on-override">
                 <input class="override-reason" value="{{ recording_override.reason }}" autocomplete="off"><br>
