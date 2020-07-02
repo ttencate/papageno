@@ -16,12 +16,13 @@ from sqlalchemy.sql.expression import text
 
 import analysis
 import db
-from recordings import Recording, SelectedRecording
+from recordings import Recording, SelectedRecording, RecordingOverride, RecordingOverrides
 from species import Species, SelectedSpecies
 
 
 app = Flask(__name__)
 session = None
+recording_overrides = None
 
 
 @app.route('/')
@@ -92,12 +93,12 @@ def _species_route(scientific_name):
         group_sizes[group] = len(groups[group])
         groups[group] = groups[group][:group_size_limit]
 
-    selected_recording_ids = [
-        selected_recording.recording_id
+    selected_recordings_by_id = {
+        selected_recording.recording_id: selected_recording
         for selected_recording in session.query(SelectedRecording)\
             .join(Recording)\
             .filter(Recording.scientific_name == scientific_name)
-    ]
+    }
 
     return render_template(
         'species.html',
@@ -105,34 +106,38 @@ def _species_route(scientific_name):
         groups=groups,
         group_sizes=group_sizes,
         group_size_limit=group_size_limit,
-        selected_recording_ids=selected_recording_ids)
+        selected_recordings_by_id=selected_recordings_by_id,
+        recording_overrides=recording_overrides)
 
 
-@app.route('/select_recording/<string:recording_id>/<int:selected>', methods=['POST'])
-def _select_recording_route(recording_id, selected):
+@app.route('/recording_override/<string:recording_id>', methods=['POST'])
+def _recording_override_route(recording_id):
+    status = request.json['status']
+    reason = request.json['reason']
     if not session.query(Recording).filter(Recording.recording_id == recording_id).one_or_none():
         abort(404)
-    was_selected = session.query(SelectedRecording).filter(SelectedRecording.recording_id == recording_id).one_or_none()
-    if selected and not was_selected:
-        logging.info(f'Selecting {recording_id}')
-        session.add(SelectedRecording(recording_id=recording_id))
-        session.commit()
-    elif was_selected and not selected:
-        logging.info(f'Deselecting {recording_id}')
-        session.delete(was_selected)
-        session.commit()
+    if status:
+        logging.info(f'Setting override for {recording_id} to {status} ({reason})')
+        recording_overrides.set(recording_id, status, reason)
+        recording_overrides.save()
+    else:
+        logging.info(f'Removing override for {recording_id}')
+        recording_overrides.delete(recording_id)
+        recording_overrides.save()
     return ''
 
 
 def main():
     global session # pylint: disable=global-statement
+    global recording_overrides # pylint: disable=global-statement
     session = db.create_session(os.path.join(os.path.dirname(__file__), 'master.db'))
+    recording_overrides = RecordingOverrides()
 
     host = 'localhost'
     port = 8080
     logging.info(f'Launching web server on http://{host}:{port}/')
     # Database session is not thread safe, so we need to disable threading here.
-    app.run(host=host, port=port, threaded=False)
+    app.run(host=host, port=port, debug=True, threaded=False)
 
 
 if __name__ == '__main__':

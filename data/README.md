@@ -573,6 +573,10 @@ Navigate to <http://localhost:8080> for a graphical browser of data.
 
 ![Screenshot of web UI](README.images/web_ui.png)
 
+Note that the web UI is only "web" because that was an easy way to create a UI;
+no attention has been paid to security, so don't expose it to the public
+internet!
+
 Developing
 ----------
 

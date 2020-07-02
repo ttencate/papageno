@@ -10,18 +10,33 @@
       <div>
         <h3>{{group|title}} - {{group_sizes[group]}}</h3>
         {% for recording in recordings %}
-        <div class="recording-box {% if recording.recording_id in selected_recording_ids %}selected{% endif %}"
-             data-recording-id="{{recording.recording_id}}">
-            <div style="width: 150px;">
+          {% set selected_recording = selected_recordings_by_id[recording.recording_id] %}
+          <!-- Brackets don't seem to call __get__ from Jinja? -->
+          {% set recording_override = recording_overrides.__get__(recording.recording_id) %}
+          <div class="recording-box {% if selected_recording %}selected{% endif %} {% if recording_override %}has-override{% endif %}"
+               data-recording-id="{{recording.recording_id}}">
+            <div style="width: 200px;">
               <a href="https://www.xeno-canto.org/{{recording.recording_id.split(':')[1]}}">{{recording.recording_id}}</a><br>
-              {{recording.length_seconds}} s<br>
+              <small>
+                <abbr title="Recording duration">{{recording.length_seconds}} s</abbr>&emsp;
+                <abbr title="Recording quality">{{recording.quality}}</abbr>&emsp;
+                <abbr title="Number of background species">{{recording.background_species|length}}</abbr>&emsp;
+                <abbr title="Computed quality from sonogram">{{"{:,.0f}".format(recording.sonogram_analysis.sonogram_quality)}}</abbr>
+              </small><br>
               {{recording.type}}<br>
-              <small>q: {{recording.quality}} – bkg.sp.: {{recording.background_species|length}}</small>
+              <select class="override-status" autocomplete="off">
+                <option value=""></option>
+                <option value="blacklist" {% if recording_override.status == 'blacklist' %}selected{% endif %}>blacklist</option>
+              </select><br>
+              <div class="show-on-override">
+                <input class="override-reason" value="{{ recording_override.reason }}" autocomplete="off"><br>
+                <input type="submit" class="override-submit" value="Save">
+              </div>
             </div>
             <div>
-              <img src="{{recording.sonogram_url_small}}" width="240" height="80" class="toggler">
+              <img src="{{recording.sonogram_url_small}}" width="240" height="80">
             </div>
-            <div style="margin-left: 8px;">
+            <div>
               <button class="play-button" data-audio-url="{{recording.audio_url}}" style="width: 40px; height: 80px; border: 0; padding: 0; cursor: pointer;">▶</button>
             </div>
           </div>
@@ -36,19 +51,38 @@
 
   <style>
     .recording-box {
-      display: flex; flex-direction: row; background: #def; padding: 8px
+      display: flex;
+      flex-direction: row;
+      background: #def;
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+    .recording-box > * {
+      margin-left: 8px;
+    }
+    .recording-box > *:first-child {
+      margin-left: 0;
     }
     .recording-box.selected {
       background: #efd;
+    }
+    .show-on-override {
+      display: none;
+    }
+    .has-override .show-on-override {
+      display: block;
+    }
+    select {
+      width: 100%;
+    }
+    input {
+      width: 100%;
     }
     button {
       background: #f8f8f8;
     }
     button:hover {
       background: #eee;
-    }
-    .toggler {
-      cursor: pointer;
     }
   </style>
 
@@ -88,29 +122,45 @@
       button.addEventListener('click', onPlayClick)
     }
 
-    function onRecordingBoxClick(event) {
-      if (!event.target.classList.contains('toggler')) {
-        return
+    function onRecordingBoxChanged(event) {
+      event.preventDefault()
+      if (event.target.classList.contains('override-status')) {
+        this.classList.add('has-override')
       }
+    }
+    function onRecordingBoxClicked(event) {
       event.preventDefault()
       const recordingId = this.dataset.recordingId
-      const selected = !this.classList.contains('selected')
-      const url = `/select_recording/${encodeURIComponent(recordingId)}/${selected ? 1 : 0}`
+      if (event.target.classList.contains('override-submit')) {
+        const url = `/recording_override/${recordingId}`
+        const data = {
+          status: this.querySelector('.override-status').value,
+          reason: this.querySelector('.override-reason').value,
+        }
+        post(url, data, function() {
+          window.location.reload()
+        })
+      }
+    }
+    for (const recordingBox of document.getElementsByClassName('recording-box')) {
+      recordingBox.addEventListener('change', onRecordingBoxChanged)
+      recordingBox.addEventListener('click', onRecordingBoxClicked)
+    }
+
+    function post(url, data, done) {
       const request = new XMLHttpRequest()
       request.addEventListener('readystatechange', () => {
         if (request.readyState == XMLHttpRequest.DONE) {
           if (request.status != 200) {
             alert(`Request to ${url} returned status code ${request.status}`)
           } else {
-            this.classList.toggle('selected', selected)
+            done()
           }
         }
       })
-      request.open('POST', url, true)
-      request.send()
-    }
-    for (const recordingBox of document.getElementsByClassName('recording-box')) {
-      recordingBox.addEventListener('click', onRecordingBoxClick)
+      request.open('POST', url)
+      request.setRequestHeader('Content-Type', 'application/json')
+      request.send(JSON.stringify(data))
     }
   </script>
 

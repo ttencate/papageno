@@ -106,6 +106,10 @@ class RecordingOverrides:
     def set(self, recording_id, status, reason):
         self._overrides[recording_id] = RecordingOverride(recording_id, status, reason)
 
+    def delete(self, recording_id):
+        if recording_id in self._overrides:
+            del self._overrides[recording_id]
+
     def save(self):
         with open(RecordingOverrides.FILE_NAME, 'wt') as f:
             w = csv.DictWriter(f, RecordingOverride.fields())
