@@ -10,7 +10,7 @@ import logging
 import os.path
 import sys
 
-from flask import Flask, request, abort, render_template, send_file
+from flask import Flask, request, abort, render_template, send_file, redirect
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
@@ -29,6 +29,11 @@ recording_overrides = None
 
 @app.route('/')
 def _root_route():
+    return render_template('root.html')
+
+
+@app.route('/species')
+def _species_list_route():
     recording_counts_subquery = session\
         .query(Species.species_id, func.count('*').label('num_recordings'))\
         .join(Recording, Species.scientific_name == Recording.scientific_name)\
@@ -54,15 +59,16 @@ def _root_route():
         .group_by(Species.species_id)\
         .all())
     return render_template(
-        'root.html',
+        'species_list.html',
         selected_species=selected_species,
         unselected_species=unselected_species,
         recording_counts=recording_counts,
         selected_recording_counts=selected_recording_counts)
 
 
-@app.route('/<string:scientific_name>')
+@app.route('/species/<string:scientific_name>')
 def _species_route(scientific_name):
+    highlight_recording_id = request.args.get('highlight_recording_id', None)
     species = session.query(Species)\
         .filter(Species.scientific_name == scientific_name)\
         .one_or_none()
@@ -109,10 +115,23 @@ def _species_route(scientific_name):
         group_sizes=group_sizes,
         group_size_limit=group_size_limit,
         selected_recordings_by_id=selected_recordings_by_id,
-        recording_overrides=recording_overrides)
+        recording_overrides=recording_overrides,
+        highlight_recording_id=highlight_recording_id)
 
 
-@app.route('/trimmed_recordings/<string:recording_id>')
+@app.route('/recordings')
+def _recordings_route():
+    recording_id = request.args['recording_id']
+    recording = session.query(Recording).filter(Recording.recording_id == recording_id).one_or_none()
+    if not recording:
+        recording = session.query(Recording).filter(Recording.recording_id.like(f'%{recording_id}%')).first()
+    if not recording:
+        abort(404)
+    species = session.query(Species).filter(Species.scientific_name == recording.scientific_name).one()
+    return redirect(f'/species/{species.scientific_name}?highlight_recording_id={recording.recording_id}')
+
+
+@app.route('/recordings/trimmed/<string:recording_id>')
 def _trimmed_recording_route(recording_id):
     recording = session.query(Recording).filter(Recording.recording_id == recording_id).one()
     file_name = trim_recording(recording, skip_if_exists=True)

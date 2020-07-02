@@ -13,7 +13,10 @@
         {% for recording in recordings %}
           {% set selected_recording = selected_recordings_by_id[recording.recording_id] %}
           {% set recording_override = recording_overrides[recording.recording_id] %}
-          <div class="recording-box {% if selected_recording %}selected{% endif %} {% if recording_override.status %}has-override{% endif %}"
+          <div class="recording-box
+                      {% if selected_recording %}selected{% endif %}
+                      {% if recording_override.status %}has-override{% endif %}
+                      {% if recording.recording_id == highlight_recording_id %}highlighted{% endif %}"
                data-recording-id="{{recording.recording_id}}">
             <div style="width: 200px;">
               <a href="https://www.xeno-canto.org/{{recording.recording_id.split(':')[1]}}">{{recording.recording_id}}</a><br>
@@ -39,7 +42,7 @@
             </div>
             <div>
               <button class="play-button" data-audio-url="{{recording.audio_url}}" title="Play full recording">▶</button><br>
-              <button class="play-button" data-audio-url="/trimmed_recordings/{{recording.recording_id}}" title="Play trimmed recording">▶</button>
+              <button class="play-button" data-audio-url="/recordings/trimmed/{{recording.recording_id}}" title="Play trimmed recording">▶</button>
             </div>
           </div>
         {% endfor %}
@@ -67,6 +70,9 @@
     }
     .recording-box.selected {
       background: #efd;
+    }
+    .recording-box.highlighted {
+      background: #ffd;
     }
     .show-on-override {
       display: none;
