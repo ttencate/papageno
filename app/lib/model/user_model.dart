@@ -1,11 +1,14 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:built_collection/built_collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:papageno/ebisu/ebisu.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
+import 'package:papageno/utils/built_list_utils.dart';
 
 final _log = Logger('user_model');
 
@@ -178,7 +181,14 @@ class Knowledge {
   }
 
   @override
+  bool operator ==(dynamic other) => other is Knowledge && _ofSpecies == other._ofSpecies;
+
+  @override
+  int get hashCode => _ofSpecies.hashCode;
+
+  @override
   String toString() => _ofSpecies.toString();
+
 }
 
 @immutable
@@ -193,6 +203,8 @@ class SpeciesKnowledge {
   static const _firstHalfStarAtDays = 60.0 / _minutesPerDay;
   static const _halfStarExponent = 1.9;
 
+  static const _numConfusionsToKeep = 20;
+
   static const maxStarCount = 5;
   static const maxHalfStarCount = 2 * maxStarCount;
 
@@ -204,19 +216,29 @@ class SpeciesKnowledge {
   /// This is 0 if and only if [model] is `null`.
   final int _lastAskedTimestampMs;
 
+  /// A list of species IDs that this species has been confused with in the past.
+  /// Each entry represents a wrongly answered question (with a confusion in either direction) so one should expect to
+  /// see the same species ID more than once. They are in reverse chronological order.
+  final BuiltList<int> confusionSpeciesIds;
+
   SpeciesKnowledge.none() :
       model = null,
-      _lastAskedTimestampMs = 0;
+      _lastAskedTimestampMs = 0,
+      confusionSpeciesIds = BuiltList();
 
   SpeciesKnowledge.fromMap(Map<String, dynamic> map) :
-      model = EbisuModel(
-        time: map['ebisu_time'] as double,
-        alpha: map['ebisu_alpha'] as double,
-        beta: map['ebisu_beta'] as double,
-      ),
-      _lastAskedTimestampMs = map['last_asked_timestamp_ms'] as int;
+      model =
+        map['ebisu_time'] != null && map['ebisu_alpha'] != null && map['ebisu_beta'] != null ?
+        EbisuModel(
+          time: map['ebisu_time'] as double,
+          alpha: map['ebisu_alpha'] as double,
+          beta: map['ebisu_beta'] as double,
+        ) :
+        null,
+      _lastAskedTimestampMs = map['last_asked_timestamp_ms'] as int,
+      confusionSpeciesIds = Uint16List.sublistView(map['confusion_species_ids'] as Uint8List ?? Uint8List(0)).toBuiltList();
   
-  SpeciesKnowledge._internal(this.model, this._lastAskedTimestampMs);
+  SpeciesKnowledge._internal(this.model, this._lastAskedTimestampMs, this.confusionSpeciesIds);
 
   /// True if and only if this species has never been asked before.
   bool get isNone => model == null;
@@ -231,37 +253,64 @@ class SpeciesKnowledge {
       0 :
       max(0, min((pow(halflifeDays / _firstHalfStarAtDays, 1.0 / _halfStarExponent)).floor(), maxHalfStarCount));
 
+  DateTime get lastAskedTimestamp => _lastAskedTimestampMs == 0 ? null : DateTime.fromMillisecondsSinceEpoch(_lastAskedTimestampMs);
+
   /// Returns the probability between 0 and 1 that the species is remembered at this moment.
   double recallProbability(DateTime now) => model?.predictRecall(daysSinceAsked(now), exact: true) ?? 0.0;
 
   /// Returns a number that represents how important it is to ask about this species now (greater is higher priority).
   /// The number is not meaningful by itself, only in comparisons.
   double priority(DateTime now) => -(model?.predictRecall(daysSinceAsked(now)) ?? double.negativeInfinity);
-  
-  SpeciesKnowledge update({@required bool correct, DateTime answerTimestamp}) {
-    answerTimestamp ??= DateTime.now();
+
+  /// Returns a new [SpeciesKnowledge] that represents the knowledge after the given question has been answered.
+  SpeciesKnowledge withUpdatedModel({@required bool correct, @required DateTime answerTimestamp}) {
     EbisuModel newModel;
     if (model == null) {
+      // This species was seen for the first time. Initialize the Ebisu model so that the predicted recall will be 100%
+      // and don't record whether the answer was correct, because it wouldn't be meaningful when the species has been
+      // encountered for the first time.
       newModel = EbisuModel(time: _initialHalflifeDays, alpha: _initialAlpha);
     } else {
       try {
         newModel = model.updateRecall(correct ? 1 : 0, 1, daysSinceAsked(answerTimestamp));
       } catch (ex) {
-        _log.warning('Failed to update Ebishu model', ex);
+        _log.severe('Failed to update Ebisu model; keeping current model', ex);
+        newModel = model;
       }
     }
-    return SpeciesKnowledge._internal(newModel, answerTimestamp.millisecondsSinceEpoch);
+    return SpeciesKnowledge._internal(newModel, answerTimestamp.millisecondsSinceEpoch, confusionSpeciesIds);
+  }
+
+  /// Returns a new [SpeciesKnowledge] that represents the knowledge after a question about _another_ species has been
+  /// wrongly answered with _this_ species.
+  SpeciesKnowledge withAddedConfusion({@required int confusedWithspeciesId}) {
+    final newConfusionSpeciesIds = confusionSpeciesIds.rebuild((builder) {
+      builder
+          ..insert(0, confusedWithspeciesId)
+          ..trimTo(_numConfusionsToKeep);
+    });
+    return SpeciesKnowledge._internal(model, _lastAskedTimestampMs, newConfusionSpeciesIds);
   }
 
   double daysSinceAsked(DateTime now) => max(0.0, (now.millisecondsSinceEpoch - _lastAskedTimestampMs) / _millisecondsPerDay);
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-    'ebisu_time': model.time,
-    'ebisu_alpha': model.alpha,
-    'ebisu_beta': model.beta,
+    'ebisu_time': model?.time,
+    'ebisu_alpha': model?.alpha,
+    'ebisu_beta': model?.beta,
     'last_asked_timestamp_ms': _lastAskedTimestampMs,
+    'confusion_species_ids': Uint8List.sublistView(Uint16List.fromList(confusionSpeciesIds.asList())),
   };
 
   @override
-  String toString() => '$model @ ${DateTime.fromMillisecondsSinceEpoch(_lastAskedTimestampMs).toIso8601String()}';
+  bool operator ==(dynamic other) => other is SpeciesKnowledge &&
+      model == other.model &&
+      _lastAskedTimestampMs == other._lastAskedTimestampMs &&
+      confusionSpeciesIds == other.confusionSpeciesIds;
+
+  @override
+  int get hashCode => model.hashCode ^ _lastAskedTimestampMs.hashCode ^ confusionSpeciesIds.hashCode;
+
+  @override
+  String toString() => '$model @ ${lastAskedTimestamp?.toIso8601String() ?? '<never asked>'} (confusions: $confusionSpeciesIds)';
 }

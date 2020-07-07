@@ -2,9 +2,9 @@ import 'package:built_collection/built_collection.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/services/app_db.dart';
 
-final Species species1 = _makeSpecies(1, 'Turdus merula');
-final Species species2 = _makeSpecies(2, 'Fringilla coelebs');
-final Species species3 = _makeSpecies(3, 'Parus major');
+final Species species1 = _makeSpecies(1, 'Species 1');
+final Species species2 = _makeSpecies(2, 'Species 2');
+final Species species3 = _makeSpecies(3, 'Species 3');
 
 final Recording recording1 = _makeRecording('xc:1', species1);
 final Recording recording2 = _makeRecording('xc:2', species2);

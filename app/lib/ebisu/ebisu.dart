@@ -214,6 +214,20 @@ class EbisuModel {
     }
   }
 
+  static bool _approxEqual(double a, double b) {
+    return a == b || a.isNaN == b.isNaN || max(a, b) - min(a, b) < 1e-6 * max(a, b);
+  }
+
+  @override
+  bool operator ==(dynamic other) => other is EbisuModel &&
+      _approxEqual(time, other.time) &&
+      _approxEqual(alpha, other.alpha) &&
+      _approxEqual(beta, other.beta);
+
+  // XXX This is not fully consistent with operator == because it's not approximate!
+  @override
+  int get hashCode => time.hashCode ^ alpha.hashCode ^ beta.hashCode;
+
   @override
   String toString() => 'EbisuModel(time: $time, alpha: $alpha, beta: $beta)';
 }

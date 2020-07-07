@@ -1,7 +1,19 @@
+/// This file implements migrations on the user database.
+///
+/// These migrations upgrade the database structure and content from previous versions of the app to the current
+/// version.
+///
+/// Note that several migration functions duplicate functionality that is also present in the model and controller
+/// layers. This is done because changes to the model and controller always assume the latest database version, and this
+/// assumption may not be valid during the migration process. It also helps to guarantee that the semantics of the
+/// migrations remain frozen in time, even if the other code continues to evolve.
+
 import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:logging/logging.dart';
-import 'package:papageno/model/user_model.dart';
+import 'package:papageno/ebisu/ebisu.dart';
 import 'package:sqflite/sqlite_api.dart';
 
 final _log = Logger('user_db_migrations');
@@ -9,12 +21,13 @@ final _log = Logger('user_db_migrations');
 typedef Migration = Future<void> Function(Transaction);
 
 const List<Migration> migrations = [
-  _upgradeToVersion1,
-  _upgradeToVersion2,
-  _upgradeToVersion3,
-  _upgradeToVersion4,
-  _upgradeToVersion5,
-  _upgradeToVersion6,
+  _upgradeFromVersion0,
+  _upgradeFromVersion1,
+  _upgradeFromVersion2,
+  _upgradeFromVersion3,
+  _upgradeFromVersion4,
+  _upgradeFromVersion5,
+  _upgradeFromVersion6,
 ];
 
 final latestVersion = migrations.length;
@@ -32,7 +45,7 @@ Future<void> upgradeToVersion(Database db, int newVersion) async {
 }
 
 /// Creates profiles and settings tables.
-Future<void> _upgradeToVersion1(Transaction txn) async {
+Future<void> _upgradeFromVersion0(Transaction txn) async {
   await txn.execute('''
       create table profiles (
         profile_id integer primary key autoincrement,
@@ -51,7 +64,7 @@ Future<void> _upgradeToVersion1(Transaction txn) async {
 }
 
 /// Adds courses table.
-Future<void> _upgradeToVersion2(Transaction txn) async {
+Future<void> _upgradeFromVersion1(Transaction txn) async {
 // The `name` field is not yet used and will always be NULL for now.
   await txn.execute('''
       create table courses (
@@ -67,7 +80,7 @@ Future<void> _upgradeToVersion2(Transaction txn) async {
 }
 
 /// Adds questions table.
-Future<void> _upgradeToVersion3(Transaction txn) async {
+Future<void> _upgradeFromVersion2(Transaction txn) async {
   await txn.execute('''
       create table questions (
         profile_id integer not null,
@@ -86,7 +99,7 @@ Future<void> _upgradeToVersion3(Transaction txn) async {
 }
 
 /// Adds unlocked_lesson_count to courses table.
-Future<void> _upgradeToVersion4(Transaction txn) async {
+Future<void> _upgradeFromVersion3(Transaction txn) async {
 // Since version 6, this column is no longer used.
   await txn.execute('''
       alter table courses add column unlocked_lesson_count integer
@@ -94,16 +107,14 @@ Future<void> _upgradeToVersion4(Transaction txn) async {
 }
 
 /// Adds last_used timestamp to profiles table.
-Future<void> _upgradeToVersion5(Transaction txn) async {
+Future<void> _upgradeFromVersion4(Transaction txn) async {
   await txn.execute('''
       alter table profiles add column last_used_timestamp_ms integer
     ''');
 }
 
 /// Adds knowledge table and populates it.
-/// This duplicates some code from the controller, because we don't want the database layer to depend on the
-/// controller layer. And also, because we want to be able to change the controller but keep the migration frozen.
-Future<void> _upgradeToVersion6(Transaction txn) async {
+Future<void> _upgradeFromVersion5(Transaction txn) async {
   await txn.execute('''
       create table knowledge (
         profile_id integer not null,
@@ -120,8 +131,8 @@ Future<void> _upgradeToVersion6(Transaction txn) async {
   final existingProfileIds = (await txn.query('profiles', columns: <String>['profile_id']))
       .map((Map<String, dynamic> r) => r['profile_id'] as int)
       .toSet();
-  final profiles = <int, Map<int, SpeciesKnowledge>>{
-    for (final profileId in existingProfileIds) profileId: <int, SpeciesKnowledge>{},
+  final knowledges = <int, Map<int, Map<String, dynamic>>>{
+    for (final profileId in existingProfileIds) profileId: <int, Map<String, dynamic>>{},
   };
 
   final questionRecords = await txn.query(
@@ -130,32 +141,42 @@ Future<void> _upgradeToVersion6(Transaction txn) async {
       orderBy: 'answer_timestamp');
   for (final record in questionRecords) {
     final profileId = record['profile_id'] as int;
-    final profile = profiles[profileId];
-    if (profile == null) {
+    final knowledge = knowledges[profileId];
+    if (knowledge == null) {
       continue;
     }
 
     final correctSpeciesId = record['correct_species_id'] as int;
     final givenSpeciesId = record['given_species_id'] as int;
-    final correct = givenSpeciesId == correctSpeciesId;
     final answerTimestamp = DateTime.fromMillisecondsSinceEpoch((record['answer_timestamp'] as double).round());
-    profile[correctSpeciesId] = (profile[correctSpeciesId] ?? SpeciesKnowledge.none())
-        .update(correct: correct, answerTimestamp: answerTimestamp);
+
+    final speciesKnowledge = knowledge[correctSpeciesId];
+    if (speciesKnowledge == null) {
+      knowledge[correctSpeciesId] = <String, dynamic>{
+        'profile_id': profileId,
+        'species_id': correctSpeciesId,
+        'ebisu_time': 10.0 / (60.0 * 24.0),
+        'ebisu_alpha': 3.0,
+        'ebisu_beta': 3.0,
+        'last_asked_timestamp_ms': answerTimestamp.millisecondsSinceEpoch,
+      };
+    } else {
+      final model = EbisuModel(
+          time: speciesKnowledge['ebisu_time'] as double,
+          alpha: speciesKnowledge['ebisu_alpha'] as double,
+          beta: speciesKnowledge['ebisu_beta'] as double);
+      final correct = givenSpeciesId == correctSpeciesId;
+      final daysSinceAsked = max(0.0, (answerTimestamp.millisecondsSinceEpoch - (speciesKnowledge['last_asked_timestamp_ms'] as int)) / (1000.0 * 60.0 * 60.0 * 24.0));
+      final newModel = model.updateRecall(correct ? 1 : 0, 1, daysSinceAsked);
+      speciesKnowledge['ebisu_time'] = newModel.time;
+      speciesKnowledge['ebisu_alpha'] = newModel.alpha;
+      speciesKnowledge['ebisu_beta'] = newModel.beta;
+    }
   }
 
-  for (final entry in profiles.entries) {
-    final profileId = entry.key;
-    final profile = entry.value;
-    for (final entry in profile.entries) {
-      final speciesId = entry.key;
-      final knowledge = entry.value;
-      await txn.insert(
-          'knowledge',
-          <String, dynamic>{
-            'profile_id': profileId,
-            'species_id': speciesId,
-            ...knowledge.toMap(),
-          });
+  for (final knowledge in knowledges.values) {
+    for (final speciesKnowledge in knowledge.values) {
+      await txn.insert('knowledge', speciesKnowledge);
     }
   }
 
@@ -195,5 +216,68 @@ Future<void> _upgradeToVersion6(Transaction txn) async {
       where: 'course_id = ?',
       whereArgs: <dynamic>[courseId],
     );
+  }
+}
+
+/// Adds the `confusion_species_ids` column to the `knowledge` table and populates it.
+/// This duplicates some logic from [SpeciesKnowledge] so that the latter can safely diverge without affecting
+/// migration correctness.
+Future<void> _upgradeFromVersion6(Transaction txn) async {
+  await txn.execute('''
+      alter table knowledge add column confusion_species_ids blob
+    ''');
+
+  final existingProfileIds = (await txn.query('profiles', columns: <String>['profile_id']))
+      .map((Map<String, dynamic> r) => r['profile_id'] as int)
+      .toSet();
+  final knowledges = <int, Map<int, List<int>>>{
+    for (final profileId in existingProfileIds) profileId: <int, List<int>>{},
+  };
+
+  final questionRecords = await txn.query(
+      'questions',
+      columns: <String>['profile_id', 'correct_species_id', 'given_species_id'],
+      orderBy: 'answer_timestamp');
+  for (final record in questionRecords) {
+    final profileId = record['profile_id'] as int;
+    final knowledge = knowledges[profileId];
+    if (knowledge == null) {
+      continue;
+    }
+
+    final correctSpeciesId = record['correct_species_id'] as int;
+    final givenSpeciesId = record['given_species_id'] as int;
+    final correct = givenSpeciesId == correctSpeciesId;
+    void updateKnowledge(int a, int b, bool addIfAbsent) {
+      if (knowledge.containsKey(a)) {
+        if (!correct) {
+          knowledge.update(a, (confusionSpeciesIds) => confusionSpeciesIds..add(b));
+        }
+      } else if (addIfAbsent) {
+        // If no knowledge of a species existed, the confusion is not recorded.
+        // This is intentional: the user couldn't know and we don't want them to be haunted forever by their best guess.
+        knowledge[a] = <int>[];
+      }
+    }
+    updateKnowledge(correctSpeciesId, givenSpeciesId, true);
+    updateKnowledge(givenSpeciesId, correctSpeciesId, false);
+  }
+
+  const numConfusionsToKeep = 20;
+  for (final entry in knowledges.entries) {
+    final profileId = entry.key;
+    final knowledge = entry.value;
+    for (final entry in knowledge.entries) {
+      final speciesId = entry.key;
+      final confusionSpeciesIds = Uint8List.sublistView(Uint16List.fromList(
+          entry.value.reversed.take(numConfusionsToKeep).toList()));
+      await txn.update(
+          'knowledge',
+          <String, dynamic>{
+            'confusion_species_ids': confusionSpeciesIds,
+          },
+          where: 'profile_id = ? and species_id = ?',
+          whereArgs: <dynamic>[profileId, speciesId]);
+    }
   }
 }

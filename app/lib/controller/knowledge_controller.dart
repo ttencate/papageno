@@ -46,18 +46,43 @@ class KnowledgeController {
   Stream<Knowledge> get knowledgeUpdates => _knowledgeUpdatesController.stream;
 
   /// Updates the stored [Knowledge] with the answer to the given [Question].
-  Future<void> updateSpeciesKnowledge(Question question) async {
+  Future<Knowledge> updateSpeciesKnowledge(Question question) async {
     assert(question.isAnswered);
     _knowledgeFuture = _knowledgeFuture.then((knowledge) {
       _log.fine('Updating species knowledge after $question');
-      final species = question.correctAnswer;
-      final speciesKnowledge = knowledge.ofSpeciesOrNone(species);
-      final newSpeciesKnowledge = speciesKnowledge.update(correct: question.isCorrect);
-      final newKnowledge = knowledge.updated(species, newSpeciesKnowledge);
-      unawaited(_userDb.upsertSpeciesKnowledge(profile.profileId, species.speciesId, newSpeciesKnowledge));
+
+      var correctSpeciesKnowledge = knowledge.ofSpeciesOrNull(question.correctAnswer);
+      var givenSpeciesKnowledge = knowledge.ofSpeciesOrNull(question.givenAnswer);
+
+      final correct = question.isCorrect;
+      // Only record the confusion on both sides if the user has heard at least one of these species before.
+      final recordConfusion = !correct && (correctSpeciesKnowledge != null || givenSpeciesKnowledge != null);
+
+      correctSpeciesKnowledge ??= SpeciesKnowledge.none();
+      correctSpeciesKnowledge = correctSpeciesKnowledge.withUpdatedModel(
+          correct: correct,
+          answerTimestamp: question.answerTimestamp);
+
+      if (recordConfusion) {
+        correctSpeciesKnowledge = correctSpeciesKnowledge.withAddedConfusion(confusedWithspeciesId: question.givenAnswer.speciesId);
+        givenSpeciesKnowledge ??= SpeciesKnowledge.none();
+        givenSpeciesKnowledge = givenSpeciesKnowledge.withAddedConfusion(confusedWithspeciesId: question.correctAnswer.speciesId);
+      }
+
+      var newKnowledge = knowledge;
+      if (correctSpeciesKnowledge != null) {
+        newKnowledge = newKnowledge.updated(question.correctAnswer, correctSpeciesKnowledge);
+        unawaited(_userDb.upsertSpeciesKnowledge(profile.profileId, question.correctAnswer.speciesId, correctSpeciesKnowledge));
+      }
+      if (!correct && givenSpeciesKnowledge != null) {
+        newKnowledge = newKnowledge.updated(question.givenAnswer, givenSpeciesKnowledge);
+        unawaited(_userDb.upsertSpeciesKnowledge(profile.profileId, question.givenAnswer.speciesId, givenSpeciesKnowledge));
+      }
+
       _notifyListeners(newKnowledge);
       return newKnowledge;
     });
+    return await _knowledgeFuture;
   }
 
   void _notifyListeners(Knowledge knowledge) {
