@@ -23,6 +23,7 @@ final _log = Logger('QuizController');
 /// This prevents over-quizzing on a particular species.
 class QuizController {
   static const _choiceCount = 5;
+  static const _maxConfusionChoices = 2;
 
   /// Number of batches in a quiz.
   final int questionBatchCount;
@@ -106,7 +107,7 @@ class QuizController {
     _log.fine('Generating new batch of questions');
 
     final now = DateTime.now();
-    final allSpecies = _course.unlockedSpecies.toList();
+    final allSpecies = _course.unlockedSpecies.toSet();
     final knowledge = await _knowledgeController.updatedKnowledge;
 
     // Ask higher priority first.
@@ -134,14 +135,31 @@ class QuizController {
         _recordingsBags[correctAnswer] = RandomBag(await _appDb.recordingsFor(correctAnswer));
       }
       final recording = _recordingsBags[correctAnswer].next(_random);
+
+      final speciesKnowledge = knowledge.ofSpeciesOrNone(correctAnswer);
+      final confusions =
+          // Make a copy because Future.wait returns an unmodifiable list.
+          List.of(await Future.wait(speciesKnowledge.confusionSpeciesIds.map(_appDb.species)))
+              ..retainWhere(allSpecies.contains);
+      var remainingConfusionsCount = _maxConfusionChoices;
       final choices = <Species>[correctAnswer];
       while (choices.length < min(_choiceCount, allSpecies.length)) {
-        final choice = answersBag.next(_random);
+        Species choice;
+        if (remainingConfusionsCount > 0 && confusions.isNotEmpty) {
+          choice = confusions.randomElement(_random);
+          confusions.removeWhere((species) => species == choice);
+          remainingConfusionsCount--;
+          _log.finer('Adding confusion answer: $choice');
+        } else {
+          choice = answersBag.next(_random);
+        }
+        assert(choice != null);
         if (!choices.contains(choice)) {
           choices.add(choice);
         }
       }
       choices.shuffle(_random);
+
       questions.add(Question(
         recording: recording,
         choices: choices,
