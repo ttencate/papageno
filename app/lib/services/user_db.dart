@@ -8,14 +8,13 @@ import 'package:meta/meta.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
+import 'package:papageno/services/user_db_migrations.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 final _log = Logger('UserDb');
 
 class UserDb {
-  static const _latestVersion = 6;
-
   final AppDb _appDb;
   final Database _db;
 
@@ -24,7 +23,7 @@ class UserDb {
   static Future<UserDb> open({@required AppDb appDb, DatabaseFactory factory, String path, int upgradeToVersion, bool singleInstance = true}) async {
     factory ??= databaseFactory;
     path ??= await _defaultPath();
-    upgradeToVersion ??= _latestVersion;
+    upgradeToVersion ??= latestVersion;
     _log.info('Opening database $path');
     final db = await factory.openDatabase(
       path,
@@ -52,12 +51,6 @@ class UserDb {
     await _db.close();
   }
 
-  /// Only used for testing the migrations themselves.
-  /// TODO decouple migrations from UserDb so we can do this in a better way.
-  Future<void> upgradeForTest(int version) async {
-    await _onUpgrade(_db, await _db.getVersion(), version);
-  }
-
   // TODO used for tests; make unnecessary by injecting db
   Database get dbForTest => _db;
 
@@ -71,192 +64,7 @@ class UserDb {
   }
 
   static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    await db.transaction((txn) async {
-      for (var v = oldVersion + 1; v <= newVersion; v++) {
-        await _upgradeToVersion(txn, v);
-      }
-    });
-  }
-
-  static Future<void> _upgradeToVersion(Transaction txn, int version) {
-    _log.info('Running migration for version $version');
-    switch (version) {
-      // TODO pull out migrations to a separate file, in a `const List<Migration>`.
-      case 1: return _upgradeToVersion1(txn);
-      case 2: return _upgradeToVersion2(txn);
-      case 3: return _upgradeToVersion3(txn);
-      case 4: return _upgradeToVersion4(txn);
-      case 5: return _upgradeToVersion5(txn);
-      case 6: return _upgradeToVersion6(txn);
-      default: return Future.value();
-    }
-  }
-
-  /// Creates profiles and settings tables.
-  static Future<void> _upgradeToVersion1(Transaction txn) async {
-    await txn.execute('''
-      create table profiles (
-        profile_id integer primary key autoincrement,
-        name text
-      )
-    ''');
-    await txn.execute('''
-      create table settings (
-        profile_id integer not null,
-        name text not null,
-        value text,
-        primary key (profile_id, name),
-        foreign key (profile_id) references profiles(profile_id) on delete cascade
-      )
-    ''');
-  }
-
-  /// Adds courses table.
-  static Future<void> _upgradeToVersion2(Transaction txn) async {
-    // The `name` field is not yet used and will always be NULL for now.
-    await txn.execute('''
-      create table courses (
-        course_id integer primary key autoincrement,
-        profile_id integer not null,
-        location_lat float,
-        location_lon float,
-        name text,
-        lessons text, -- Format changed in version 6.
-        foreign key (profile_id) references profiles(profile_id) on delete cascade
-      )
-    ''');
-  }
-
-  /// Adds questions table.
-  static Future<void> _upgradeToVersion3(Transaction txn) async {
-    await txn.execute('''
-      create table questions (
-        profile_id integer not null,
-        course_id integer,
-        recording_id string,
-        choices text,
-        correct_species_id integer,
-        given_species_id integer,
-        answer_timestamp double, -- Note: we actually store integers (milliseconds) here!
-        foreign key (profile_id) references profiles(profile_id) on delete cascade
-      )
-    ''');
-    await txn.execute('''
-      create index questions_profile_id on questions(profile_id)
-    ''');
-  }
-
-  /// Adds unlocked_lesson_count to courses table.
-  static Future<void> _upgradeToVersion4(Transaction txn) async {
-    // Since version 6, this column is no longer used.
-    await txn.execute('''
-      alter table courses add column unlocked_lesson_count integer
-    ''');
-  }
-
-  /// Adds last_used timestamp to profiles table.
-  static Future<void> _upgradeToVersion5(Transaction txn) async {
-    await txn.execute('''
-      alter table profiles add column last_used_timestamp_ms integer
-    ''');
-  }
-
-  /// Adds knowledge table and populates it.
-  /// This duplicates some code from the controller, because we don't want the database layer to depend on the
-  /// controller layer. And also, because we want to be able to change the controller but keep the migration frozen.
-  static Future<void> _upgradeToVersion6(Transaction txn) async {
-    await txn.execute('''
-      create table knowledge (
-        profile_id integer not null,
-        species_id integer not null,
-        ebisu_time double,
-        ebisu_alpha double,
-        ebisu_beta double,
-        last_asked_timestamp_ms int,
-        primary key (profile_id, species_id),
-        foreign key (profile_id) references profiles(profile_id) on delete cascade
-      )
-    ''');
-
-    final existingProfileIds = (await txn.query('profiles', columns: <String>['profile_id']))
-        .map((Map<String, dynamic> r) => r['profile_id'] as int)
-        .toSet();
-    final profiles = <int, Map<int, SpeciesKnowledge>>{
-      for (final profileId in existingProfileIds) profileId: <int, SpeciesKnowledge>{},
-    };
-
-    final questionRecords = await txn.query(
-        'questions',
-        columns: <String>['profile_id', 'correct_species_id', 'given_species_id', 'answer_timestamp'],
-        orderBy: 'answer_timestamp');
-    for (final record in questionRecords) {
-      final profileId = record['profile_id'] as int;
-      final profile = profiles[profileId];
-      if (profile == null) {
-        continue;
-      }
-
-      final correctSpeciesId = record['correct_species_id'] as int;
-      final givenSpeciesId = record['given_species_id'] as int;
-      final correct = givenSpeciesId == correctSpeciesId;
-      final answerTimestamp = DateTime.fromMillisecondsSinceEpoch((record['answer_timestamp'] as double).round());
-      profile[correctSpeciesId] = (profile[correctSpeciesId] ?? SpeciesKnowledge.none())
-          .update(correct: correct, answerTimestamp: answerTimestamp);
-    }
-
-    for (final entry in profiles.entries) {
-      final profileId = entry.key;
-      final profile = entry.value;
-      for (final entry in profile.entries) {
-        final speciesId = entry.key;
-        final knowledge = entry.value;
-        await txn.insert(
-            'knowledge',
-            <String, dynamic>{
-              'profile_id': profileId,
-              'species_id': speciesId,
-              ...knowledge.toMap(),
-            });
-      }
-    }
-
-    await txn.execute('''
-      create index knowledge_profile_id on knowledge(profile_id)
-    ''');
-    await txn.execute('''
-      create index knowledge_profile_id_species_id on knowledge(profile_id, species_id)
-    ''');
-
-    final courses = await txn.query('courses', columns: <String>['course_id', 'lessons', 'unlocked_lesson_count']);
-    for (final course in courses) {
-      final courseId = course['course_id'] as int;
-      final lessons = jsonDecode(course['lessons'] as String) as List<dynamic>;
-      final unlockedLessonCount = course['unlocked_lesson_count'] as int;
-      final localSpecies = <int>[];
-      final unlockedSpecies = <int>[];
-      for (var i = 0; i < lessons.length; i++) {
-        final unlocked = i < unlockedLessonCount;
-        final lesson = lessons[i] as Map<String, dynamic>;
-        final speciesIds = lesson['s'] as List<dynamic>;
-        for (final speciesId in speciesIds) {
-          localSpecies.add(speciesId as int);
-          if (unlocked) {
-            unlockedSpecies.add(speciesId as int);
-          }
-        }
-      }
-      await txn.update(
-        'courses',
-        <String, dynamic>{
-          'lessons': jsonEncode(<String, dynamic>{
-            'unlocked_species': unlockedSpecies,
-            'local_species': localSpecies,
-          }),
-        },
-        where: 'course_id = ?',
-        whereArgs: <dynamic>[courseId],
-      );
-    }
+    await upgradeToVersion(db, newVersion);
   }
 
   /// Returns all profiles, ordered by descending last used timestamp.

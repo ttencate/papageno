@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/user_db.dart';
+import 'package:papageno/services/user_db_migrations.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -54,7 +55,7 @@ void main() {
         await userDb.insertQuestion(profileId2, courseId2, _makeQuestion(recording1, species1, species1, _time(days: 1)));
 
         final now = _time(days: 4);
-        await userDb.upgradeForTest(6);
+        await upgradeToVersion(userDb.dbForTest, 6);
 
         final knowledge1 = await userDb.knowledge(profileId1);
         expect(knowledge1.ofSpeciesOrNone(species1).recallProbability(now), greaterThan(knowledge1.ofSpeciesOrNone(species2).recallProbability(now)));
@@ -77,7 +78,7 @@ void main() {
           'unlocked_lesson_count': 2,
         });
 
-        await userDb.upgradeForTest(6);
+        await upgradeToVersion(userDb.dbForTest, 6);
 
         final course = await userDb.getCourse(1);
         expect(course.unlockedSpecies, [species3, species1]);
