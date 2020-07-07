@@ -236,7 +236,10 @@ class SpeciesKnowledge {
         ) :
         null,
       _lastAskedTimestampMs = map['last_asked_timestamp_ms'] as int,
-      confusionSpeciesIds = Uint16List.sublistView(map['confusion_species_ids'] as Uint8List ?? Uint8List(0)).toBuiltList();
+      // We need to clone the Uint8List because offset inside the underlying buffer must be a multiple of elements size.
+      confusionSpeciesIds = Uint16List
+          .sublistView(Uint16List.fromList((map['confusion_species_ids'] as Uint8List) ?? Uint8List(0)))
+          .toBuiltList();
   
   SpeciesKnowledge._internal(this.model, this._lastAskedTimestampMs, this.confusionSpeciesIds);
 
