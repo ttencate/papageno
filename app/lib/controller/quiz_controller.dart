@@ -22,7 +22,7 @@ final _log = Logger('QuizController');
 /// Questions are generated in batches, where a batch cannot contain the same species more than once.
 /// This prevents over-quizzing on a particular species.
 class QuizController {
-  static const _choiceCount = 4;
+  static const _choiceCount = 5;
 
   /// Number of batches in a quiz.
   final int questionBatchCount;

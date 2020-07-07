@@ -111,7 +111,7 @@ class _QuizPageState extends State<QuizPage> {
                                 key: ObjectKey(index),
                                 drawer: drawer,
                                 question: question,
-                                onAnswer: (givenAnswer) {_answerQuestion(index, givenAnswer); },
+                                onAnswer: (givenAnswer) { _answerQuestion(index, givenAnswer); },
                                 onProceed: () { _showNextQuestion(quiz); },
                               );
                             }
@@ -332,7 +332,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
             )) widget,
             Divider(height: 0.0),
             SizedBox(
-              height: 56.0, // Same as ListTile
+              height: 48.0, // ListTile in non-dense mode: 56.0; dense: 48.0
               child: Center(
                 child: AnimatedOpacity(
                   opacity: _question.isAnswered ? 1.0 : 0.0,
