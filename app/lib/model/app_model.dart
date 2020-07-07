@@ -119,7 +119,7 @@ class Species {
   int get hashCode => speciesId.hashCode;
 
   @override
-  String toString() => scientificName;
+  String toString() => '$speciesId:$scientificName:${commonNameIn(LanguageCode.fromString('en'))}';
 }
 
 /// Common interface for media items (recordings, images) for which we can show attribution and license details.

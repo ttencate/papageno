@@ -141,6 +141,7 @@ class QuizController {
           // Make a copy because Future.wait returns an unmodifiable list.
           List.of(await Future.wait(speciesKnowledge.confusionSpeciesIds.map(_appDb.species)))
               ..retainWhere(allSpecies.contains);
+      _log.finer('Confusions for $correctAnswer: $confusions');
       var remainingConfusionsCount = _maxConfusionChoices;
       final choices = <Species>[correctAnswer];
       while (choices.length < min(_choiceCount, allSpecies.length)) {
@@ -149,7 +150,7 @@ class QuizController {
           choice = confusions.randomElement(_random);
           confusions.removeWhere((species) => species == choice);
           remainingConfusionsCount--;
-          _log.finer('Adding confusion answer: $choice');
+          _log.finer('Adding confusion for $correctAnswer: $choice');
         } else {
           choice = answersBag.next(_random);
         }

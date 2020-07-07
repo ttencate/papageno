@@ -237,9 +237,7 @@ class SpeciesKnowledge {
         null,
       _lastAskedTimestampMs = map['last_asked_timestamp_ms'] as int,
       // We need to clone the Uint8List because offset inside the underlying buffer must be a multiple of elements size.
-      confusionSpeciesIds = Uint16List
-          .sublistView(Uint16List.fromList((map['confusion_species_ids'] as Uint8List) ?? Uint8List(0)))
-          .toBuiltList();
+      confusionSpeciesIds = decodeSpeciesIdList((map['confusion_species_ids'] as Uint8List) ?? Uint8List(0));
   
   SpeciesKnowledge._internal(this.model, this._lastAskedTimestampMs, this.confusionSpeciesIds);
 
@@ -302,7 +300,7 @@ class SpeciesKnowledge {
     'ebisu_alpha': model?.alpha,
     'ebisu_beta': model?.beta,
     'last_asked_timestamp_ms': _lastAskedTimestampMs,
-    'confusion_species_ids': Uint8List.sublistView(Uint16List.fromList(confusionSpeciesIds.asList())),
+    'confusion_species_ids': encodeSpeciesIdList(confusionSpeciesIds.asList()),
   };
 
   @override
@@ -316,4 +314,14 @@ class SpeciesKnowledge {
 
   @override
   String toString() => '$model @ ${lastAskedTimestamp?.toIso8601String() ?? '<never asked>'} (confusions: $confusionSpeciesIds)';
+}
+
+BuiltList<int> decodeSpeciesIdList(Uint8List encoded) {
+  // `encoded` may be a view into a larger buffer, and that view might not aligned to 2-byte boundaries.
+  // So we need to make a copy. Conveniently, sublist does that: https://stackoverflow.com/a/45548181/14637
+  return encoded.sublist(0).buffer.asUint16List().build();
+}
+
+Uint8List encodeSpeciesIdList(List<int> speciesIdList) {
+  return Uint8List.sublistView(Uint16List.fromList(speciesIdList));
 }
