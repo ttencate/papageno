@@ -114,6 +114,8 @@ Future<void> _upgradeFromVersion4(Transaction txn) async {
 }
 
 /// Adds knowledge table and populates it.
+///
+/// This mirrors the update logic from [KnowledgeController].
 Future<void> _upgradeFromVersion5(Transaction txn) async {
   await txn.execute('''
       create table knowledge (
@@ -220,7 +222,8 @@ Future<void> _upgradeFromVersion5(Transaction txn) async {
 }
 
 /// Adds the `confusion_species_ids` column to the `knowledge` table and populates it.
-/// This duplicates some logic from [SpeciesKnowledge] so that the latter can safely diverge without affecting
+///
+/// This duplicates some logic from [KnowledgeController] so that the latter can safely diverge without affecting
 /// migration correctness.
 Future<void> _upgradeFromVersion6(Transaction txn) async {
   await txn.execute('''
@@ -248,19 +251,14 @@ Future<void> _upgradeFromVersion6(Transaction txn) async {
     final correctSpeciesId = record['correct_species_id'] as int;
     final givenSpeciesId = record['given_species_id'] as int;
     final correct = givenSpeciesId == correctSpeciesId;
-    void updateKnowledge(int a, int b, bool addIfAbsent) {
-      if (knowledge.containsKey(a)) {
-        if (!correct) {
-          knowledge.update(a, (confusionSpeciesIds) => confusionSpeciesIds..add(b));
-        }
-      } else if (addIfAbsent) {
-        // If no knowledge of a species existed, the confusion is not recorded.
-        // This is intentional: the user couldn't know and we don't want them to be haunted forever by their best guess.
-        knowledge[a] = <int>[];
-      }
+    if (correct) {
+      // Correct answers are recorded as confusions to eventually push out the wrong ones.
+      knowledge.update(correctSpeciesId, (confusionSpeciesIds) => confusionSpeciesIds..add(correctSpeciesId), ifAbsent: () => <int>[]);
+    } else if (!correct && (knowledge.containsKey(correctSpeciesId) || knowledge.containsKey(givenSpeciesId))) {
+      // Wrong answers are recorded as confusions on both sides if either species was previously encountered.
+      knowledge.putIfAbsent(correctSpeciesId, () => <int>[]).add(givenSpeciesId);
+      knowledge.putIfAbsent(givenSpeciesId, () => <int>[]).add(correctSpeciesId);
     }
-    updateKnowledge(correctSpeciesId, givenSpeciesId, true);
-    updateKnowledge(givenSpeciesId, correctSpeciesId, false);
   }
 
   const numConfusionsToKeep = 20;
@@ -271,13 +269,22 @@ Future<void> _upgradeFromVersion6(Transaction txn) async {
       final speciesId = entry.key;
       final confusionSpeciesIds = Uint8List.sublistView(Uint16List.fromList(
           entry.value.reversed.take(numConfusionsToKeep).toList()));
-      await txn.update(
+      final updatedRecordCount = await txn.update(
           'knowledge',
           <String, dynamic>{
             'confusion_species_ids': confusionSpeciesIds,
           },
           where: 'profile_id = ? and species_id = ?',
           whereArgs: <dynamic>[profileId, speciesId]);
+      if (updatedRecordCount == 0) {
+        await txn.insert(
+            'knowledge',
+            <String, dynamic>{
+              'profile_id': profileId,
+              'species_id': speciesId,
+              'confusion_species_ids': confusionSpeciesIds,
+            });
+      }
     }
   }
 }

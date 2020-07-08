@@ -1,14 +1,34 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:papageno/model/app_model.dart';
+import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
 
-final Species species1 = _makeSpecies(1, 'Species 1');
-final Species species2 = _makeSpecies(2, 'Species 2');
-final Species species3 = _makeSpecies(3, 'Species 3');
+final Species species1 = makeSpecies(1, 'Species 1');
+final Species species2 = makeSpecies(2, 'Species 2');
+final Species species3 = makeSpecies(3, 'Species 3');
 
-final Recording recording1 = _makeRecording('xc:1', species1);
-final Recording recording2 = _makeRecording('xc:2', species2);
-final Recording recording3 = _makeRecording('xc:3', species3);
+final Recording recording1 = makeRecording('xc:1', species1);
+final Recording recording2 = makeRecording('xc:2', species2);
+final Recording recording3 = makeRecording('xc:3', species3);
+
+Species makeSpecies(int speciesId, String scientificName) {
+  return Species(speciesId, scientificName, BuiltMap.of(<LanguageCode, String>{}));
+}
+
+Recording makeRecording(String recordingId, Species species) {
+  return Recording(recordingId: recordingId, speciesId: species.speciesId, fileName: '$recordingId.ogg');
+}
+
+Question makeQuestion(Recording recording, Species correctAnswer, Species givenAnswer, DateTime answerTimestamp) {
+  return Question(recording: recording, choices: <Species>[species1, species2, species3], correctAnswer: correctAnswer)
+      .answeredWith(givenAnswer, answerTimestamp);
+}
+
+DateTime time({int days, int minutes}) {
+  return _startTime.add(Duration(days: days ?? 0, minutes: minutes ?? 0));
+}
+
+final DateTime _startTime = DateTime.parse('2020-05-08 12:00:00'); // Happy birthday, David Attenborough!
 
 class MockAppDb implements AppDb {
 
@@ -51,12 +71,4 @@ class MockAppDb implements AppDb {
   @override
   Future<Region> region(int regionId) async => _regions
       .firstWhere((r) => r.regionId == regionId, orElse: () => null);
-}
-
-Species _makeSpecies(int speciesId, String scientificName) {
-  return Species(speciesId, scientificName, BuiltMap.of(<LanguageCode, String>{}));
-}
-
-Recording _makeRecording(String recordingId, Species species) {
-  return Recording(recordingId: recordingId, speciesId: species.speciesId, fileName: '$recordingId.ogg');
 }

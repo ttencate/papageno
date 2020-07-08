@@ -138,9 +138,9 @@ class QuizController {
 
       final speciesKnowledge = knowledge.ofSpeciesOrNone(correctAnswer);
       final confusions =
-          // Make a copy because Future.wait returns an unmodifiable list.
-          List.of(await Future.wait(speciesKnowledge.confusionSpeciesIds.map(_appDb.species)))
-              ..retainWhere(allSpecies.contains);
+          (await Future.wait(speciesKnowledge.confusionSpeciesIds.map(_appDb.species)))
+              .where((species) => species != correctAnswer && allSpecies.contains(species))
+              .toList();
       _log.finer('Confusions for $correctAnswer: $confusions');
       var remainingConfusionsCount = _maxConfusionChoices;
       final choices = <Species>[correctAnswer];

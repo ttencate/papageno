@@ -58,7 +58,15 @@ class KnowledgeController {
       // Only record the confusion on both sides if the user has heard at least one of these species before.
       final recordConfusion = !correct && (correctSpeciesKnowledge != null || givenSpeciesKnowledge != null);
 
+      // Never heard before? Make sure to initialize so we can update the model.
       correctSpeciesKnowledge ??= SpeciesKnowledge.none();
+      // If the species has been heard before but was answered correctly, record this as a confusion even though it
+      // really isn't, to push out the real confusions eventually.
+      if (correct && !correctSpeciesKnowledge.isNone) {
+        correctSpeciesKnowledge = correctSpeciesKnowledge.withAddedConfusion(
+            confusedWithspeciesId: question.givenAnswer.speciesId);
+      }
+      // The species has been asked, so we should update its model to reflect the newly gained knowledge.
       correctSpeciesKnowledge = correctSpeciesKnowledge.withUpdatedModel(
           correct: correct,
           answerTimestamp: question.answerTimestamp);
@@ -69,9 +77,11 @@ class KnowledgeController {
             updateTimestamp: false);
       }
       if (recordConfusion) {
-        correctSpeciesKnowledge = correctSpeciesKnowledge.withAddedConfusion(confusedWithspeciesId: question.givenAnswer.speciesId);
+        correctSpeciesKnowledge = correctSpeciesKnowledge.withAddedConfusion(
+            confusedWithspeciesId: question.givenAnswer.speciesId);
         givenSpeciesKnowledge ??= SpeciesKnowledge.none();
-        givenSpeciesKnowledge = givenSpeciesKnowledge.withAddedConfusion(confusedWithspeciesId: question.correctAnswer.speciesId);
+        givenSpeciesKnowledge = givenSpeciesKnowledge.withAddedConfusion(
+            confusedWithspeciesId: question.correctAnswer.speciesId);
       }
 
       var newKnowledge = knowledge;

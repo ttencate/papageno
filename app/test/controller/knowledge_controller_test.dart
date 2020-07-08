@@ -4,8 +4,8 @@ import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:pedantic/pedantic.dart';
 
-import '../services/mock_app_db.dart';
 import '../services/user_db_helpers.dart';
+import '../testdata.dart';
 
 void main() {
   const initialHalflife = 10.0 / (60.0 * 24.0);
@@ -64,7 +64,7 @@ void main() {
         expect(speciesKnowledge.isNone, false);
         expect(speciesKnowledge.lastAskedTimestamp, time(minutes: 10));
         expect(speciesKnowledge.model.modelToPercentileDecay(), isExtendedHalflife);
-        expect(speciesKnowledge.confusionSpeciesIds, isEmpty);
+        expect(speciesKnowledge.confusionSpeciesIds, <int>[species1.speciesId]);
 
         expect(knowledge, await knowledgeFromDb());
       });
@@ -112,7 +112,7 @@ void main() {
         expect(knowledge, await knowledgeFromDb());
       });
 
-      test('when only the answered species is known', () async {
+      test('when only the given species is known', () async {
         // Ask species 1 for the first time, but the user guessed that it was species 2 which they heard before.
         await knowledgeController.updateSpeciesKnowledge(makeQuestion(recording2, species2, species2, time(minutes: 0)));
         final knowledge = await knowledgeController.updateSpeciesKnowledge(makeQuestion(recording1, species1, species2, time(minutes: 1)));

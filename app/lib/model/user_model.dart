@@ -225,8 +225,11 @@ class SpeciesKnowledge {
   final int _lastAskedTimestampMs;
 
   /// A list of species IDs that this species has been confused with in the past.
-  /// Each entry represents a wrongly answered question (with a confusion in either direction) so one should expect to
-  /// see the same species ID more than once. They are in reverse chronological order.
+  ///
+  /// Each entry represents either a wrongly answered question (with a confusion in either direction), or this species
+  /// answered correctly (to eventually push out old confusions).
+  ///
+  /// They are in reverse chronological order. One should expect to see the same species ID more than once.
   final BuiltList<int> confusionSpeciesIds;
 
   SpeciesKnowledge.none() :
@@ -293,7 +296,7 @@ class SpeciesKnowledge {
   }
 
   /// Returns a new [SpeciesKnowledge] that represents the knowledge after a question about _another_ species has been
-  /// wrongly answered with _this_ species.
+  /// wrongly answered with _this_ species, or when _this_ species was correctly answered (to push out old confusions).
   SpeciesKnowledge withAddedConfusion({@required int confusedWithspeciesId}) {
     final newConfusionSpeciesIds = confusionSpeciesIds.rebuild((builder) {
       builder

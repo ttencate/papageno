@@ -1,10 +1,8 @@
-import 'package:papageno/model/app_model.dart';
-import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'mock_app_db.dart';
+import '../testdata.dart';
 
 var _sqfliteInited = false;
 
@@ -28,14 +26,3 @@ Future<UserDb> createUserDbForTest({int version}) async {
       path: inMemoryDatabasePath,
       upgradeToVersion: version);
 }
-
-Question makeQuestion(Recording recording, Species correctAnswer, Species givenAnswer, DateTime answerTimestamp) {
-  return Question(recording: recording, choices: <Species>[species1, species2, species3], correctAnswer: correctAnswer)
-      .answeredWith(givenAnswer, answerTimestamp);
-}
-
-DateTime time({int days, int minutes}) {
-  return _startTime.add(Duration(days: days ?? 0, minutes: minutes ?? 0));
-}
-
-final DateTime _startTime = DateTime.parse('2020-05-08 12:00:00'); // Happy birthday, David Attenborough!
