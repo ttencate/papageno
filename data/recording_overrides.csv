@@ -1,5 +1,6 @@
 recording_id,status,reason
 xc:101524,blacklist,"Too short, not representative"
+xc:121694,blacklist,Recording cuts out
 xc:127766,blacklist,Not representative
 xc:129472,blacklist,Trimming includes background noise
 xc:130063,blacklist,Trim selects wrong part
@@ -8,26 +9,33 @@ xc:149382,blacklist,Not representative
 xc:154082,blacklist,Consistently gives internal server error (500)
 xc:164009,blacklist,Too many background species
 xc:184537,blacklist,Recording artifact
+xc:185590,blacklist,Not representative
 xc:188272,blacklist,Too many background species
 xc:210817,blacklist,Background noises
 xc:217672,blacklist,Trimming selects wrong part
+xc:218538,blacklist,Background noises
 xc:239375,blacklist,Trouble with trimming
+xc:246540,blacklist,Background species
 xc:269285,blacklist,Too short and not very representative
 xc:269762,blacklist,Background species
 xc:269763,blacklist,background species
 xc:281173,blacklist,Not representative
+xc:281182,blacklist,Background species
 xc:299936,blacklist,Background species
 xc:303360,blacklist,Background species
 xc:305936,blacklist,Not representative
 xc:322210,blacklist,Trimming selects too much
 xc:327881,blacklist,Not representative
+xc:342973,blacklist,Not representative
 xc:353814,blacklist,Trim selects wrong part
+xc:371057,blacklist,Background species
 xc:376671,blacklist,"Too short, harsh"
 xc:381956,blacklist,Too many background species
 xc:385854,goldlist,
 xc:391705,blacklist,Background species
 xc:400069,blacklist,Not representative
 xc:406339,blacklist,Not representative
+xc:432776,blacklist,Background species
 xc:436507,blacklist,Background noises
 xc:444806,blacklist,Not representative
 xc:446270,blacklist,Not representative
@@ -37,6 +45,8 @@ xc:462611,blacklist,Noisy
 xc:46773,blacklist,Missing file (404)
 xc:46803,blacklist,Not representative
 xc:468691,blacklist,Not representative
+xc:471820,blacklist,Not representative
+xc:476862,blacklist,Barely audible
 xc:48067,blacklist,Not representative
 xc:481799,blacklist,Trim selects wrong part
 xc:488832,blacklist,Too much noise filtering
@@ -51,4 +61,5 @@ xc:541538,blacklist,Too many background species
 xc:541547,blacklist,Too many background species
 xc:541963,blacklist,Too many background species
 xc:541964,blacklist,Too many background species
+xc:543041,blacklist,"Too short, not representative"
 xc:92264,blacklist,Not representative
