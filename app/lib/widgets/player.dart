@@ -31,7 +31,7 @@ class PlayerController with WidgetsBindingObserver {
   bool _playWhenLoaded;
   final bool pauseWhenLosingFocus;
 
-  StreamController<PlayerState> _stateUpdatesController = StreamController<PlayerState>();
+  StreamController<PlayerState> _stateUpdatesController = StreamController<PlayerState>.broadcast();
 
   AudioPlayer _audioPlayer = AudioPlayer();
   AudioPlayerState _state;
@@ -82,6 +82,9 @@ class PlayerController with WidgetsBindingObserver {
     _audioPlayer.onPlayerStateChanged.listen((AudioPlayerState state) {
       // _log.fine('${this} received AudioPlayer state ${state}');
       _state = state;
+      if (_state == AudioPlayerState.COMPLETED) {
+        _position = _duration;
+      }
       _notify();
     });
     _audioPlayer.onDurationChanged.listen((Duration duration) {
@@ -212,46 +215,54 @@ class PlayerController with WidgetsBindingObserver {
   String toString() => 'PlayerController($audioFile)';
 }
 
-/// Audio player widget with seek bar and play/pause button.
-class Player extends StatelessWidget {
+/// Floating play/pause button for audio playback.
+class FloatingPlayPauseButton extends StatelessWidget {
   final PlayerController controller;
 
-  Player({Key key, @required this.controller}) :
-      super(key: key);
+  const FloatingPlayPauseButton({Key key, this.controller}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return StreamBuilder<PlayerState>(
       stream: controller.stateUpdates,
       initialData: PlayerState.initial,
       builder: (context, snapshot) {
         final state = snapshot.data;
-        return Row(
-            children: <Widget>[
-              Expanded(
-                child: Slider(
-                  min: 0.0,
-                  max: state.duration.inMilliseconds.toDouble(),
-                  value: state.position.inMilliseconds.toDouble(),
-                  onChanged: state.loaded ? _seek : null,
-                ),
-              ),
-              IconButton(
-                icon: Icon(state.playing ? Icons.pause : Icons.play_arrow),
-                iconSize: 48.0,
-                onPressed: state.loaded ? controller.togglePlaying : null,
-              ),
-            ]
+        return FloatingActionButton(
+          backgroundColor: theme.accentColor,
+          onPressed: state.loaded ? controller.togglePlaying : null,
+          child: Icon(
+            state.playing ? Icons.pause : Icons.play_arrow,
+            size: 32.0,
+          ),
         );
       }
     );
   }
+}
 
-  void _seek(double position) {
-    controller.seek(Duration(milliseconds: position.toInt()));
-  }
+/// Non-interactive playback progress bar for audio.
+class PlaybackProgress extends StatelessWidget {
+  final PlayerController controller;
+
+  const PlaybackProgress({Key key, this.controller}) : super(key: key);
 
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      '${super.toString(minLevel: minLevel)}(${controller.audioFile})';
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return StreamBuilder<PlayerState>(
+      stream: controller.stateUpdates,
+      initialData: PlayerState.initial,
+      builder: (context, snapshot) {
+        final state = snapshot.data;
+        final position = state.position.inMicroseconds.toDouble();
+        final duration = state.duration.inMicroseconds.toDouble();
+        return LinearProgressIndicator(
+          value: duration > 0.0 ? position / duration : 0.0,
+          backgroundColor: Color.lerp(theme.accentColor, Colors.white, 0.7),
+        );
+      }
+    );
+  }
 }

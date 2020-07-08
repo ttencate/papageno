@@ -261,74 +261,93 @@ class _QuestionScreenState extends State<QuestionScreen> {
         body: Column(
           children: <Widget>[
             Expanded(
-              child: RevealingImage(
-                image: Stack(
-                  fit: StackFit.expand,
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    if (_image == null) Container(),
-                    if (_image != null) material.Image(
-                      image: AssetImage(join('assets', 'images', _image.fileName)),
-                      fit: BoxFit.cover,
-                    ),
-                    if (_image != null) ClipRect(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: 8.0,
-                          sigmaY: 8.0,
-                        ),
-                        child: material.Image(
+              child: Stack(
+                children: <Widget>[
+                  RevealingImage(
+                    image: Stack(
+                      fit: StackFit.expand,
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        if (_image == null) Container(),
+                        if (_image != null) material.Image(
                           image: AssetImage(join('assets', 'images', _image.fileName)),
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                         ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 0.0,
-                      right: 0.0,
-                      bottom: 0.0,
-                      child: Container(
-                        color: Colors.black.withOpacity(0.2),
-                        alignment: Alignment.center,
-                        padding: EdgeInsets.all(2.0),
-                        child: Column(
-                          children: <Widget>[
-                            Text(
-                              _question.correctAnswer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
-                              style: theme.textTheme.headline6.copyWith(
-                                color: textOnImageColor,
-                                shadows: textOnImageShadows,
-                              ),
+                        if (_image != null) ClipRect(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(
+                              sigmaX: 8.0,
+                              sigmaY: 8.0,
                             ),
-                            if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) Text(
-                              _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
-                              style: theme.textTheme.headline6.copyWith(
-                                color: textOnImageColor,
-                                shadows: textOnImageShadows,
-                                fontWeight: FontWeight.normal,
-                              ),
+                            child: material.Image(
+                              image: AssetImage(join('assets', 'images', _image.fileName)),
+                              fit: BoxFit.contain,
                             ),
-                            if (settings.showScientificName.value) Text(
-                              _question.correctAnswer.scientificName.capitalize(),
-                              style: theme.textTheme.caption.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: textOnImageColor,
-                                shadows: textOnImageShadows,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                        Positioned(
+                          left: 0.0,
+                          right: 0.0,
+                          bottom: 0.0,
+                          child: Container(
+                            // color: Colors.black.withOpacity(0.2),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: <Color>[Colors.black.withOpacity(0.0), Colors.black.withOpacity(0.5)],
+                              ),
+                            ),
+                            alignment: Alignment.centerLeft,
+                            padding: EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  _question.correctAnswer.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                                  style: theme.textTheme.headline6.copyWith(
+                                    color: textOnImageColor,
+                                    shadows: textOnImageShadows,
+                                  ),
+                                ),
+                                if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) Text(
+                                  _question.correctAnswer.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(),
+                                  style: theme.textTheme.headline6.copyWith(
+                                    color: textOnImageColor,
+                                    shadows: textOnImageShadows,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                                if (settings.showScientificName.value) Text(
+                                  _question.correctAnswer.scientificName.capitalize(),
+                                  style: theme.textTheme.caption.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: textOnImageColor,
+                                    shadows: textOnImageShadows,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                revealed: _question.isAnswered,
+                    revealed: _question.isAnswered,
+                  ),
+                  Positioned(
+                    right: 16.0,
+                    bottom: 16.0,
+                    child: FloatingPlayPauseButton(
+                      controller: _playerController,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Player(
-              key: GlobalObjectKey(_question.recording),
+            PlaybackProgress(
               controller: _playerController,
             ),
+            // SizedBox(height: 6.0), // Matches LinearProgressIndicator.
             Divider(height: 0.0),
             for (var widget in ListTile.divideTiles(
               context: context,

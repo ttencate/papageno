@@ -19,4 +19,8 @@ final appTheme = ThemeData(
   iconTheme: IconThemeData(
     color: Colors.green.shade500,
   ),
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
+    backgroundColor: Colors.green.shade800,
+    foregroundColor: Colors.white,
+  ),
 );
