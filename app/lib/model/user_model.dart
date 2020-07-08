@@ -191,6 +191,14 @@ class Knowledge {
 
 }
 
+/// Represents the knowledge a user has about a single species.
+///
+/// Wraps an [EbisuModel] as well as the time the species was last asked and species it has been confused with.
+///
+/// Knowledge about a species can be in one of three states:
+/// 0. Never asked before: `speciesKnowledge == null || speciesKnowledge.isNone`.
+/// 1. Asked once: `!speciesKnowledge.isNone` but the Ebisu model is the initial model.
+/// 2. Asked more than once: the Ebisu model is something else.
 @immutable
 class SpeciesKnowledge {
   static const _minutesPerDay = 60.0 * 24.0;
@@ -264,7 +272,8 @@ class SpeciesKnowledge {
   double priority(DateTime now) => -(model?.predictRecall(daysSinceAsked(now)) ?? double.negativeInfinity);
 
   /// Returns a new [SpeciesKnowledge] that represents the knowledge after the given question has been answered.
-  SpeciesKnowledge withUpdatedModel({@required bool correct, @required DateTime answerTimestamp}) {
+  /// [answerTimestamp] may be set to `null` to skip updating the timestamp.
+  SpeciesKnowledge withUpdatedModel({@required bool correct, @required DateTime answerTimestamp, bool updateTimestamp = true}) {
     EbisuModel newModel;
     if (model == null) {
       // This species was seen for the first time. Initialize the Ebisu model so that the predicted recall will be 100%
@@ -279,7 +288,8 @@ class SpeciesKnowledge {
         newModel = model;
       }
     }
-    return SpeciesKnowledge._internal(newModel, answerTimestamp.millisecondsSinceEpoch, confusionSpeciesIds);
+    final newAnswerTimestamp = updateTimestamp ? answerTimestamp.millisecondsSinceEpoch : _lastAskedTimestampMs;
+    return SpeciesKnowledge._internal(newModel, newAnswerTimestamp, confusionSpeciesIds);
   }
 
   /// Returns a new [SpeciesKnowledge] that represents the knowledge after a question about _another_ species has been

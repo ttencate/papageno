@@ -62,7 +62,12 @@ class KnowledgeController {
       correctSpeciesKnowledge = correctSpeciesKnowledge.withUpdatedModel(
           correct: correct,
           answerTimestamp: question.answerTimestamp);
-
+      if (!correct && givenSpeciesKnowledge?.isNone == false) {
+        givenSpeciesKnowledge = givenSpeciesKnowledge.withUpdatedModel(
+            correct: false,
+            answerTimestamp: question.answerTimestamp,
+            updateTimestamp: false);
+      }
       if (recordConfusion) {
         correctSpeciesKnowledge = correctSpeciesKnowledge.withAddedConfusion(confusedWithspeciesId: question.givenAnswer.speciesId);
         givenSpeciesKnowledge ??= SpeciesKnowledge.none();
