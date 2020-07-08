@@ -3,7 +3,7 @@
 {% block title %}{{species.common_name('nl')}}{% endblock %}
 
 {% block content %}
-  <h2><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}}</h2>
+  <h2><em>{{species.scientific_name}}</em> - {{species.common_name('en')}} - {{species.common_name('nl')}} <small class="weight-normal">({{selected_recordings_by_id|length}} selected)</small></h2>
 
   <div style="display: flex; flex-direction: row; justify-content: space-between;">
     {% for group, recordings in groups.items() %}
@@ -58,6 +58,9 @@
 
 {% block head %}
   <style>
+    .weight-normal {
+      font-weight: normal;
+    }
     .recording-box {
       display: flex;
       flex-direction: row;
