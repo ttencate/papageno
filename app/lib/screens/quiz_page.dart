@@ -204,7 +204,12 @@ class _QuestionScreenState extends State<QuestionScreen> {
   void initState() {
     _log.finer('_QuestionScreenState.initState() for $_question');
     super.initState();
-    _playerController = PlayerController(playing: !_question.isAnswered, looping: !_question.isAnswered);
+    _playerController = PlayerController(
+      audioFile: 'assets/sounds/${_question.recording.fileName}',
+      playing: !_question.isAnswered,
+      looping: !_question.isAnswered,
+      pauseWhenLosingFocus: true,
+    );
   }
 
   @override
@@ -323,7 +328,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
             Player(
               key: GlobalObjectKey(_question.recording),
               controller: _playerController,
-              audioFile: 'assets/sounds/${_question.recording.fileName}',
             ),
             Divider(height: 0.0),
             for (var widget in ListTile.divideTiles(
