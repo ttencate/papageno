@@ -79,62 +79,59 @@ class _QuizPageState extends State<QuizPage> {
           }
           return WillPopScope(
             onWillPop: quiz.isComplete ? null : _confirmPop,
-            // Keep the system's status bar green, because having it transparent on top of the photo is too visually noisy.
-            child: Container(
-              color: theme.primaryColor,
-              child: SafeArea(
-                child: Column(
-                  children: <Widget>[
-                    Expanded(
-                      child: PageView.builder(
-                        controller: _pageController,
-                        onPageChanged: (index) { setState(() { _currentPage = index; }); },
-                        scrollDirection: Axis.horizontal,
-                        physics: PageScrollPhysics(),
-                        // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
-                        // the `PageView` sometimes creates pages before they are visible, causing
-                        // https://github.com/ttencate/papageno/issues/58.
-                        // If we fix this by setting `itemCount` to `quiz.firstUnansweredQuestionIndex + 1`, then
-                        // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
-                        // (shouldn't keys prevent this?).
-                        itemCount: null,
-                        itemBuilder: (BuildContext context, int index) {
-                          if (index > quiz.firstUnansweredQuestionIndex) {
-                            return null;
-                          }
-                          if (index < quiz.questionCount) {
-                            if (index >= quiz.availableQuestions.length) {
-                              return Center(child: CircularProgressIndicator());
-                            } else {
-                              final question = quiz.availableQuestions[index];
-                              return QuestionScreen(
-                                key: ObjectKey(index),
-                                drawer: drawer,
-                                question: question,
-                                onAnswer: (givenAnswer) { _answerQuestion(index, givenAnswer); },
-                                onProceed: () { _showNextQuestion(quiz); },
-                              );
-                            }
-                          } else {
-                            return QuizResult(
-                              quiz: quiz,
-                              drawer: drawer,
-                              onRetry: () { Navigator.of(context).pop(AfterQuizOption.retry); },
-                              onBack: () { Navigator.of(context).pop(AfterQuizOption.stop); },
-                              onAddSpecies: () { Navigator.of(context).pop(AfterQuizOption.addSpecies); },
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                    if (_currentPage < quiz.questionCount) LinearProgressIndicator(
-                      value: quiz.firstUnansweredQuestionIndex / quiz.questionCount,
-                      valueColor: AlwaysStoppedAnimation(theme.primaryColorDark),
-                      backgroundColor: theme.backgroundColor,
-                    ),
-                  ],
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) { setState(() { _currentPage = index; }); },
+                    scrollDirection: Axis.horizontal,
+                    physics: PageScrollPhysics(),
+                    // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
+                    // the `PageView` sometimes creates pages before they are visible, causing
+                    // https://github.com/ttencate/papageno/issues/58.
+                    // If we fix this by setting `itemCount` to `quiz.firstUnansweredQuestionIndex + 1`, then
+                    // each `_QuestionScreenState`s gets rebuilt twice for some reason I don't understand
+                    // (shouldn't keys prevent this?).
+                    itemCount: null,
+                    itemBuilder: (BuildContext context, int index) {
+                      if (index > quiz.firstUnansweredQuestionIndex) {
+                        return null;
+                      }
+                      if (index < quiz.questionCount) {
+                        if (index >= quiz.availableQuestions.length) {
+                          return Container(
+                            color: theme.canvasColor,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        } else {
+                          final question = quiz.availableQuestions[index];
+                          return QuestionScreen(
+                            key: ObjectKey(index),
+                            drawer: drawer,
+                            question: question,
+                            onAnswer: (givenAnswer) { _answerQuestion(index, givenAnswer); },
+                            onProceed: () { _showNextQuestion(quiz); },
+                          );
+                        }
+                      } else {
+                        return QuizResult(
+                          quiz: quiz,
+                          drawer: drawer,
+                          onRetry: () { Navigator.of(context).pop(AfterQuizOption.retry); },
+                          onBack: () { Navigator.of(context).pop(AfterQuizOption.stop); },
+                          onAddSpecies: () { Navigator.of(context).pop(AfterQuizOption.addSpecies); },
+                        );
+                      }
+                    },
+                  ),
                 ),
-              ),
+                if (_currentPage < quiz.questionCount) LinearProgressIndicator(
+                  value: quiz.firstUnansweredQuestionIndex / quiz.questionCount,
+                  valueColor: AlwaysStoppedAnimation(theme.primaryColorDark),
+                  backgroundColor: theme.backgroundColor,
+                ),
+              ],
             ),
           );
         },
