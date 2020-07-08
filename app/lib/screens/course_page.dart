@@ -9,6 +9,7 @@ import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/screens/add_species_dialog.dart';
+import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/chain_item_builder.dart';
@@ -270,12 +271,41 @@ class _StarRating extends StatelessWidget {
   }
 }
 
-class _SpeciesDetailsDialog extends StatelessWidget {
+class _SpeciesDetailsDialog extends StatefulWidget {
   final Species species;
   final SpeciesKnowledge knowledge;
   final Settings settings;
 
   const _SpeciesDetailsDialog({Key key, @required this.species, @required this.knowledge, @required this.settings}) : super(key: key);
+
+  @override
+  State<_SpeciesDetailsDialog> createState() => _SpeciesDetailsDialogState();
+}
+
+class _SpeciesDetailsDialogState extends State<_SpeciesDetailsDialog> {
+  Future<String> _confusionSpecies;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final appDb = Provider.of<AppDb>(context);
+    final locale = WidgetsBinding.instance.window.locale;
+    _confusionSpecies = () async {
+      final counts = <int, int>{};
+      for (final speciesId in widget.knowledge?.confusionSpeciesIds ?? <int>[]) {
+        counts.update(speciesId, (c) => c + 1, ifAbsent: () => 1);
+      }
+      counts.remove(widget.species.speciesId);
+      final entries = counts.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+      final speciesEntries = await Future.wait(entries.map((entry) async => MapEntry(await appDb.species(entry.key), entry.value)));
+      final result = speciesEntries
+          .where((MapEntry<Species, int> entry) => entry.key != null)
+          .map((entry) => '${entry.key.commonNameIn(widget.settings.primarySpeciesLanguage.value.resolve(locale)).capitalize()} (${entry.value}×)')
+          .join(', ');
+      return result.isEmpty ? '—' : result;
+    }();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -291,47 +321,56 @@ class _SpeciesDetailsDialog extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+              widget.species.commonNameIn(widget.settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
               softWrap: true,
             ),
           ),
-          if (knowledge != null) _StarRating(starCount: 5, filledHalfStars: knowledge.halfStars, size: 16.0),
+          if (widget.knowledge != null) _StarRating(starCount: 5, filledHalfStars: widget.knowledge.halfStars, size: 16.0),
         ],
       ),
       scrollable: true,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          if (knowledge != null && knowledge.halfStars < SpeciesKnowledge.maxHalfStarCount) Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              strings.starRatingExplanation,
-              style: theme.textTheme.caption,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (widget.knowledge != null && widget.knowledge.halfStars < SpeciesKnowledge.maxHalfStarCount) Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                strings.starRatingExplanation,
+                style: theme.textTheme.caption,
+              ),
             ),
-          ),
-          _KeyValueRow(
-            keyText: strings.languageSettingName(settings.primarySpeciesLanguage.value).capitalize(),
-            value: Text(species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(), softWrap: true),
-          ),
-          if (settings.secondarySpeciesLanguage.value != LanguageSetting.none) _KeyValueRow(
-            keyText: strings.languageSettingName(settings.secondarySpeciesLanguage.value).capitalize(),
-            value: Text(species.commonNameIn(settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(), softWrap: true),
-          ),
-          _KeyValueRow(
-            keyText: strings.scientificName,
-            value: Text(species.scientificName, softWrap: true, style: TextStyle(fontStyle: FontStyle.italic)),
-          ),
-          if (knowledge?.model != null) _KeyValueRow(
-            keyText: strings.learningStats,
-            value: Text(
-                'α = ${knowledge.model.alpha.toStringAsFixed(1)}, '
-                'β = ${knowledge.model.beta.toStringAsFixed(1)}, '
-                't = ${knowledge.model.time.toStringAsFixed(4)}\n'
-                'h = ${knowledge.model.modelToPercentileDecay(percentile: 0.5).toStringAsFixed(4)}, '
-                'Δ = ${knowledge.daysSinceAsked(now).toStringAsFixed(3)}, '
-                'p = ${(knowledge.recallProbability(now) * 100).toStringAsFixed(2)}%'),
-          ),
-        ],
+            _KeyValueRow(
+              keyText: strings.languageSettingName(widget.settings.primarySpeciesLanguage.value).capitalize(),
+              value: Text(widget.species.commonNameIn(widget.settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(), softWrap: true),
+            ),
+            if (widget.settings.secondarySpeciesLanguage.value != LanguageSetting.none) _KeyValueRow(
+              keyText: strings.languageSettingName(widget.settings.secondarySpeciesLanguage.value).capitalize(),
+              value: Text(widget.species.commonNameIn(widget.settings.secondarySpeciesLanguage.value.resolve(locale)).capitalize(), softWrap: true),
+            ),
+            _KeyValueRow(
+              keyText: strings.scientificName,
+              value: Text(widget.species.scientificName, softWrap: true, style: TextStyle(fontStyle: FontStyle.italic)),
+            ),
+            if (widget.knowledge != null) _KeyValueRow(
+              keyText: strings.confusedWith,
+              value: FutureBuilder<String>(
+                future: _confusionSpecies,
+                builder: (context, snapshot) => Text(snapshot.data ?? '…'),
+              ),
+            ),
+            if (widget.knowledge?.model != null) _KeyValueRow(
+              keyText: strings.learningStats,
+              value: Text(
+                  'α = ${widget.knowledge.model.alpha.toStringAsFixed(1)}, '
+                  'β = ${widget.knowledge.model.beta.toStringAsFixed(1)}, '
+                  't = ${widget.knowledge.model.time.toStringAsFixed(4)}\n'
+                  'h = ${widget.knowledge.model.modelToPercentileDecay(percentile: 0.5).toStringAsFixed(4)}, '
+                  'Δ = ${widget.knowledge.daysSinceAsked(now).toStringAsFixed(3)}, '
+                  'p = ${(widget.knowledge.recallProbability(now) * 100).toStringAsFixed(2)}%'),
+            ),
+          ],
+        ),
       ),
       actions: <Widget>[
         FlatButton(
