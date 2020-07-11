@@ -35,6 +35,7 @@ xc:385854,goldlist,
 xc:391705,blacklist,Background species
 xc:400069,blacklist,Not representative
 xc:406339,blacklist,Not representative
+xc:413785,blacklist,Background noises
 xc:432776,blacklist,Background species
 xc:436507,blacklist,Background noises
 xc:444806,blacklist,Not representative
@@ -49,6 +50,7 @@ xc:471820,blacklist,Not representative
 xc:476862,blacklist,Barely audible
 xc:48067,blacklist,Not representative
 xc:481799,blacklist,Trim selects wrong part
+xc:483550,blacklist,Not representative
 xc:488832,blacklist,Too much noise filtering
 xc:505432,blacklist,This is a WAV file! They support those?!
 xc:505631,blacklist,Too noisy
