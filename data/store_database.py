@@ -14,6 +14,7 @@ from images import Image
 from recordings import Recording, SelectedRecording
 from species import Species, SelectedSpecies, LANGUAGE_CODES
 from regions import Region
+from cities import City
 
 
 def _license_url_to_name(url):
@@ -92,6 +93,12 @@ def main(_args, session):
         Column('centroid_lat', Float, nullable=False),
         Column('centroid_lon', Float, nullable=False),
         Column('weight_by_species_id', LargeBinary, nullable=False))
+    out_cities = Table(
+        'cities', metadata,
+        Column('city_id', Integer, primary_key=True, nullable=False),
+        Column('name', String, nullable=False),
+        Column('lat', Float, nullable=False),
+        Column('lon', Float, nullable=False))
     metadata.create_all(out.engine)
 
     selected_species_ids_by_scientific_name = {
@@ -161,4 +168,15 @@ def main(_args, session):
         if any(
             scientific_name in selected_species_ids_by_scientific_name
             for scientific_name in r.species_weight_by_scientific_name)
+    ])
+
+    logging.info('Inserting cities')
+    out.execute(out_cities.insert(), [ # pylint: disable=no-value-for-parameter
+        {
+            'city_id': r.city_id,
+            'name': r.name,
+            'lat': r.lat,
+            'lon': r.lon,
+        }
+        for r in session.query(City)
     ])
