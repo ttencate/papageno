@@ -66,6 +66,12 @@ abstract class Strings {
   String get courses;
   /// Button to start course creation
   String get startCreatingCourseButton;
+  /// Dialog title
+  String get editCourseTitle;
+  /// Text above text input field for course name
+  String get courseNameLabel;
+  /// Placeholder text in empty course name text input
+  String get courseNamePlaceholder;
   /// Text asking to delete a course
   String deleteCourseConfirmation(String courseName);
   /// Title of screen for creating a new course
@@ -308,6 +314,9 @@ abstract class Strings {
       case 'deleteProfileConfirmation': return deleteProfileConfirmation;
       case 'courses': return courses;
       case 'startCreatingCourseButton': return startCreatingCourseButton;
+      case 'editCourseTitle': return editCourseTitle;
+      case 'courseNameLabel': return courseNameLabel;
+      case 'courseNamePlaceholder': return courseNamePlaceholder;
       case 'deleteCourseConfirmation': return deleteCourseConfirmation;
       case 'createCourseTitle': return createCourseTitle;
       case 'createCourseInstructions': return createCourseInstructions;
@@ -459,6 +468,9 @@ class _Strings_en extends Strings {
   @override String deleteProfileConfirmation(String profileName) => <String>['The profile "', profileName, '" will be deleted, along with all its courses and progress. This cannot be undone. Are you sure?'].join();
   @override String get courses => 'Courses';
   @override String get startCreatingCourseButton => 'Start new course';
+  @override String get editCourseTitle => 'Edit course';
+  @override String get courseNameLabel => 'Name';
+  @override String get courseNamePlaceholder => 'For example, the location or purpose of this course';
   @override String deleteCourseConfirmation(String courseName) => <String>['The course "', courseName, '" will be deleted. This cannot be undone. Are you sure?'].join();
   @override String get createCourseTitle => 'Start new course';
   @override String get createCourseInstructions => 'Choose a location. Your course will contain birds from that area, ordered from common to rare.';
@@ -589,6 +601,9 @@ class _Strings_nl extends _Strings_en {
   @override String deleteProfileConfirmation(String profileName) => <String>['Het profiel "', profileName, '" zal worden verwijderd, samen met al zijn cursussen en voortgang. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
   @override String get courses => 'Cursussen';
   @override String get startCreatingCourseButton => 'Nieuwe cursus beginnen';
+  @override String get editCourseTitle => 'Cursus bewerken';
+  @override String get courseNameLabel => 'Naam';
+  @override String get courseNamePlaceholder => 'Bijvoorbeeld de locatie of het doel van deze cursus';
   @override String deleteCourseConfirmation(String courseName) => <String>['De cursus "', courseName, '" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
   @override String get createCourseTitle => 'Nieuwe cursus beginnen';
   @override String get createCourseInstructions => 'Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend.';

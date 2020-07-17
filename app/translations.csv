@@ -23,6 +23,9 @@ deleteProfileButton,Text on button to delete profile,Delete profile,Profiel verw
 deleteProfileConfirmation,Text asking to delete a profile,"The profile ""${profileName}"" will be deleted, along with all its courses and progress. This cannot be undone. Are you sure?","Het profiel ""${profileName}"" zal worden verwijderd, samen met al zijn cursussen en voortgang. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
 courses,Title of screen listing all courses in a profile,Courses,Cursussen
 startCreatingCourseButton,Button to start course creation,Start new course,Nieuwe cursus beginnen
+editCourseTitle,Dialog title,Edit course,Cursus bewerken
+courseNameLabel,Text above text input field for course name,Name,Naam
+courseNamePlaceholder,Placeholder text in empty course name text input,"For example, the location or purpose of this course","Bijvoorbeeld de locatie of het doel van deze cursus"
 deleteCourseConfirmation,Text asking to delete a course,"The course ""${courseName}"" will be deleted. This cannot be undone. Are you sure?","De cursus ""${courseName}"" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
 createCourseTitle,Title of screen for creating a new course,Start new course,Nieuwe cursus beginnen
 createCourseInstructions,Instructions on the screen for creating a new course,"Choose a location. Your course will contain birds from that area, ordered from common to rare.","Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend."

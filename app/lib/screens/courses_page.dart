@@ -74,8 +74,8 @@ class _CoursesPageState extends State<CoursesPage> {
                       subtitle: Text(strings.courseDetails(course.unlockedSpecies.length, course.localSpecies.length)),
                       onTap: () { _openCourse(course); },
                       trailing: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () { _maybeDeleteCourse(course); },
+                        icon: Icon(Icons.edit),
+                        onPressed: () { _editCourse(course); },
                       ),
                     ),
                   ]).toList(),
@@ -103,6 +103,22 @@ class _CoursesPageState extends State<CoursesPage> {
     }
   }
 
+  Future<void> _editCourse(Course course) async {
+    final result = await showDialog<_CourseDialogResult>(
+      context: context,
+      builder: (BuildContext context) => _CourseDialog(course: course),
+    );
+    if (result == null) {
+      return;
+    }
+    if (result.name != null) {
+      await _userDb.renameCourse(course.courseId, result.name);
+      await _loadCourses();
+    } else if (result.delete) {
+      await _maybeDeleteCourse(course);
+    }
+  }
+
   void _openCourse(Course course) {
     Navigator.of(context).push(CourseRoute(widget.profile, course));
   }
@@ -119,5 +135,84 @@ class _CoursesPageState extends State<CoursesPage> {
       await _userDb.deleteCourse(course);
       await _loadCourses();
     }
+  }
+}
+
+@immutable
+class _CourseDialogResult {
+  final String name;
+  final bool delete;
+
+  _CourseDialogResult({this.name, this.delete});
+}
+
+class _CourseDialog extends StatefulWidget {
+  final Course course;
+
+  const _CourseDialog({Key key, this.course}) : super(key: key);
+
+  @override
+  State<_CourseDialog> createState() => _CourseDialogState();
+}
+
+class _CourseDialogState extends State<_CourseDialog> {
+  TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final strings = Strings.of(context);
+    if (_controller.text.isEmpty) {
+      _controller.text = strings.courseNameOrLocation(widget.course);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = Strings.of(context);
+    return AlertDialog(
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(strings.editCourseTitle),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () => Navigator.of(context).pop(_CourseDialogResult(delete: true)),
+            icon: Icon(Icons.delete),
+          ),
+        ],
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(
+          labelText: strings.courseNameLabel.toUpperCase(),
+          hintText: strings.courseNamePlaceholder,
+        ),
+      ),
+      actions: <Widget>[
+        FlatButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text(strings.cancel.toUpperCase()),
+        ),
+        FlatButton(
+          onPressed: () => Navigator.of(context).pop(_CourseDialogResult(name: _controller.text)),
+          child: Text(strings.ok.toUpperCase()),
+        ),
+      ],
+    );
   }
 }

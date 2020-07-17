@@ -155,6 +155,15 @@ class UserDb {
     return await _courseFromMap(records.single);
   }
 
+  Future<void> renameCourse(int courseId, String name) async {
+    await _db.update(
+      'courses',
+      <String, dynamic>{'name': name},
+      where: 'course_id = ?',
+      whereArgs: <dynamic>[courseId]
+    );
+  }
+
   Future<void> updateCourse(Course course) async {
     await _db.update(
         'courses',

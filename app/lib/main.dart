@@ -74,7 +74,7 @@ class AppState extends State<App> {
       final packageInfo = await PackageInfo.fromPlatform();
       setState(() { _packageInfo = packageInfo; });
 
-      // All these are I/O-heavy, so it does not seem necessary to try and do them in parallel.
+      // All these are I/O-heavy, so it does not seem useful to try and do them in parallel.
       final appDb = await AppDb.open();
       setState(() { _appDb = appDb; });
       final userDb = await UserDb.open(appDb: _appDb);

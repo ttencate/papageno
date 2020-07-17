@@ -132,7 +132,8 @@ class _ProfilesPageState extends State<ProfilesPage> {
     );
     if (result == null) {
       return;
-    }if (result.name != null) {
+    }
+    if (result.name != null) {
       await _userDb.renameProfile(profile, result.name);
       await _loadProfiles();
     } else if (result.delete) {
