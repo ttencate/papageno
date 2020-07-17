@@ -12,9 +12,8 @@ extension StringsExtensions on Strings {
   String profileLastUsedDate(Profile profile) =>
       profile.lastUsed == null ? profileNeverUsed : humanizedDateTime(profile.lastUsed);
 
-  String courseName(Course course) {
-    // When we have an actual name stored in the course, return that instead.
-    return courseTitle(latLon(course.location));
+  String courseNameOrLocation(Course course) {
+    return course.name ?? courseName(latLon(course.location));
   }
 
   String languageSettingName(LanguageSetting languageSetting) {

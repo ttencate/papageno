@@ -23,16 +23,16 @@ deleteProfileButton,Text on button to delete profile,Delete profile,Profiel verw
 deleteProfileConfirmation,Text asking to delete a profile,"The profile ""${profileName}"" will be deleted, along with all its courses and progress. This cannot be undone. Are you sure?","Het profiel ""${profileName}"" zal worden verwijderd, samen met al zijn cursussen en voortgang. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
 courses,Title of screen listing all courses in a profile,Courses,Cursussen
 startCreatingCourseButton,Button to start course creation,Start new course,Nieuwe cursus beginnen
-deleteCourseConfirmation,Text asking to delete a course,"The course ""${courseTitle}"" will be deleted. This cannot be undone. Are you sure?","De cursus ""${courseTitle}"" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
+deleteCourseConfirmation,Text asking to delete a course,"The course ""${courseName}"" will be deleted. This cannot be undone. Are you sure?","De cursus ""${courseName}"" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?"
 createCourseTitle,Title of screen for creating a new course,Start new course,Nieuwe cursus beginnen
 createCourseInstructions,Instructions on the screen for creating a new course,"Choose a location. Your course will contain birds from that area, ordered from common to rare.","Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend."
 createCourseTapMap,Instructions on the screen for creating a new course,Or tap the map to select another location.,Of tik op de kaart om een andere locatie te kiezen.
 useCurrentLocationButton,Text for button to use current GPS location for creating a course,Use current location,Gebruik huidige locatie
 courseSearchingSpecies,Shown on the course creation screen while bird species are being looked up,Searching for bird species…,Vogelsoorten worden opgezocht…
-courseSpecies,Shown on the course creation screen above a list of bird names,Common birds in this area:,Veel voorkomende vogels in deze regio:
+courseSpecies,Shown on the course creation screen above a list of bird names,Common birds near ${cityName}:,Veel voorkomende vogels rondom ${cityName}:
 createCourseButtonDisabled,Button text while button is disabled,Start course,Begin cursus
 createCourseButtonEnabled,Button text when enough species were found,Start course (#{speciesCount} birds),Begin cursus (#{speciesCount} vogels)
-courseTitle,"Title of a course, containing GPS location; keep short",Birds near ${location},Vogels rondom ${location}
+courseName,"Title of a course, containing potentially long place name; keep short",Birds near ${cityName},Vogels rondom ${cityName}
 courseDetails,Detail line about one course in a listing,"#{unlockedSpeciesCount} birds in course, out of #{totalSpeciesCount}","#{unlockedSpeciesCount} vogels in cursus, van de #{totalSpeciesCount}"
 unlockedSpeciesHeading,Heading on course screen above species currently in this course,Birds in this course (#{speciesCount}),Vogels in deze cursus (#{speciesCount})
 lockedSpeciesHeading,Heading on course screen above species that can still be added to this course,Other birds in this region (#{speciesCount}),Andere vogels in deze omgeving (#{speciesCount})

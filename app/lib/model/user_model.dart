@@ -49,10 +49,11 @@ class Course {
   int courseId;
   final int profileId;
   final LatLon location;
+  final String name;
   final List<Species> localSpecies;
   final List<Species> unlockedSpecies;
 
-  Course({this.courseId, this.profileId, this.location, this.localSpecies, this.unlockedSpecies});
+  Course({this.courseId, this.profileId, this.location, this.name, this.localSpecies, this.unlockedSpecies});
 }
 
 enum AfterQuizOption {

@@ -96,4 +96,22 @@ class AppDb {
     }
     return Region.fromMap(records.single);
   }
+
+  Future<String> nearestCityNameTo(LatLon pos) async {
+    final records = await _db.rawQuery('select city_id, lat, lon from cities order by city_id');
+    if (records.isEmpty) {
+      throw NotFoundException(pos); // Should not happen.
+    }
+    final nearest = records.reduce((a, b) {
+      final aLatLon = LatLon(a['lat'] as double, a['lon'] as double);
+      final bLatLon = LatLon(b['lat'] as double, b['lon'] as double);
+      if (aLatLon.distanceInKmTo(pos) < bLatLon.distanceInKmTo(pos)) {
+        return a;
+      } else {
+        return b;
+      }
+    });
+    final nameRecords = await _db.rawQuery('select name from cities where city_id = ?', <dynamic>[nearest['city_id']]);
+    return nameRecords.single['name'] as String;
+  }
 }

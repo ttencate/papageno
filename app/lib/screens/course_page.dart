@@ -62,7 +62,7 @@ class _CoursePageState extends State<CoursePage> {
           final lockedSpecies = course.localSpecies.where((s) => !unlockedSpecies.contains(s)).toList();
           return Scaffold(
             appBar: AppBar(
-              title: Text(strings.courseName(course)),
+              title: Text(strings.courseNameOrLocation(course)),
             ),
             drawer: MenuDrawer(profile: widget.profile, course: widget.course),
             body: StreamBuilder<Knowledge>(

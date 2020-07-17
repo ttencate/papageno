@@ -220,6 +220,7 @@ class UserDb {
     'profile_id': course.profileId,
     'location_lat': course.location.lat,
     'location_lon': course.location.lon,
+    'name': course.name,
     'lessons': json.encode(<String, dynamic>{
       'unlocked_species': course.unlockedSpecies.map((s) => s.speciesId).toList(),
       'local_species': course.localSpecies.map((s) => s.speciesId).toList(),
@@ -244,6 +245,7 @@ class UserDb {
       courseId: map['course_id'] as int,
       profileId: map['profile_id'] as int,
       location: LatLon(map['location_lat'] as double, map['location_lon'] as double),
+      name: map['name'] as String,
       unlockedSpecies: unlockedSpecies,
       localSpecies: localSpecies,
     );

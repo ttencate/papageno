@@ -5,9 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
-import 'package:location/location.dart';
 import 'package:papageno/common/strings.g.dart';
-import 'package:papageno/controller/controller.dart';
+import 'package:papageno/controller/create_course_controller.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
@@ -27,27 +26,44 @@ class CreateCoursePage extends StatefulWidget {
 }
 
 class _CreateCoursePageState extends State<CreateCoursePage> {
+  CreateCourseController _controller;
 
   static const _initialRadiusKm = 10000.0 / 90.0 * sqrt1_2;
 
-  AppDb _appDb;
-
-  bool _searchingLocation = false;
   MapController _mapController;
-  LatLng _selectedLocation;
-  RankedSpecies _rankedSpecies;
-  Course _course;
 
   @override
   void initState() {
     super.initState();
+
+    final appDb = Provider.of<AppDb>(context, listen: false);
+    final userDb = Provider.of<UserDb>(context, listen: false);
+
+    _controller = CreateCourseController(appDb, userDb, widget.profile);
     _mapController = MapController();
+
+    _controller.stateUpdates
+        .where((state) => state.selectedLocation != null)
+        .distinct((a, b) => a.selectedLocation == b.selectedLocation && a.rankedSpecies == b.rankedSpecies)
+        .listen((state) {
+          if (state.rankedSpecies == null) {
+            _panTo(state.selectedLocation);
+          } else {
+            _zoomTo(state.selectedLocation, 1.5 * state.rankedSpecies.usedRadiusKm);
+          }
+        });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _appDb = Provider.of<AppDb>(context);
+    _controller.courseNameFunc = Strings.of(context).courseName;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -61,132 +77,138 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
         title: Text(strings.createCourseTitle),
       ),
       drawer: MenuDrawer(profile: widget.profile),
-      body: Column(
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              children: <Widget>[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(strings.createCourseInstructions),
-                ),
-                SizedBox(height: 8.0),
-                RaisedButton(
-                  onPressed: _searchingLocation ? null : _useCurrentLocation,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Text(strings.useCurrentLocationButton.toUpperCase()),
-                      if (_searchingLocation) CircularProgressIndicator(),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 8.0),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(strings.createCourseTapMap),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                _buildMap(),
-                if (_selectedLocation != null) Positioned(
-                  top: 0.0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(8.0),
-                        bottomRight: Radius.circular(8.0),
-                      ),
+      body: StreamBuilder<CreateCourseState>(
+        stream: _controller.stateUpdates,
+        initialData: CreateCourseState(),
+        builder: (context, snapshot) {
+          final state = snapshot.data;
+          return Column(
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(strings.createCourseInstructions),
                     ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
-                      child: Text(
-                        // TODO convert lat/lon to string in a locale-dependent way
-                        _latLngToLatLon(_selectedLocation).toString(),
-                        style: TextStyle(
-                          color: Colors.black,
-                          shadows: <Shadow>[
-                            Shadow(color: Colors.white, blurRadius: 2.0),
-                            Shadow(color: Colors.white, blurRadius: 4.0),
-                          ]
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // This panel showing common species in put in the Stack on top of the map
-                // (rather than in the containing Column) because flutter_map has problems
-                // with resizing: it makes the CircleMarker jump around.
-                if (_selectedLocation != null) Positioned(
-                  left: 0.0,
-                  right: 0.0,
-                  bottom: 0.0,
-                  child: Container(
-                    color: Color.lerp(Colors.white, theme.primaryColor, 0.2).withOpacity(0.8),
-                    child: Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                    SizedBox(height: 8.0),
+                    RaisedButton(
+                      onPressed: state.searchingLocation ? null : _controller.useCurrentLocation,
+                      child: Stack(
+                        alignment: Alignment.center,
                         children: <Widget>[
-                          if (_rankedSpecies == null) Text(
-                            strings.courseSearchingSpecies,
-                          ),
-                          if (_rankedSpecies != null) Text(
-                            strings.courseSpecies,
-                          ),
-                          if (_rankedSpecies != null) Text(
-                            // 20 species should be enough to always hit the ellipsis, and if not, no big deal.
-                            _rankedSpecies == null ? '' : _rankedSpecies.speciesList
-                                .take(20)
-                                .map((species) => species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)))
-                                .join(', '),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                            style: TextStyle(fontWeight: FontWeight.w300),
-                          ),
+                          Text(strings.useCurrentLocationButton.toUpperCase()),
+                          if (state.searchingLocation) CircularProgressIndicator(),
                         ],
                       ),
                     ),
+                    SizedBox(height: 8.0),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(strings.createCourseTapMap),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    _buildMap(state.selectedLocation, state.rankedSpecies),
+                    if (state.selectedLocation != null) Positioned(
+                      top: 0.0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(8.0),
+                            bottomRight: Radius.circular(8.0),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+                          child: Text(
+                            // TODO convert lat/lon to string in a locale-dependent way
+                            state.selectedLocation.toString(),
+                            style: TextStyle(
+                              color: Colors.black,
+                              shadows: <Shadow>[
+                                Shadow(color: Colors.white, blurRadius: 2.0),
+                                Shadow(color: Colors.white, blurRadius: 4.0),
+                              ]
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // This panel showing common species in put in the Stack on top of the map
+                    // (rather than in the containing Column) because flutter_map has problems
+                    // with resizing: it makes the CircleMarker jump around.
+                    if (state.selectedLocation != null) Positioned(
+                      left: 0.0,
+                      right: 0.0,
+                      bottom: 0.0,
+                      child: Container(
+                        color: Color.lerp(Colors.white, theme.primaryColor, 0.2).withOpacity(0.8),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              if (state.cityName != null) Text(
+                                strings.courseSpecies(state.cityName),
+                              ),
+                              Text(
+                                state.rankedSpecies == null ?
+                                  strings.courseSearchingSpecies :
+                                  // 20 species should be enough to always hit the ellipsis, and if not, no big deal.
+                                  state.rankedSpecies.speciesList
+                                      .take(20)
+                                      .map((species) => species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)))
+                                      .join(', '),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                                style: TextStyle(fontWeight: FontWeight.w300),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(16.0),
+                child: RaisedButton(
+                  onPressed: state.course == null ?
+                  null :
+                  () { _createCourse(state.course); },
+                  child: Text(
+                      state.rankedSpecies == null ?
+                      strings.createCourseButtonDisabled.toUpperCase() :
+                      strings.createCourseButtonEnabled(state.rankedSpecies.length).toUpperCase()
                   ),
                 ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: RaisedButton(
-              onPressed: _course == null ?
-              null :
-              _createCourse,
-              child: Text(
-                  _rankedSpecies == null ?
-                  strings.createCourseButtonDisabled.toUpperCase() :
-                  strings.createCourseButtonEnabled(_rankedSpecies.length).toUpperCase()
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        }
       ),
     );
   }
 
-  Widget _buildMap() {
+  Widget _buildMap(LatLon selectedLocation, RankedSpecies rankedSpecies) {
     final theme = Theme.of(context);
     final circleColor = theme.primaryColor;
-    final circleRadiusKm = _rankedSpecies?.usedRadiusKm ?? _initialRadiusKm;
+    final circleRadiusKm = rankedSpecies?.usedRadiusKm ?? _initialRadiusKm;
     return Stack(
       children: <Widget>[
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
-            center: _selectedLocation ?? LatLng(0.0, 0.0),
+            center: _latLonToLatLng(selectedLocation ?? LatLon(0.0, 0.0)),
             zoom: 1.0,
             minZoom: 1.0,
             maxZoom: 7.0,
@@ -202,20 +224,20 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
               subdomains: ['a', 'b', 'c'],
               tileProvider: NonCachingNetworkTileProvider(),
             ),
-            if (_rankedSpecies != null) CircleLayerOptions(
+            if (rankedSpecies != null) CircleLayerOptions(
               circles: [
                 for (var f = 1.0; f > 0.0; f -= 0.25) CircleMarker(
-                  point: _latLonToLatLng(_rankedSpecies.location),
+                  point: _latLonToLatLng(rankedSpecies.location),
                   color: circleColor.withOpacity(0.25),
                   radius: f * circleRadiusKm * 1000.0,
                   useRadiusInMeter: true,
                 )
               ],
             ),
-            if (_selectedLocation != null) CircleLayerOptions(
+            if (selectedLocation != null) CircleLayerOptions(
               circles: [
                 CircleMarker(
-                  point: _selectedLocation,
+                  point: _latLonToLatLng(selectedLocation),
                   color: circleColor.withOpacity(0.75),
                   borderColor: Colors.white.withOpacity(0.75),
                   borderStrokeWidth: 1.0,
@@ -244,56 +266,18 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     );
   }
 
-  Future<void> _useCurrentLocation() async {
-    if (_searchingLocation) {
-      return;
-    }
-    setState(() { _searchingLocation = true; });
-    try {
-      final location = Location();
-      var serviceEnabled = await location.serviceEnabled();
-      if (!serviceEnabled) {
-        serviceEnabled = await location.requestService();
-        if (!serviceEnabled) {
-          return;
-        }
-      }
-      await location.changeSettings(accuracy: LocationAccuracy.low);
-      var permissionGranted = await location.hasPermission();
-      if (permissionGranted == PermissionStatus.denied) {
-        permissionGranted = await location.requestPermission();
-        if (permissionGranted != PermissionStatus.granted) {
-          return;
-        }
-      }
-      final locationData = await location.getLocation();
-      await _selectLocation(LatLng(locationData.latitude, locationData.longitude));
-    } finally {
-      setState(() { _searchingLocation = false; });
-    }
-  }
-
-  Future<void> _onMapTap(LatLng latLng) async {
-    await _selectLocation(latLng);
-  }
-
-  Future<void> _selectLocation(LatLng latLng) async {
-    setState(() {
-      _selectedLocation = latLng;
-      _rankedSpecies = null;
-      _course = null;
-    });
-
+  void _onMapTap(LatLng latLng) {
     final location = _latLngToLatLon(latLng);
-    final rankedSpecies = await rankSpecies(_appDb, location);
-    setState(() { _rankedSpecies = rankedSpecies; });
-    _zoomTo(latLng, 1.5 * _rankedSpecies.usedRadiusKm);
-
-    final course = await createCourse(widget.profile.profileId, location, rankedSpecies);
-    setState(() { _course = course; });
+    _controller.selectLocation(location);
   }
 
-  void _zoomTo(LatLng latLng, double radiusKm) {
+  void _panTo(LatLon location) {
+    final latLng = _latLonToLatLng(location);
+    _mapController.move(latLng, _mapController.zoom);
+  }
+
+  void _zoomTo(LatLon location, double radiusKm) {
+    final latLng = _latLonToLatLng(location);
     final radiusDegrees = radiusKm / 10000.0 * 90.0;
     _mapController.fitBounds(LatLngBounds.fromPoints(<LatLng>[
       _safeLatLng(latLng.latitude + radiusDegrees, latLng.longitude),
@@ -303,28 +287,27 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
     ]));
   }
 
-  static LatLng _safeLatLng(double lat, double lon) {
-    // We clamp, rather than wrap, because the map isn't wrapped either and we
-    // don't want to end up spanning the entire map.
-    lat = max(-90, min(90, lat));
-    lon = max(-180, min(180, lon));
-    return LatLng(lat, lon);
+  Future<void> _createCourse(Course course) async {
+    assert(course != null);
+    await _controller.saveCourse();
+    Navigator.of(context).pop(course);
   }
+}
 
-  static LatLon _latLngToLatLon(LatLng latLng) {
-    return LatLon(latLng.latitude, latLng.longitude);
-  }
+LatLng _safeLatLng(double lat, double lon) {
+  // We clamp, rather than wrap, because the map isn't wrapped either and we
+  // don't want to end up spanning the entire map.
+  lat = max(-90, min(90, lat));
+  lon = max(-180, min(180, lon));
+  return LatLng(lat, lon);
+}
 
-  static LatLng _latLonToLatLng(LatLon latLon) {
-    return LatLng(latLon.lat, latLon.lon);
-  }
+LatLon _latLngToLatLon(LatLng latLng) {
+  return LatLon(latLng.latitude, latLng.longitude);
+}
 
-  Future<void> _createCourse() async {
-    assert(_course != null);
-    final userDb = Provider.of<UserDb>(context, listen: false);
-    await userDb.insertCourse(_course);
-    Navigator.of(context).pop(_course);
-  }
+LatLng _latLonToLatLng(LatLon latLon) {
+  return LatLng(latLon.lat, latLon.lon);
 }
 
 // TODO deduplicate with similar code from quiz_page.dart (something like LinkedTextWidget)

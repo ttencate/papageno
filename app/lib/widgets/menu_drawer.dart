@@ -31,7 +31,7 @@ class MenuDrawer extends StatelessWidget {
           ),
           if (course != null) ListTile(
             title: Text(strings.switchCourse),
-            subtitle: course == null ? null : Text(strings.courseName(course)),
+            subtitle: course == null ? null : Text(strings.courseNameOrLocation(course)),
             onTap: () { _switchCourse(context); },
           ),
           Divider(),

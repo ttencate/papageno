@@ -67,7 +67,7 @@ abstract class Strings {
   /// Button to start course creation
   String get startCreatingCourseButton;
   /// Text asking to delete a course
-  String deleteCourseConfirmation(String courseTitle);
+  String deleteCourseConfirmation(String courseName);
   /// Title of screen for creating a new course
   String get createCourseTitle;
   /// Instructions on the screen for creating a new course
@@ -79,13 +79,13 @@ abstract class Strings {
   /// Shown on the course creation screen while bird species are being looked up
   String get courseSearchingSpecies;
   /// Shown on the course creation screen above a list of bird names
-  String get courseSpecies;
+  String courseSpecies(String cityName);
   /// Button text while button is disabled
   String get createCourseButtonDisabled;
   /// Button text when enough species were found
   String createCourseButtonEnabled(int speciesCount);
-  /// Title of a course, containing GPS location; keep short
-  String courseTitle(String location);
+  /// Title of a course, containing potentially long place name; keep short
+  String courseName(String cityName);
   /// Detail line about one course in a listing
   String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount);
   /// Heading on course screen above species currently in this course
@@ -317,7 +317,7 @@ abstract class Strings {
       case 'courseSpecies': return courseSpecies;
       case 'createCourseButtonDisabled': return createCourseButtonDisabled;
       case 'createCourseButtonEnabled': return createCourseButtonEnabled;
-      case 'courseTitle': return courseTitle;
+      case 'courseName': return courseName;
       case 'courseDetails': return courseDetails;
       case 'unlockedSpeciesHeading': return unlockedSpeciesHeading;
       case 'lockedSpeciesHeading': return lockedSpeciesHeading;
@@ -459,16 +459,16 @@ class _Strings_en extends Strings {
   @override String deleteProfileConfirmation(String profileName) => <String>['The profile "', profileName, '" will be deleted, along with all its courses and progress. This cannot be undone. Are you sure?'].join();
   @override String get courses => 'Courses';
   @override String get startCreatingCourseButton => 'Start new course';
-  @override String deleteCourseConfirmation(String courseTitle) => <String>['The course "', courseTitle, '" will be deleted. This cannot be undone. Are you sure?'].join();
+  @override String deleteCourseConfirmation(String courseName) => <String>['The course "', courseName, '" will be deleted. This cannot be undone. Are you sure?'].join();
   @override String get createCourseTitle => 'Start new course';
   @override String get createCourseInstructions => 'Choose a location. Your course will contain birds from that area, ordered from common to rare.';
   @override String get createCourseTapMap => 'Or tap the map to select another location.';
   @override String get useCurrentLocationButton => 'Use current location';
   @override String get courseSearchingSpecies => 'Searching for bird species…';
-  @override String get courseSpecies => 'Common birds in this area:';
+  @override String courseSpecies(String cityName) => <String>['Common birds near ', cityName, ':'].join();
   @override String get createCourseButtonDisabled => 'Start course';
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Start course (', speciesCount.toString(), ' birds)'].join();
-  @override String courseTitle(String location) => <String>['Birds near ', location].join();
+  @override String courseName(String cityName) => <String>['Birds near ', cityName].join();
   @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' birds in course, out of ', totalSpeciesCount.toString()].join();
   @override String unlockedSpeciesHeading(int speciesCount) => <String>['Birds in this course (', speciesCount.toString(), ')'].join();
   @override String lockedSpeciesHeading(int speciesCount) => <String>['Other birds in this region (', speciesCount.toString(), ')'].join();
@@ -589,16 +589,16 @@ class _Strings_nl extends _Strings_en {
   @override String deleteProfileConfirmation(String profileName) => <String>['Het profiel "', profileName, '" zal worden verwijderd, samen met al zijn cursussen en voortgang. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
   @override String get courses => 'Cursussen';
   @override String get startCreatingCourseButton => 'Nieuwe cursus beginnen';
-  @override String deleteCourseConfirmation(String courseTitle) => <String>['De cursus "', courseTitle, '" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
+  @override String deleteCourseConfirmation(String courseName) => <String>['De cursus "', courseName, '" zal worden verwijderd. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?'].join();
   @override String get createCourseTitle => 'Nieuwe cursus beginnen';
   @override String get createCourseInstructions => 'Kies een locatie. De cursus bevat vogels uit die regio, op volgorde van meer naar minder voorkomend.';
   @override String get createCourseTapMap => 'Of tik op de kaart om een andere locatie te kiezen.';
   @override String get useCurrentLocationButton => 'Gebruik huidige locatie';
   @override String get courseSearchingSpecies => 'Vogelsoorten worden opgezocht…';
-  @override String get courseSpecies => 'Veel voorkomende vogels in deze regio:';
+  @override String courseSpecies(String cityName) => <String>['Veel voorkomende vogels rondom ', cityName, ':'].join();
   @override String get createCourseButtonDisabled => 'Begin cursus';
   @override String createCourseButtonEnabled(int speciesCount) => <String>['Begin cursus (', speciesCount.toString(), ' vogels)'].join();
-  @override String courseTitle(String location) => <String>['Vogels rondom ', location].join();
+  @override String courseName(String cityName) => <String>['Vogels rondom ', cityName].join();
   @override String courseDetails(int unlockedSpeciesCount, int totalSpeciesCount) => <String>[unlockedSpeciesCount.toString(), ' vogels in cursus, van de ', totalSpeciesCount.toString()].join();
   @override String unlockedSpeciesHeading(int speciesCount) => <String>['Vogels in deze cursus (', speciesCount.toString(), ')'].join();
   @override String lockedSpeciesHeading(int speciesCount) => <String>['Andere vogels in deze omgeving (', speciesCount.toString(), ')'].join();

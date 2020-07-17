@@ -71,4 +71,9 @@ class MockAppDb implements AppDb {
   @override
   Future<Region> region(int regionId) async => _regions
       .firstWhere((r) => r.regionId == regionId, orElse: () => null);
+
+  @override
+  Future<String> nearestCityNameTo(LatLon pos) {
+    throw UnimplementedError();
+  }
 }

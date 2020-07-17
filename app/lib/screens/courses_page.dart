@@ -70,7 +70,7 @@ class _CoursesPageState extends State<CoursesPage> {
                 ListView(
                   children: ListTile.divideTiles(context: context, tiles: <Widget>[
                     for (final course in snapshot.data) ListTile(
-                      title: Text(strings.courseName(course)),
+                      title: Text(strings.courseNameOrLocation(course)),
                       subtitle: Text(strings.courseDetails(course.unlockedSpecies.length, course.localSpecies.length)),
                       onTap: () { _openCourse(course); },
                       trailing: IconButton(
@@ -112,7 +112,7 @@ class _CoursesPageState extends State<CoursesPage> {
     final reallyDelete = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => ConfirmationDialog(
-        content: Text(strings.deleteCourseConfirmation(strings.courseName(course))),
+        content: Text(strings.deleteCourseConfirmation(strings.courseNameOrLocation(course))),
       ),
     ) ?? false;
     if (reallyDelete) {
