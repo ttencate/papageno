@@ -39,6 +39,7 @@ _STAGES = [
     'analyze_recordings',
     'select_recordings',
     'trim_recordings',
+    'select_cities',
     'store_recordings',
     'store_images',
     'store_database',

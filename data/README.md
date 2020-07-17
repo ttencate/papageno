@@ -510,6 +510,56 @@ around 80 kbps. There is some audible loss in quality when listening through
 headphones, but sound quality remains acceptable, and this relatively low
 quality lets us include more recordings and species.
 
+### `select_cities`
+
+To display the name of a course, like “Birds near London”, we need to find the
+name of a well-known place near a given point. For this, we use a list of place
+names and locations embedded in the app. (Online reverse geocoding services
+either required some kind of subscription, or didn't allow usage from an app.)
+This stage selects which places (hereafter strangely called “cities”) to
+include.
+
+The input is the `cities500.zip` file from [GeoNames](https://geonames.org),
+which contains all cities in the world with a population above 500 people. It
+contains about 200,000 records, which would end up around 9 MB in the app;
+somewhat too big to be practical, so we need to be more selective.
+
+Population is a good proxy for well-knownness, so it's tempting to simply
+select only those cities with a population greater than some threshold.
+However, this ends up oversampling densely populated areas like the
+Netherlands, while leaving sparsely populated areas almost devoid of cities. A
+user in rural Norway might then get “Birds near Oslo” even though they're
+nowhere near Oslo.
+
+After some experimentation, I found a better way to select cities. For each
+city, we add up the total population in the local area (within a radius of
+about 60 km). Then we compute what percentage of that population lives in the
+city under consideration. This gives an “importance weight” for the city. A
+populous city in a populous area will not score highly, but a tiny town in the
+middle of nowhere might even get weighted 100%. Finally, we simply select the
+25,000 cities with the greates importance weight.
+
+In actuality, it's a bit more complicated than just adding up populations of
+nearby cities: they are also weighted by distance according to a Gaussian
+function. This helps to make the result less dependent on small changes to the
+search radius.
+
+To show how well this algorithm works, let's compare it to the full
+`cities5000.zip` dataset, which contains all cities with a population above
+5,000. There are about 50,000 of these, so twice as much as in our selection.
+Our selection is indicated with green circles, the `cities5000.zip` with brown
+crosses:
+
+![Selected cities distribution in Western Europe](README.images/selected_cities.png)
+
+As you can see, the sampling is much more uniform; even densely populated areas
+only have a few cities selected, and they tend to be the biggest ones. But in
+rural Norway and the west coast of Ireland, where barely any cities above 5,000
+population exist, the algorith still provides decent coverage. Sometimes these
+selected cities are places like the Swedish hamlet of Björkvik (pop. 511) (not
+[this one](https://en.wikipedia.org/wiki/Bj%C3%B6rkvik)), but if that's the
+biggest (or only) place around, that's exactly what we want.
+
 ### `store_recordings`
 
 This stage simply copies the trimmed recordings into the app's assets
