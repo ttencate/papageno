@@ -16,6 +16,8 @@ class AppDb {
 
   final Database _db;
 
+  final _speciesCache = <int, Species>{};
+
   AppDb._fromDatabase(this._db);
 
   static Future<AppDb> open() async {
@@ -36,9 +38,12 @@ class AppDb {
     return AppDb._fromDatabase(db);
   }
 
-  Future<List<int>> allSpeciesIds() async {
-    final records = await _db.rawQuery('select species_id from species order by species_id');
-    return records.map((r) => r['species_id'] as int).toList();
+  Future<void> populateCache() async {
+    final records = await _db.rawQuery('select * from species');
+    for (final record in records) {
+      final species = Species.fromMap(record);
+      _speciesCache[species.speciesId] = species;
+    }
   }
 
   Future<Species> species(int speciesId) async {
@@ -50,11 +55,11 @@ class AppDb {
   }
 
   Future<Species> speciesOrNull(int speciesId) async {
-    final records = await _db.rawQuery('select * from species where species_id = ?', <dynamic>[speciesId]);
-    if (records.isEmpty) {
-      return null;
+    if (!_speciesCache.containsKey(speciesId)) {
+      final records = await _db.rawQuery('select * from species where species_id = ?', <dynamic>[speciesId]);
+      _speciesCache[speciesId] = records.isEmpty ? null : Species.fromMap(records.single);
     }
-    return Species.fromMap(records.single);
+    return _speciesCache[speciesId];
   }
 
   Future<List<Recording>> allRecordings() async {

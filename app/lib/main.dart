@@ -76,6 +76,7 @@ class AppState extends State<App> {
 
       // All these are I/O-heavy, so it does not seem useful to try and do them in parallel.
       final appDb = await AppDb.open();
+      await appDb.populateCache();
       setState(() { _appDb = appDb; });
       final userDb = await UserDb.open(appDb: _appDb);
       setState(() { _userDb = userDb; });

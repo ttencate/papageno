@@ -38,8 +38,7 @@ class MockAppDb implements AppDb {
   static final _regions = <Region>{}.toBuiltList();
 
   @override
-  Future<List<int>> allSpeciesIds() async => _species
-      .map((s) => s.speciesId).toList(growable: false);
+  Future<void> populateCache() async {}
 
   @override
   Future<Species> species(int speciesId) async => _species
