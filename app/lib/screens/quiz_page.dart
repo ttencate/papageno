@@ -349,6 +349,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
             for (var widget in ListTile.divideTiles(
               context: context,
               tiles: _question.choices.map((choice) => _AnswerTile(
+                key: ObjectKey(choice),
                 question: _question,
                 species: choice,
                 onTap: () { _choose(choice); }
@@ -409,28 +410,28 @@ class _AnswerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Provider.of<Settings>(context);
     final locale = WidgetsBinding.instance.window.locale;
-    Color color;
-    AnswerIcon icon;
-    if (question.isAnswered) {
-      if (species == question.correctAnswer) {
-        color = Colors.green.shade200;
-        icon = AnswerIcon(correct: true);
-      } else if (species == question.givenAnswer) {
-        color = Colors.red.shade200;
-        icon = AnswerIcon(correct: false);
-      }
-    }
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.rectangle,
-        color: color,
-        // TODO animate the background appearing, in the Material ink manner
-//        gradient: RadialGradient(
-//          radius: 0.5,
-//          colors: [color, color, Colors.transparent],
-//          stops: [0.0, 1.0, 1.0],
-//        ),
-      ),
+
+    final isAnswered = question.isAnswered;
+    final isCorrect = species == question.correctAnswer;
+    final isGiven = species == question.givenAnswer;
+    final isIncorrect = isGiven && !isCorrect;
+
+    final color =
+        (isCorrect ? Colors.green.shade200 : Colors.red.shade200)
+        .withOpacity(isAnswered && (isCorrect || isIncorrect) ? 1.0 : 0.0);
+    final icon =
+        isAnswered && isCorrect ? AnswerIcon(correct: true) :
+        isAnswered && isIncorrect ? AnswerIcon(correct: false) :
+        null;
+    final delay =
+        isAnswered && isCorrect && !isGiven ? Duration(milliseconds: 300) : Duration.zero;
+    final duration = Duration(milliseconds: 300);
+    final totalDuration = delay + duration;
+
+    return AnimatedContainer(
+      color: color,
+      duration: totalDuration,
+      curve: Interval(delay.inMicroseconds / totalDuration.inMicroseconds, 1.0, curve: Curves.easeInOut),
       child: ListTile(
         title: Text(
           species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
