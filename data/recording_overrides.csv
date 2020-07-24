@@ -11,7 +11,9 @@ xc:164009,blacklist,Too many background species
 xc:184537,blacklist,Recording artifact
 xc:185590,blacklist,Not representative
 xc:188272,blacklist,Too many background species
+xc:200010,blacklist,Not representative
 xc:210817,blacklist,Background noises
+xc:211869,blacklist,Background species
 xc:217672,blacklist,Trimming selects wrong part
 xc:218538,blacklist,Background noises
 xc:239375,blacklist,Trouble with trimming
@@ -24,6 +26,8 @@ xc:281182,blacklist,Background species
 xc:299936,blacklist,Background species
 xc:303360,blacklist,Background species
 xc:305936,blacklist,Not representative
+xc:306692,blacklist,Background noise
+xc:315410,blacklist,Too noisy
 xc:322210,blacklist,Trimming selects too much
 xc:327881,blacklist,Not representative
 xc:342973,blacklist,Not representative
@@ -42,6 +46,7 @@ xc:444806,blacklist,Not representative
 xc:446270,blacklist,Not representative
 xc:448655,blacklist,Background species
 xc:454684,blacklist,Trimmed too short
+xc:460673,blacklist,Too soft
 xc:462611,blacklist,Noisy
 xc:46773,blacklist,Missing file (404)
 xc:46803,blacklist,Not representative
