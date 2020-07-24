@@ -348,7 +348,11 @@ class _QuestionScreenState extends State<QuestionScreen> {
             Divider(height: 0.0),
             for (var widget in ListTile.divideTiles(
               context: context,
-              tiles: _question.choices.map(_buildChoice),
+              tiles: _question.choices.map((choice) => _AnswerTile(
+                question: _question,
+                species: choice,
+                onTap: () { _choose(choice); }
+              )),
             )) widget,
             Divider(height: 0.0),
             SizedBox(
@@ -357,8 +361,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                 child: AnimatedOpacity(
                   opacity: _question.isAnswered ? 1.0 : 0.0,
                   duration: Duration(seconds: 3),
-                  // TODO DelayedCurve is just a quick and dirty way to delay the start of the animation, but I'm sure there's a better way.
-                  curve: _DelayedCurve(delay: 0.5, inner: Curves.easeInOut),
+                  curve: Interval(0.25, 1.0, curve: Curves.easeInOut),
                   child: Text(
                     // TODO see if screen readers do the right thing if we just leave the text here always
                     _question.isAnswered ? strings.tapInstructions : '',
@@ -370,42 +373,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
             )
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildChoice(Species species) {
-    final settings = Provider.of<Settings>(context);
-    final locale = WidgetsBinding.instance.window.locale;
-    Color color;
-    AnswerIcon icon;
-    if (_question.isAnswered) {
-      if (species == _question.correctAnswer) {
-        color = Colors.green.shade200;
-        icon = AnswerIcon(correct: true);
-      } else if (species == _question.givenAnswer) {
-        color = Colors.red.shade200;
-        icon = AnswerIcon(correct: false);
-      }
-    }
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.rectangle,
-        color: color,
-        // TODO animate the background appearing, in the Material ink manner
-//        gradient: RadialGradient(
-//          radius: 0.5,
-//          colors: [color, color, Colors.transparent],
-//          stops: [0.0, 1.0, 1.0],
-//        ),
-      ),
-      child: ListTile(
-        title: Text(
-          species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
-          textScaleFactor: 1.25,
-        ),
-        trailing: icon,
-        onTap: _question.isAnswered ? null : () { _choose(species); },
       ),
     );
   }
@@ -431,6 +398,51 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 }
 
+class _AnswerTile extends StatelessWidget {
+  final Question question;
+  final Species species;
+  final VoidCallback onTap;
+
+  const _AnswerTile({Key key, this.question, this.species, this.onTap}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = Provider.of<Settings>(context);
+    final locale = WidgetsBinding.instance.window.locale;
+    Color color;
+    AnswerIcon icon;
+    if (question.isAnswered) {
+      if (species == question.correctAnswer) {
+        color = Colors.green.shade200;
+        icon = AnswerIcon(correct: true);
+      } else if (species == question.givenAnswer) {
+        color = Colors.red.shade200;
+        icon = AnswerIcon(correct: false);
+      }
+    }
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.rectangle,
+        color: color,
+        // TODO animate the background appearing, in the Material ink manner
+//        gradient: RadialGradient(
+//          radius: 0.5,
+//          colors: [color, color, Colors.transparent],
+//          stops: [0.0, 1.0, 1.0],
+//        ),
+      ),
+      child: ListTile(
+        title: Text(
+          species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+          textScaleFactor: 1.25,
+        ),
+        trailing: icon,
+        onTap: question.isAnswered ? null : onTap,
+      ),
+    );
+  }
+}
+
 class AnswerIcon extends StatelessWidget {
   final bool correct;
 
@@ -442,24 +454,6 @@ class AnswerIcon extends StatelessWidget {
       return Icon(Icons.check_circle, color: Colors.green.shade800);
     } else {
       return Icon(Icons.cancel, color: Colors.red.shade800);
-    }
-  }
-}
-
-class _DelayedCurve extends Curve {
-  const _DelayedCurve({this.delay, this.inner}) :
-        assert(delay >= 0),
-        assert(delay <= 1);
-
-  final double delay;
-  final Curve inner;
-
-  @override
-  double transform(double t) {
-    if (t <= delay) {
-      return 0.0;
-    } else {
-      return inner.transform((t - delay) / (1.0 - delay));
     }
   }
 }
