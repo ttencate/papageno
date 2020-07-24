@@ -1,9 +1,12 @@
+import 'dart:math';
+import 'dart:ui' as ui;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:logging/logging.dart';
 import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/controller/knowledge_controller.dart';
@@ -18,10 +21,12 @@ import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
+import 'package:papageno/widgets/particles.dart';
 import 'package:papageno/widgets/player.dart';
 import 'package:papageno/widgets/revealing_image.dart';
 import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
+import 'package:papageno/utils/random_utils.dart';
 
 final _log = Logger('QuizPage');
 
@@ -399,7 +404,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 }
 
-class _AnswerTile extends StatelessWidget {
+class _AnswerTile extends StatefulWidget {
   final Question question;
   final Species species;
   final VoidCallback onTap;
@@ -407,13 +412,29 @@ class _AnswerTile extends StatelessWidget {
   const _AnswerTile({Key key, this.question, this.species, this.onTap}) : super(key: key);
 
   @override
+  State<_AnswerTile> createState() => _AnswerTileState();
+}
+
+class _AnswerTileState extends State<_AnswerTile> {
+
+  final _particlesControllers = <ParticlesController>[];
+
+  @override
+  void dispose() {
+    for (final particlesController in _particlesControllers) {
+      particlesController.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final settings = Provider.of<Settings>(context);
     final locale = WidgetsBinding.instance.window.locale;
 
-    final isAnswered = question.isAnswered;
-    final isCorrect = species == question.correctAnswer;
-    final isGiven = species == question.givenAnswer;
+    final isAnswered = widget.question.isAnswered;
+    final isCorrect = widget.species == widget.question.correctAnswer;
+    final isGiven = widget.species == widget.question.givenAnswer;
     final isIncorrect = isGiven && !isCorrect;
 
     final color =
@@ -428,20 +449,131 @@ class _AnswerTile extends StatelessWidget {
     final duration = Duration(milliseconds: 300);
     final totalDuration = delay + duration;
 
-    return AnimatedContainer(
-      color: color,
-      duration: totalDuration,
-      curve: Interval(delay.inMicroseconds / totalDuration.inMicroseconds, 1.0, curve: Curves.easeInOut),
-      child: ListTile(
-        title: Text(
-          species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
-          textScaleFactor: 1.25,
+    return GestureDetector(
+      onTapUp: widget.question.isAnswered ? null : _onTapUp,
+      child: AnimatedContainer(
+        color: color,
+        duration: totalDuration,
+        curve: Interval(delay.inMicroseconds / totalDuration.inMicroseconds, 1.0, curve: Curves.easeInOut),
+        child: ListTile(
+          title: Text(
+            widget.species.commonNameIn(settings.primarySpeciesLanguage.value.resolve(locale)).capitalize(),
+            textScaleFactor: 1.25,
+          ),
+          trailing: icon,
         ),
-        trailing: icon,
-        onTap: question.isAnswered ? null : onTap,
       ),
     );
   }
+
+  void _onTapUp(TapUpDetails details) {
+    if (widget.question.isAnswered) {
+      return;
+    }
+
+    final isCorrect = widget.species == widget.question.correctAnswer;
+    spawnParticlesInOverlay(
+      context: context,
+      image: AssetImage(isCorrect ? 'assets/star.png' : 'assets/feather.png'),
+      particles: isCorrect ?
+          _StarParticle.spawn(position: details.localPosition) :
+          _FeatherParticle.spawn(position: details.localPosition),
+    );
+
+    widget.onTap();
+  }
+}
+
+class _StarParticle extends Particle {
+  static const _count = 5;
+
+  static List<Particle> spawn({@required Offset position}) {
+    var direction = _random.angleInRadians();
+    return List<Particle>.generate(_count, (i) {
+      direction += _random.doubleBetween(0.8, 1.2) * 2.0 * pi / _count;
+      return _StarParticle(startPosition: position, direction: direction);
+    }).toList();
+  }
+
+  final Duration _maxAge;
+  final Size _baseSize;
+  Offset _velocity;
+  double _angularVelocity;
+  var _age = Duration.zero;
+
+  _StarParticle({@required Offset startPosition, @required double direction}) :
+    _maxAge = Duration(milliseconds: _random.intBetween(500, 800)),
+    _baseSize = Size.square(_random.doubleBetween(16.0, 48.0)),
+    _velocity = Offset.fromDirection(direction, _random.doubleBetween(70.0, 100.0)),
+    _angularVelocity = _random.sign() * _random.doubleBetween(1.0, 1.5)
+  {
+    position = startPosition;
+    rotation = _random.angleInRadians();
+  }
+
+  @override
+  bool get isAlive => _age <= _maxAge;
+
+  @override
+  void tick(Duration delta) {
+    final deltaSeconds = delta.inMicroseconds / Duration.microsecondsPerSecond;
+    final lifetimeFraction = _age.inMicroseconds / _maxAge.inMicroseconds;
+    position += _velocity * deltaSeconds;
+    _velocity *= pow(0.5, deltaSeconds).toDouble();
+    rotation += _angularVelocity * deltaSeconds;
+    _angularVelocity *= pow(0.5, deltaSeconds).toDouble();
+    size = _baseSize * Interval(0.0, 1.0, curve: Curves.easeOutBack).transform(lifetimeFraction);
+    opacity = 1.0 - Interval(0.3, 1.0, curve: Curves.easeIn).transform(lifetimeFraction);
+    _age += delta;
+  }
+}
+
+class _FeatherParticle extends Particle {
+  static const _count = 3;
+
+  static List<Particle> spawn({@required ui.Image image, @required Offset position}) {
+    return <Particle>[
+      for (var i = 0; i < _count; i++)
+        _FeatherParticle(startPosition: position)
+    ];
+  }
+
+  Offset _startPosition;
+  final Duration _maxAge;
+  final Offset _baseVelocity;
+  final double _wobbleSpeed;
+  final Size _baseSize;
+  final double _phaseOffset;
+  var _age = Duration.zero;
+
+  _FeatherParticle({@required Offset startPosition}) :
+    _startPosition = startPosition,
+    _maxAge = Duration(milliseconds: _random.intBetween(1000, 1500)),
+    _baseVelocity = Offset(_random.doubleBetween(-20.0, 20.0), _random.doubleBetween(20.0, 40.0)),
+    _wobbleSpeed = _random.doubleBetween(2.0, 3.0),
+    _baseSize = Size(_random.sign() * _random.doubleBetween(48.0, 64.0), _random.doubleBetween(48.0, 64.0)),
+    _phaseOffset = _random.angleInRadians()
+  {
+    final randomOffset = Offset(_random.doubleBetween(-16.0, 16.0), _random.doubleBetween(-8.0, 8.0));
+    _startPosition = startPosition - wobble(_phaseOffset) + randomOffset;
+  }
+
+  @override
+  bool get isAlive => _age <= _maxAge;
+
+  @override
+  void tick(Duration delta) {
+    final ageSeconds = _age.inMicroseconds / Duration.microsecondsPerSecond;
+    final lifetimeFraction = _age.inMicroseconds / _maxAge.inMicroseconds;
+    final phase = _phaseOffset + _wobbleSpeed * ageSeconds;
+    position = _startPosition + _baseVelocity * ageSeconds + wobble(phase);
+    rotation = -0.3 * cos(phase);
+    size = _baseSize * Interval(0.0, 0.1, curve: Curves.easeOut).transform(lifetimeFraction);
+    opacity = 1.0 - Interval(0.3, 1.0, curve: Curves.easeIn).transform(lifetimeFraction);
+    _age += delta;
+  }
+  
+  Offset wobble(double phase) => Offset(20.0 * cos(phase), -5.0 * cos(2.0 * phase));
 }
 
 class AnswerIcon extends StatelessWidget {
@@ -607,3 +739,5 @@ class QuizResult extends StatelessWidget {
     return <Widget>[];
   }
 }
+
+final _random = Random();

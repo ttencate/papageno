@@ -2,6 +2,24 @@ import 'dart:math';
 
 import 'package:built_collection/built_collection.dart';
 
+extension MoreRandom on Random {
+  double angleInRadians() {
+    return nextDouble() * 2.0 * pi;
+  }
+
+  double doubleBetween(double min, double max) {
+    return min + (max - min) * nextDouble();
+  }
+
+  int intBetween(int min, int max) {
+    return min + nextInt(max - min);
+  }
+
+  int sign() {
+    return nextBool() ? 1 : -1;
+  }
+}
+
 extension RandomElement<T> on List<T> {
   /// Returns a uniformly random element from this list.
   T randomElement(Random random) {

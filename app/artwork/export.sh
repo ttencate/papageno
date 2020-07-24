@@ -10,6 +10,8 @@ inkscape --export-area-page --export-filename=assets/logo.png --export-width=512
 
 # Used in question screens
 inkscape --export-area-page --export-filename=assets/question.png artwork/question.svg
+inkscape --export-area-page --export-filename=assets/feather.png artwork/feather.svg
+inkscape --export-area-page --export-filename=assets/star.png artwork/star.svg
 
 # Google Play Store
 inkscape --export-area-page --export-filename=artwork/play_store/icon.png artwork/play_store/icon.svg

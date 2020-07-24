@@ -54,8 +54,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/app.db
+    - assets/feather.png
     - assets/logo.png
     - assets/question.png
+    - assets/star.png
     - assets/images/
     - assets/sounds/
     - assets/licenses/
