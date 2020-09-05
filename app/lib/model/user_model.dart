@@ -2,10 +2,10 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:built_collection/built_collection.dart';
+import 'package:ebisu_dart/ebisu.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
-import 'package:papageno/ebisu/ebisu.dart';
 import 'package:papageno/model/app_model.dart';
 import 'package:papageno/model/settings.dart';
 import 'package:papageno/utils/built_list_utils.dart';

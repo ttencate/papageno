@@ -12,8 +12,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:ebisu_dart/ebisu.dart';
 import 'package:logging/logging.dart';
-import 'package:papageno/ebisu/ebisu.dart';
 import 'package:sqflite/sqlite_api.dart';
 
 final _log = Logger('user_db_migrations');

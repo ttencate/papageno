@@ -19,6 +19,7 @@ environment:
 dependencies:
   # Dart
   built_collection: ^4.3.2
+  ebisu_dart: ^2.0.0
   meta: ^1.1.8
 
   # Flutter

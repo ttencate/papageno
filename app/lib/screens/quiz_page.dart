@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui' as ui;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -19,6 +18,7 @@ import 'package:papageno/screens/attribution_dialog.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/iterable_utils.dart';
+import 'package:papageno/utils/random_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:papageno/widgets/particles.dart';
@@ -26,7 +26,6 @@ import 'package:papageno/widgets/player.dart';
 import 'package:papageno/widgets/revealing_image.dart';
 import 'package:path/path.dart' hide context;
 import 'package:provider/provider.dart';
-import 'package:papageno/utils/random_utils.dart';
 
 final _log = Logger('QuizPage');
 
@@ -531,7 +530,7 @@ class _StarParticle extends Particle {
 class _FeatherParticle extends Particle {
   static const _count = 3;
 
-  static List<Particle> spawn({@required ui.Image image, @required Offset position}) {
+  static List<Particle> spawn({@required Offset position}) {
     return <Particle>[
       for (var i = 0; i < _count; i++)
         _FeatherParticle(startPosition: position)
