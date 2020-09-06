@@ -73,7 +73,7 @@ class PlayerController with WidgetsBindingObserver {
   Stream<PlayerState> get stateUpdates => _stateUpdatesController?.stream;
 
   void _initAudioPlayer() {
-    _log.fine('${this} initializing AudioPlayer');
+    // _log.fine('${this} initializing AudioPlayer');
 
     // AudioPlayer.logEnabled = true;
 
@@ -99,7 +99,7 @@ class PlayerController with WidgetsBindingObserver {
 
   Future<void> _loadSound(String audioFile) async {
     try {
-      _log.fine('$this loading sound');
+      // _log.fine('$this loading sound');
       // `AudioPlayer` cannot play files from inside the asset bundle, so we have to copy it to a temporary location.
       // The `AudioCache` can also do this for us, but it has a clunky API. Also it can't be cleared properly:
       // https://github.com/luanpotter/audioplayers/issues/539
@@ -112,7 +112,7 @@ class PlayerController with WidgetsBindingObserver {
         _log.warning('$this disposed before audio data was loaded');
         return;
       }
-      _log.fine('${this} loaded and setting AudioPlayer source');
+      // _log.fine('${this} loaded and setting AudioPlayer source');
       await _audioPlayer.setUrl(_tempFile.path);
     } catch (e, s) {
       _log.severe('Could not load ${audioFile}', e, s);
@@ -128,7 +128,7 @@ class PlayerController with WidgetsBindingObserver {
   }
 
   Future<void> _disposeAudioPlayer(AudioPlayer audioPlayer) async {
-    _log.fine('${this} disposing AudioPlayer');
+    // _log.fine('${this} disposing AudioPlayer');
 
     // Explicit release() needed until https://github.com/luanpotter/audioplayers/pull/507 lands.
     await audioPlayer.release();

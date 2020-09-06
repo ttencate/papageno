@@ -40,6 +40,15 @@ class QuizPage extends StatefulWidget {
   State<StatefulWidget> createState() => _QuizPageState();
 }
 
+/// A more tolerant [ScrollPhysics] (the default is 1e-3) in an attempt to fix
+/// https://github.com/ttencate/papageno/issues/70.
+class _TolerantScrollPhysics extends ScrollPhysics {
+  static const _epsilon = 1e-1;
+
+  @override
+  Tolerance get tolerance => Tolerance(distance: _epsilon, velocity: _epsilon);
+}
+
 class _QuizPageState extends State<QuizPage> {
 
   QuizController _controller;
@@ -88,9 +97,14 @@ class _QuizPageState extends State<QuizPage> {
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
-                    onPageChanged: (index) { setState(() { _currentPage = index; }); },
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                        _log.finer('Current page changed to $_currentPage');
+                      });
+                    },
                     scrollDirection: Axis.horizontal,
-                    physics: PageScrollPhysics(),
+                    physics: PageScrollPhysics(parent: _TolerantScrollPhysics()),
                     // We don't pass `itemCount` because if we set it to `quiz.questionCount + 1`,
                     // the `PageView` sometimes creates pages before they are visible, causing
                     // https://github.com/ttencate/papageno/issues/58.
@@ -112,6 +126,7 @@ class _QuizPageState extends State<QuizPage> {
                           final question = quiz.availableQuestions[index];
                           return QuestionScreen(
                             key: ObjectKey(index),
+                            index: index,
                             drawer: drawer,
                             question: question,
                             onAnswer: (givenAnswer) { _answerQuestion(index, givenAnswer); },
@@ -156,6 +171,7 @@ class _QuizPageState extends State<QuizPage> {
         targetPage,
         duration: Duration(milliseconds: 400),
         curve: Curves.ease);
+    _log.finer('Animated to page ${targetPage}');
   }
 
   Future<bool> _confirmPop() async {
@@ -182,12 +198,13 @@ class _QuizPageState extends State<QuizPage> {
 }
 
 class QuestionScreen extends StatefulWidget {
+  final int index;
   final Question question;
   final Widget drawer;
   final void Function(Species) onAnswer;
   final void Function() onProceed;
 
-  QuestionScreen({Key key, @required this.question, @required this.drawer, this.onAnswer, this.onProceed}) :
+  QuestionScreen({Key key, @required this.index, @required this.question, @required this.drawer, this.onAnswer, this.onProceed}) :
         assert(question != null),
         super(key: key);
 
@@ -197,13 +214,14 @@ class QuestionScreen extends StatefulWidget {
 
 class _QuestionScreenState extends State<QuestionScreen> {
 
+  int get _index => widget.index;
   Question get _question => widget.question;
   model.Image _image;
   PlayerController _playerController;
 
   @override
   void initState() {
-    _log.finer('_QuestionScreenState.initState() for $_question');
+    _log.finer('_QuestionScreenState.initState() for question $_index ($_question)');
     super.initState();
     _playerController = PlayerController(
       audioFile: 'assets/sounds/${_question.recording.fileName}',
@@ -215,7 +233,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   @override
   void didChangeDependencies() {
-    _log.finer('_QuestionScreenState.didChangeDependencies() for $_question');
+    _log.finer('_QuestionScreenState.didChangeDependencies() for question $_index');
     super.didChangeDependencies();
     final appDb = Provider.of<AppDb>(context);
     appDb.imageForOrNull(_question.correctAnswer).then((image) {
@@ -227,7 +245,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   @override
   void dispose() {
-    _log.finer('_QuestionScreenState.dispose() for $_question');
+    _log.finer('_QuestionScreenState.dispose() for question $_index');
     _playerController.dispose();
     super.dispose();
   }
@@ -383,7 +401,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 
   void _choose(Species givenAnswer) {
-    _log.finer('_QuestionScreenState._choose($givenAnswer) for $_question');
+    _log.finer('_QuestionScreenState._choose($givenAnswer) for question $_index');
     if (!_question.isAnswered) {
       _playerController.looping = false;
       if (widget.onAnswer != null) {
