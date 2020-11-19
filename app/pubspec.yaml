@@ -12,6 +12,7 @@ description: "Papageno: Birdsong Tutor"
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 version: 0.8.8+9
+publish_to: none
 
 environment:
   sdk: ">=2.6.0 <3.0.0"
@@ -31,6 +32,11 @@ dependencies:
 
   # Third-party Flutter plugins
   audioplayers: ^0.14.2
+  flutter_email_sender: # ^3.0.1
+    # TODO once https://github.com/sidlatau/flutter_email_sender/pull/56 is merged and released, switch back to an official version
+    git:
+      url: git://github.com/ttencate/flutter_email_sender.git
+      ref: fix/too_many_apps_40
   flutter_map: ^0.9.0
   location: ^3.0.2
   logging: ^0.11.4

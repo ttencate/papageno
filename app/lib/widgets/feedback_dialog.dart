@@ -1,8 +1,9 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:papageno/common/log_writer.dart';
 import 'package:papageno/common/strings.g.dart';
-import 'package:papageno/utils/url_utils.dart';
+import 'package:papageno/utils/email_utils.dart';
 import 'package:provider/provider.dart';
 
 const _feedbackEmail = 'thomas@papageno.app';
@@ -74,19 +75,25 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
   Future<void> _sendFeedback() async {
     final strings = Strings.of(context);
     var body = strings.feedbackEmailTemplate;
+    final attachments = <Attachment>[];
     if (_includeDebugLog) {
-      final logContents = await _loadLog();
-      body += '\n\n---\n$logContents';
+      try {
+        final logContents = await _loadLog();
+        final attachment = await Attachment.fromString('log.txt', logContents);
+        attachments.add(attachment);
+      } catch (e, s) {
+        body += '\n\n---\n\nError attaching log file:\n$e\n$s';
+      }
     }
     await openEmailApp(
       toAddress: _feedbackEmail,
       body: body,
+      attachments: attachments,
     );
   }
 
   Future<String> _loadLog() async {
     final logWriter = Provider.of<LogWriter>(context, listen: false);
-    return logWriter.getContents()
-        .catchError((dynamic e) => 'Could not load log contents: $e');
+    return logWriter.getContents();
   }
 }

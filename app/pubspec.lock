@@ -160,6 +160,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.4.2"
+  flutter_email_sender:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "fix/too_many_apps_40"
+      resolved-ref: "6d5dccb8be6052a9e38d8d7e30b74cb0fa56fe17"
+      url: "git://github.com/ttencate/flutter_email_sender.git"
+    source: git
+    version: "3.0.1"
   flutter_image:
     dependency: transitive
     description:

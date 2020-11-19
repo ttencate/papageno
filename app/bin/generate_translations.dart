@@ -36,7 +36,7 @@
 /// Usage:
 ///
 /// - Update translations.csv
-/// - Run 'flutter pub run generate_translations'
+/// - Run 'flutter pub run bin/generate_translations'
 /// - Build and run the app as usual
 ///
 /// We use this, rather than the Dart "intl" package, because the latter is

@@ -570,9 +570,9 @@ class _Strings_en extends Strings {
   @override String get wikimediaCommonsSource => 'Photos sourced from Wikimedia Commons';
   @override String get imagesLicensesText => 'View licenses for all photos';
   @override String get sendFeedbackButton => 'Send feedback';
-  @override String get feedbackExplanation => 'This starts your email app to write a message to the developer, Thomas. I understand English, Dutch and German.';
+  @override String get feedbackExplanation => 'This starts your email app to write a message to the developer.';
   @override String get feedbackIncludeDebugLog => 'Include debug log';
-  @override String get feedbackIncludeDebugLogExplanation => 'Adds logging information to the end of the email. Check this box if a problem just occurred with the app, and you want to report it. It greatly helps me to find and fix the issue!';
+  @override String get feedbackIncludeDebugLogExplanation => 'Attaches logging information to the email. Please use this when reporting problems: it greatly helps me to find and fix the issue!';
   @override String get feedbackStartEmailAppButton => 'Start email app';
   @override String get feedbackEmailTemplate => 'Hi Thomas,\n\n';
   @override String get debugLogButton => 'Debug log';
@@ -697,9 +697,9 @@ class _Strings_nl extends _Strings_en {
   @override String get wikimediaCommonsSource => 'Foto\'s verkregen via Wikimedia Commons';
   @override String get imagesLicensesText => 'Bekijk licensies voor alle foto\'s';
   @override String get sendFeedbackButton => 'Feedback sturen';
-  @override String get feedbackExplanation => 'Hiermee open je je email-app om de ontwikkelaar, Thomas, een mail te schrijven. Ik versta Nederlands, Engels en Duits.';
+  @override String get feedbackExplanation => 'Hiermee open je je email-app om de ontwikkelaar een mail te schrijven.';
   @override String get feedbackIncludeDebugLog => 'Logbestand bijvoegen';
-  @override String get feedbackIncludeDebugLogExplanation => 'Voeg het logbestand toe aan het eind van de email. Vink dit aan als er zojuist een probleem is opgetreden in de app, en je dat wilt melden. Dit helpt mij heel erg bij het vinden en verhelpen van het probleem!';
+  @override String get feedbackIncludeDebugLogExplanation => 'Voeg het logbestand toe aan de email. Gebruik dit bij het melden van problemen: het helpt mij heel erg bij het vinden en verhelpen van het probleem!';
   @override String get feedbackStartEmailAppButton => 'Start email-app';
   @override String get feedbackEmailTemplate => 'Hoi Thomas,\n\n';
   @override String get debugLogButton => 'Logbestand voor debuggen';

@@ -127,9 +127,9 @@ recordingsLicensesText,Button text in About screen,View licenses for all recordi
 wikimediaCommonsSource,Text in About screen,Photos sourced from Wikimedia Commons,Foto's verkregen via Wikimedia Commons
 imagesLicensesText,Button text in About screen,View licenses for all photos,Bekijk licensies voor alle foto's
 sendFeedbackButton,Button that opens the email app to send feedback,Send feedback,Feedback sturen
-feedbackExplanation,Explanatory text in dialog for sending feedback,"This starts your email app to write a message to the developer, Thomas. I understand English, Dutch and German.","Hiermee open je je email-app om de ontwikkelaar, Thomas, een mail te schrijven. Ik versta Nederlands, Engels en Duits."
+feedbackExplanation,Explanatory text in dialog for sending feedback,"This starts your email app to write a message to the developer.","Hiermee open je je email-app om de ontwikkelaar een mail te schrijven."
 feedbackIncludeDebugLog,Text of check box that selects whether a debug log is added to the feedback email,Include debug log,Logbestand bijvoegen
-feedbackIncludeDebugLogExplanation,Explanation in send feedback dialog,"Adds logging information to the end of the email. Check this box if a problem just occurred with the app, and you want to report it. It greatly helps me to find and fix the issue!","Voeg het logbestand toe aan het eind van de email. Vink dit aan als er zojuist een probleem is opgetreden in de app, en je dat wilt melden. Dit helpt mij heel erg bij het vinden en verhelpen van het probleem!"
+feedbackIncludeDebugLogExplanation,Explanation in send feedback dialog,"Attaches logging information to the email. Please use this when reporting problems: it greatly helps me to find and fix the issue!","Voeg het logbestand toe aan de email. Gebruik dit bij het melden van problemen: het helpt mij heel erg bij het vinden en verhelpen van het probleem!"
 feedbackStartEmailAppButton,Button that starts the email app to compose a feedback email,Start email app,Start email-app
 feedbackEmailTemplate,"Template for feedback email; only translate to English, Dutch and German!","Hi Thomas,
 
