@@ -12,3 +12,4 @@ cache
 # Ignoring the master database (~0.5 GB) until it stops changing so much. Then
 # maybe we should commit it.
 master.db
+.ipynb_checkpoints/

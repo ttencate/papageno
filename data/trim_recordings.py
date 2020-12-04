@@ -92,7 +92,8 @@ def trim_recording(recording,
 
     # Find longest utterance, the end of which is a good place to cut off the
     # sample.
-    utterances = list(_detect_utterances(sound, debug_otsu_threshold=debug_otsu_threshold))
+    utterances = list(detect_utterances(
+        sound, recording.recording_id, debug_otsu_threshold=debug_otsu_threshold))
     # This should not happen, because the threshold is such that there is
     # always something above it.
     assert utterances, f'No utterances detected in {recording.url}'
@@ -176,7 +177,7 @@ def trim_recording(recording,
     return output_file_name
 
 
-def _otsu_threshold(array, debug=False):
+def otsu_threshold(array, recording_id, debug=False):
     '''
     Computes a binary classification threshold for the given array using Otsu's
     method:
@@ -184,6 +185,7 @@ def _otsu_threshold(array, debug=False):
     '''
     num_bins = 256
     hist, bin_edges = np.histogram(array, bins=num_bins)
+    hist = hist.astype(np.float32) / hist.sum()
 
     # The implementation below does not look at bin_edges at all; in other
     # words, it assumes equal-sized bins.
@@ -212,16 +214,18 @@ def _otsu_threshold(array, debug=False):
     if debug:
         import matplotlib.pyplot as plt # pylint: disable=import-outside-toplevel
         logging.info(f'Histogram from {bin_edges[0]} to {bin_edges[-1]}, Otsu threshold at {threshold}')
-        _fig, ax1 = plt.subplots()
+        fig, ax1 = plt.subplots()
         ax1.hist(bin_edges[:-1], bin_edges, weights=hist, color=(0.1, 0.2, 1.0))
+        ax1.set(title=recording_id)
         ax2 = ax1.twinx()
         ax2.plot(bin_edges[:-1], qualities, color=(1.0, 0.2, 0.1))
         ax2.axvline(x=threshold, color=(0.1, 1.0, 0.2))
+        ax2.text(x=threshold, y=best_quality, s=str(best_quality))
         plt.show()
     return threshold
 
 
-def _detect_utterances(sound, debug_otsu_threshold=False):
+def detect_utterances(sound, recording_id, debug_otsu_threshold=False):
     '''
     Classifies each millisecond of audio as either "utterance" or "silence"
     based on whether loudness is above the Otsu threshold. Returns runs of
@@ -234,7 +238,7 @@ def _detect_utterances(sound, debug_otsu_threshold=False):
     # gives a much clearer histogram in practice.
     loudnesses = np.array([ms.dBFS for ms in sound])
     loudnesses[loudnesses == -np.inf] = -90
-    utterance_threshold = _otsu_threshold(loudnesses, debug=debug_otsu_threshold)
+    utterance_threshold = otsu_threshold(loudnesses, recording_id, debug=debug_otsu_threshold)
 
     min_gap_ms = round(1000 * _MIN_UTTERANCE_GAP)
 

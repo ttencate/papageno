@@ -23,6 +23,14 @@ Rtree = "^0.9.4"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4.4"
+jupyter = "^1.0.0"
+notebook = "^6.1.5"
+tqdm = "^4.52.0"
+scipy = "^1.5.4"
+librosa = "^0.8.0"
+ffmpeg = "^1.4"
+audioread = "^2.1.9"
+pygobject = "^3.38.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
