@@ -159,6 +159,187 @@ def _crop_white(img):
     return img[:, :last_nonwhite_col + 1]
 
 
+def lazy_cached(func):
+    attr_name = '__cached__' + func.__name__
+    def cached_func(self):
+        value = getattr(self, attr_name, None)
+        if value is None:
+            value = func(self)
+            setattr(self, attr_name, value)
+        return value
+    return cached_func
+
+
+class Analysis:
+    '''
+    Contains analysis functions for a single recording. Cheap to create,
+    because every field is lazily evaluated.
+    '''
+
+    def __init__(self, sound):
+        '''
+        Creates a new `Analysis` from an array of samples, as returned by the
+        `load_sound` function.
+        '''
+        self.sound = sound
+
+    @property
+    @lazy_cached
+    def mel_spectrogram(self):
+        '''
+        Computes the spectrogram of the sound using a mel frequency scale. The
+        resulting spectrogram is normalized so that its maximum value is 1
+        (unless it's all zero).
+
+        We use a mel spectrogram because the winners of the 2018 Bird Audio
+        Detection Challege [1] did so too. They got a lot fancier of course, with
+        deep learning and such, but it shows that the necessary information is
+        somehow contained in the mel spectrogram.
+
+        [1] http://c4dm.eecs.qmul.ac.uk/events/badchallenge_results/
+        '''
+        power = librosa.feature.melspectrogram(
+            self.sound,
+            sr=SAMPLE_RATE,
+            n_fft=FFT_WINDOW_SIZE,
+            hop_length=FFT_HOP_LENGTH,
+            n_mels=NUM_MELS,
+            fmin=0.0,
+            fmax=SAMPLE_RATE / 2)
+        max_power = np.amax(power)
+        return power / np.amax(power) if max_power > 0 else power
+
+    @property
+    @lazy_cached
+    def mel_frequencies(self):
+        '''
+        Center (?) frequencies corresponding to the rows (frequency bins) in the
+        `mel_spectrogram`.
+        '''
+        return librosa.mel_frequencies(n_mels=NUM_MELS, fmin=0.0, fmax=SAMPLE_RATE / 2)
+
+    @property
+    @lazy_cached
+    def noise_profile(self):
+        '''
+        Computes the noise level along each frequency band by computing a
+        low-quantile volume level for each band. For a spectrogram of shape `(freq,
+        time)`, this returns an array of shape `(freq, 1)` so that it can easily be
+        plotted and/or broadcast across the same spectrogram later.
+        '''
+        # TODO Account for fades. These often occur at the start and end of the recording,
+        # but e.g. xc:130997 has fades in the middle! This makes the computed noise
+        # level a bit lower than it should be.
+        noise_profile = np.quantile(self.mel_spectrogram, q=NOISE_QUANTILE, axis=1)
+        return np.reshape(noise_profile, (self.mel_spectrogram.shape[0], 1))
+
+    @property
+    @lazy_cached
+    def noise_volume_db(self):
+        '''
+        Returns the noise volume in decibels. The reference (maximum) volume is
+        assumed to be 1.0, which is mapped to 0 dB.
+
+        This is used to determine the volume thresholds between vocalization
+        and background noise.
+        '''
+        return librosa.power_to_db(np.sum(self.noise_profile))
+
+    @property
+    @lazy_cached
+    def perceptual_noise_volume_db(self):
+        '''
+        Returns the perceptual volume of noise in decibels. The reference
+        (maximum) volume is assumed to be 1.0, which is mapped to 0 dB.
+
+        This is used to determine the suitability of the recording for
+        inclusion in the app.
+
+        The implementation uses A-weighting to determine the perceptual
+        loudness: https://en.wikipedia.org/wiki/A-weighting
+        '''
+        factors = librosa.db_to_power(librosa.A_weighting(self.mel_frequencies))
+        return librosa.power_to_db(np.sum(self.noise_profile * factors))
+
+    @property
+    @lazy_cached
+    def filtered_volume_db(self):
+        '''
+        Subtracts the given noise profile from the spectrogram, then computes and
+        returns the remaining volume (as power, not dB) for each time slice.
+        '''
+        filtered_spectrogram = self.mel_spectrogram - self.noise_profile
+        filtered_volume = np.sum(filtered_spectrogram, axis=0)
+        filtered_volume_db = librosa.power_to_db(filtered_volume)
+        return filtered_volume_db
+
+    @property
+    @lazy_cached
+    def raw_vocalizations(self):
+        '''
+        Detects vocalizations in the given volume curve. A vocalization is a
+        consecutive range of time slices in which the volume remains some minimum
+        "trigger" threshold above the `perceptual_noise_volume_db`, and exceeds
+        some maximum "keep" threshold at least once.
+
+        Vocalization are returned as a list of tuples `(start, end)` where `start`
+        and `end` are in seconds.
+        '''
+        trigger_threshold_db = self.noise_volume_db + VOCALIZATION_TRIGGER_THRESHOLD_DB
+        keep_threshold_db = self.noise_volume_db + VOCALIZATION_KEEP_THRESHOLD_DB
+
+        vocalizations = []
+        start = None
+        keep = False
+        volumes_db = self.filtered_volume_db
+        for i, volume_db in enumerate(volumes_db):
+            if volume_db >= trigger_threshold_db:
+                if start is None:
+                    start = i
+                if volume_db >= keep_threshold_db:
+                    keep = True
+            else:
+                if start is not None:
+                    if keep:
+                        vocalizations.append((start, i))
+                    start = None
+                    keep = False
+        if start is not None and keep:
+            vocalizations.append((start, len(volumes_db)))
+
+        return [
+            (frames_to_time(start), frames_to_time(end))
+            for (start, end) in vocalizations
+        ]
+
+    @property
+    @lazy_cached
+    def merged_vocalizations(self):
+        '''
+        Merges consecutive vocalizations if they are close together. Useful for
+        rapid trills and such.
+        '''
+        merged_vocalizations = []
+        for start, end in self.raw_vocalizations:
+            if merged_vocalizations and start <= merged_vocalizations[-1][1] + MIN_VOCALIZATION_SEPARATION_SECONDS:
+                merged_vocalizations[-1] = (merged_vocalizations[-1][0], end)
+            else:
+                merged_vocalizations.append((start, end))
+        return merged_vocalizations
+
+    @property
+    @lazy_cached
+    def vocalizations(self):
+        '''
+        Removes all vocalizations that are very short and probably artifacts.
+        '''
+        return [
+            (start, end)
+            for (start, end) in self.merged_vocalizations
+            if end - start >= MIN_VOCALIZATION_DURATION_SECONDS
+        ]
+
+
 def load_sound(file_obj):
     '''
     Loads a sound from a file-like object representing MP3 data, and transforms
@@ -174,128 +355,9 @@ def load_sound(file_obj):
     return np.array(sound.get_array_of_samples()) / (2**(BITS_PER_SAMPLE - 1))
 
 
-def mel_spectrogram(sound):
-    '''
-    Computes the spectrogram of the given sound (sample array), using a mel
-    frequency scale. The resulting spectrogram is normalized so that its
-    maximum value is 1 (unless it's all zero).
-
-    We use a mel spectrogram because the winners of the 2018 Bird Audio
-    Detection Challege [1] did so too. They got a lot fancier of course, with
-    deep learning and such, but it shows that the necessary information is
-    somehow contained in the mel spectrogram.
-
-    [1] http://c4dm.eecs.qmul.ac.uk/events/badchallenge_results/
-    '''
-    power = librosa.feature.melspectrogram(
-        sound,
-        sr=SAMPLE_RATE,
-        n_fft=FFT_WINDOW_SIZE,
-        hop_length=FFT_HOP_LENGTH,
-        n_mels=NUM_MELS)
-    max_power = np.amax(power)
-    return power / np.amax(power) if max_power > 0 else power
-
-
-def noise_profile(mel_spectrogram):
-    '''
-    Computes the noise level along each frequency band by computing a
-    low-quantile volume level for each band. For a spectrogram of shape `(freq,
-    time)`, this returns an array of shape `(freq, 1)` so that it can easily be
-    plotted and/or broadcast across the same spectrogram later.
-    '''
-    # TODO Account for fades. These often occur at the start and end of the recording,
-    # but e.g. xc:130997 has fades in the middle! This makes the computed noise
-    # level a bit lower than it should be.
-    noise_profile = np.quantile(mel_spectrogram, q=NOISE_QUANTILE, axis=1)
-    return np.reshape(noise_profile, (mel_spectrogram.shape[0], 1))
-
-
-def noise_volume_db(noise_profile):
-    '''
-    Given a noise profile from the `noise_profile` function, returns the volume
-    level in decibels. The reference (maximum) volume is assumed to be 1.0,
-    which is mapped to 0 dB.
-    '''
-    return librosa.power_to_db(np.sum(noise_profile))
-
-
 def time_to_frames(time):
     return librosa.time_to_frames(time, sr=SAMPLE_RATE, hop_length=FFT_HOP_LENGTH)
 
 
 def frames_to_time(frames):
     return librosa.frames_to_time(frames, sr=SAMPLE_RATE, hop_length=FFT_HOP_LENGTH)
-
-
-def filtered_volume_db(mel_spectrogram, noise_profile):
-    '''
-    Subtracts the given noise profile from the spectrogram, then computes and
-    returns the remaining volume (as power, not dB) for each time slice.
-    '''
-    filtered_spectrogram = mel_spectrogram - noise_profile
-    filtered_volume = np.sum(filtered_spectrogram, axis=0)
-    filtered_volume_db = librosa.power_to_db(filtered_volume)
-    return filtered_volume_db
-
-
-def vocalizations(filtered_volume_db, noise_volume_db):
-    '''
-    Detects vocalizations in the given volume curve. A vocalization is a
-    consecutive range of time slices in which the volume remains some minimum
-    "trigger" threshold above the `noise_volume_db`, and exceeds some maximum
-    "keep" threshold at least once.
-
-    Vocalization are returned as a list of tuples `(start, end)` where `start`
-    and `end` are in seconds.
-    '''
-    trigger_threshold_db = noise_volume_db + VOCALIZATION_TRIGGER_THRESHOLD_DB
-    keep_threshold_db = noise_volume_db + VOCALIZATION_KEEP_THRESHOLD_DB
-
-    vocalizations = []
-    start = None
-    keep = False
-    for i, volume_db in enumerate(filtered_volume_db):
-        if volume_db >= trigger_threshold_db:
-            if start is None:
-                start = i
-            if volume_db >= keep_threshold_db:
-                keep = True
-        else:
-            if start is not None:
-                if keep:
-                    vocalizations.append((start, i))
-                start = None
-                keep = False
-    if start is not None and keep:
-        vocalizations.append((start, len(filtered_volume_db)))
-
-    return [
-        (frames_to_time(start), frames_to_time(end))
-        for (start, end) in vocalizations
-    ]
-
-
-def merge_vocalizations(vocalizations):
-    '''
-    Merges consecutive vocalizations if they are close together. Useful for
-    rapid trills and such.
-    '''
-    merged_vocalizations = []
-    for start, end in vocalizations:
-        if merged_vocalizations and start <= merged_vocalizations[-1][1] + MIN_VOCALIZATION_SEPARATION_SECONDS:
-            merged_vocalizations[-1] = (merged_vocalizations[-1][0], end)
-        else:
-            merged_vocalizations.append((start, end))
-    return merged_vocalizations
-
-
-def filter_vocalizations(vocalizations):
-    '''
-    Removes all vocalizations that are very short and probably artifacts.
-    '''
-    return [
-        (start, end)
-        for (start, end) in vocalizations
-        if end - start >= MIN_VOCALIZATION_DURATION_SECONDS
-    ]
