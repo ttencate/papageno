@@ -4,8 +4,6 @@ Fancy analysis algorithms.
 
 import hashlib
 import logging
-import tempfile
-import warnings
 
 import imageio # TODO port to pillow
 import librosa
@@ -13,8 +11,11 @@ import librosa.feature
 import numpy as np
 import pydub
 
+import lazy
+
 
 # False positive lint. pylint: disable=pointless-string-statement
+# TODO remove here
 '''
 Types of recordings that we allow. Any other type tag will cause the recording
 to be rejected.
@@ -89,6 +90,7 @@ Vocalizations shorter than this will be discarded.
 MIN_VOCALIZATION_DURATION_SECONDS = 0.05
 
 
+# TODO remove
 def recording_quality(recording):
     '''
     The main quality metric used to select which recordings will go into the app.
@@ -113,6 +115,7 @@ def recording_quality(recording):
     )
 
 
+# TODO remove
 def sonogram_quality(recording_id, sonogram):
     '''
     Determines sound quality on the basis of a small sonogram image. Higher is better.
@@ -143,6 +146,7 @@ def sonogram_quality(recording_id, sonogram):
     return signal_score * noise_score
 
 
+# TODO remove
 def _crop_white(img):
     '''
     Sonograms shorter than 10 seconds are full white on the right side.
@@ -159,32 +163,22 @@ def _crop_white(img):
     return img[:, :last_nonwhite_col + 1]
 
 
-def lazy_cached(func):
-    attr_name = '__cached__' + func.__name__
-    def cached_func(self):
-        value = getattr(self, attr_name, None)
-        if value is None:
-            value = func(self)
-            setattr(self, attr_name, value)
-        return value
-    return cached_func
-
-
 class Analysis:
     '''
     Contains analysis functions for a single recording. Cheap to create,
     because every field is lazily evaluated.
     '''
 
-    def __init__(self, sound):
+    def __init__(self, recording, sound):
         '''
         Creates a new `Analysis` from an array of samples, as returned by the
         `load_sound` function.
         '''
+        self.recording = recording
         self.sound = sound
 
     @property
-    @lazy_cached
+    @lazy.cached
     def mel_spectrogram(self):
         '''
         Computes the spectrogram of the sound using a mel frequency scale. The
@@ -210,16 +204,21 @@ class Analysis:
         return power / np.amax(power) if max_power > 0 else power
 
     @property
-    @lazy_cached
+    @lazy.cached
     def mel_frequencies(self):
         '''
         Center (?) frequencies corresponding to the rows (frequency bins) in the
         `mel_spectrogram`.
         '''
-        return librosa.mel_frequencies(n_mels=NUM_MELS, fmin=0.0, fmax=SAMPLE_RATE / 2)
+        # Exclude top and bottom frequency to find bin centers, because this is
+        # what `librosa.feature.melspectrogram` does as well. Without this, 0
+        # Hz is included which gives division by zero errors in the A-weighting
+        # formula.
+        return librosa.mel_frequencies(
+            n_mels=NUM_MELS + 2, fmin=0.0, fmax=SAMPLE_RATE / 2)[1:-1]
 
     @property
-    @lazy_cached
+    @lazy.cached
     def noise_profile(self):
         '''
         Computes the noise level along each frequency band by computing a
@@ -234,7 +233,7 @@ class Analysis:
         return np.reshape(noise_profile, (self.mel_spectrogram.shape[0], 1))
 
     @property
-    @lazy_cached
+    @lazy.cached
     def noise_volume_db(self):
         '''
         Returns the noise volume in decibels. The reference (maximum) volume is
@@ -246,7 +245,7 @@ class Analysis:
         return librosa.power_to_db(np.sum(self.noise_profile))
 
     @property
-    @lazy_cached
+    @lazy.cached
     def perceptual_noise_volume_db(self):
         '''
         Returns the perceptual volume of noise in decibels. The reference
@@ -262,7 +261,7 @@ class Analysis:
         return librosa.power_to_db(np.sum(self.noise_profile * factors))
 
     @property
-    @lazy_cached
+    @lazy.cached
     def filtered_volume_db(self):
         '''
         Subtracts the given noise profile from the spectrogram, then computes and
@@ -274,7 +273,7 @@ class Analysis:
         return filtered_volume_db
 
     @property
-    @lazy_cached
+    @lazy.cached
     def raw_vocalizations(self):
         '''
         Detects vocalizations in the given volume curve. A vocalization is a
@@ -313,11 +312,12 @@ class Analysis:
         ]
 
     @property
-    @lazy_cached
-    def merged_vocalizations(self):
+    @lazy.cached
+    def vocalizations(self):
         '''
         Merges consecutive vocalizations if they are close together. Useful for
-        rapid trills and such.
+        rapid trills and such. Then removes all vocalizations that are very
+        short and probably artifacts, and returns the result.
         '''
         merged_vocalizations = []
         for start, end in self.raw_vocalizations:
@@ -325,19 +325,46 @@ class Analysis:
                 merged_vocalizations[-1] = (merged_vocalizations[-1][0], end)
             else:
                 merged_vocalizations.append((start, end))
-        return merged_vocalizations
 
-    @property
-    @lazy_cached
-    def vocalizations(self):
-        '''
-        Removes all vocalizations that are very short and probably artifacts.
-        '''
         return [
-            (start, end)
-            for (start, end) in self.merged_vocalizations
+            Vocalization(self, start, end)
+            for (start, end) in merged_vocalizations
             if end - start >= MIN_VOCALIZATION_DURATION_SECONDS
         ]
+
+
+class Vocalization:
+    '''
+    Represents a single vocalization, extracted from a full recording.
+    '''
+
+    def __init__(self, analysis, start, end):
+        self.analysis = analysis
+        self.recording = analysis.recording
+        start_sample, end_sample = librosa.time_to_samples([start, end], sr=SAMPLE_RATE)
+        self.sound = analysis.sound[start_sample:end_sample]
+        self.start = start
+        self.end = end
+
+    @property
+    @lazy.cached
+    def mel_spectrogram(self):
+        '''
+        Extract of `Analysis.mel_spectrogram`.
+        '''
+        start_frame, end_frame = time_to_frames([self.start, self.end])
+        return self.analysis.mel_spectrogram[:, start_frame:end_frame]
+
+    @property
+    @lazy.cached
+    def filtered_mel_spectrogram(self):
+        '''
+        The mel spectrogram after subtracting the noise profile and normalizing
+        it to a maximum of 1.0.
+        '''
+        power = np.maximum(0, self.mel_spectrogram - self.analysis.noise_profile)
+        max_power = np.amax(power)
+        return power / np.amax(power) if max_power > 0 else power
 
 
 def load_sound(file_obj):

@@ -141,6 +141,7 @@ disable=print-statement,
         comprehension-escape,
         # This is just a performance micro-optimization that hurts readability.
         logging-format-interpolation,
+        logging-fstring-interpolation,
         # This warning is silly.
         too-few-public-methods,
         # Too many false positives.
