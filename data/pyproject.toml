@@ -11,7 +11,7 @@ readme = "README.md"
 # compatible with Python 3.9: https://github.com/numba/numba/issues/6345
 # Until that gets resolved and released, we'll have to restrict ourselves to
 # older Python versions and install python38 from AUR.
-python = "^3.6.1, <3.9"
+python = "^3.6.2, <3.9"
 urllib3 = "^1.25.8"
 openpyxl = "^3.0.3"
 sqlalchemy = "^1.3.16"
@@ -24,19 +24,16 @@ beautifulsoup4 = "^4.9.0"
 pillow = "^7.1.1"
 lxml = "^4.5.0"
 pydub = "^0.23.1"
-matplotlib = "^3.2.1"
+matplotlib = "^3.2.1" # TODO move to dev-dependencies
 Rtree = "^0.9.4"
+scipy = "^1.5.4"
+librosa = "^0.8.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4.4"
-jupyter = "^1.0.0"
 notebook = "^6.1.5"
 tqdm = "^4.52.0"
-scipy = "^1.5.4"
-librosa = "^0.8.0"
-ffmpeg = "^1.4"
-audioread = "^2.1.9"
-pygobject = "^3.38.0"
+jupyterlab = "^3.0.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
