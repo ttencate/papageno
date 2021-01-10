@@ -201,7 +201,7 @@ class Analysis:
             fmin=0.0,
             fmax=SAMPLE_RATE / 2)
         max_power = np.amax(power)
-        return power / np.amax(power) if max_power > 0 else power
+        return power / max_power if max_power > 0 else power
 
     @property
     @lazy.cached
@@ -356,15 +356,79 @@ class Vocalization:
         return self.analysis.mel_spectrogram[:, start_frame:end_frame]
 
     @property
-    @lazy.cached
+    # @lazy.cached
     def filtered_mel_spectrogram(self):
         '''
         The mel spectrogram after subtracting the noise profile and normalizing
-        it to a maximum of 1.0.
+        it back to a maximum power of 1.0.
         '''
         power = np.maximum(0, self.mel_spectrogram - self.analysis.noise_profile)
         max_power = np.amax(power)
-        return power / np.amax(power) if max_power > 0 else power
+        return power / max_power if max_power > 0 else power
+
+    @property
+    # @lazy.cached
+    def mfccs(self):
+        '''
+        Mel frequency cepstral coefficients. Useful intro:
+        https://medium.com/prathena/the-dummys-guide-to-mfcc-aceab2450fd
+        '''
+        NUM_MFCCS = 16 # TODO move outside
+        mfccs = librosa.feature.mfcc(
+            S=librosa.power_to_db(self.filtered_mel_spectrogram),
+            sr=SAMPLE_RATE, n_mfcc=NUM_MFCCS)
+        return mfccs
+
+    @property
+    # @lazy.cached
+    def quantized_spectrogram(self):
+        '''
+        The mel spectrogram after subtracting the noise profile, downsampling
+        the frequency axis, normalizing it, converting it to decibels and
+        quantizing each bucket. Used as the basis for feature extraction.
+        '''
+        FEATURE_NUM_MELS = 8 # Must be a divisor of NUM_MELS.
+        power = np.maximum(0, self.mel_spectrogram - self.analysis.noise_profile)
+        power = np.mean(
+            power.reshape((FEATURE_NUM_MELS, NUM_MELS // FEATURE_NUM_MELS, power.shape[1])),
+            axis=1)
+        max_power = np.amax(power)
+        power = power / max_power if max_power > 0 else power
+        db = librosa.power_to_db(power)
+        quantized = quantize(db, (-30, -15))
+        return quantized
+
+    @property
+    # @lazy.cached
+    def features(self):
+        '''
+        Returns a list of relatively low-dimensional, hashable features that
+        represent this vocalization.
+        '''
+        #return list(map(tuple, self.quantized_spectrogram.T))
+        # Find the locations of the 3 strongest peaks in the MFCC.
+        features = []
+        for spectrum in self.mfccs.T:
+            spectrum = spectrum[:]
+            feature = np.zeros(spectrum.size, dtype='int')
+            for i in range(3):
+                peak = np.argmax(spectrum)
+                feature[peak] = 3 - i
+                spectrum[peak] = -np.inf
+            features.append(tuple(feature))
+        return features
+
+
+def quantize(array, thresholds):
+    '''
+    Quantizes values in a numpy array. Returns an array of the same shape,
+    containing for each element the number of thresholds that are smaller than
+    the element. Assumes that `thresholds` is sorted and small.
+    '''
+    out = np.zeros_like(array)
+    for threshold in thresholds:
+        out += threshold < array
+    return out
 
 
 def load_sound(file_obj):
