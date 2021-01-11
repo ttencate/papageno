@@ -25,10 +25,10 @@ ALLOWED_TYPES = set([
 ])
 
 '''
-Maximum volume level of background noise (in dB, where the maximum is 0 dB) for
-a recording to be considered suitable.
+Maximum volume level of background noise (in dB) a recording to be considered
+suitable.
 '''
-MAXIMUM_NOISE_VOLUME_DB = -25.0
+MAXIMUM_NOISE_VOLUME_DB = -45.0
 
 
 class RecordingSelection:
@@ -76,14 +76,19 @@ class RecordingSelection:
         recordings.sort(key=lambda r: md5(r.recording_id))
         return recordings
 
-    def analyze_recordings(self):
+    def suitable_recordings(self):
         '''
-        Generator that returns `Analysis` objects.
+        Generator that returns tuples of `(Recording, Analysis)` objects for
+        recordings that are suitable for inclusion.
         '''
-        recordings = sorted(self.candidate_recordings, key=lambda r: md5(r.recording_id))
-        for recording in recordings:
+        for recording in self.candidate_recordings:
             sound = load_recording(recording, self._recordings_fetcher)
-            yield Analysis(recording, sound)
+            analysis = Analysis(sound)
+            rejection_reasons = self.rejection_reasons(analysis)
+            if rejection_reasons:
+                logging.debug(f'Rejecting {recording.recording_id}: {", ".join(rejection_reasons)}')
+            else:
+                yield (recording, analysis)
 
     def rejection_reasons(self, analysis):
         '''
@@ -94,18 +99,6 @@ class RecordingSelection:
         if analysis.perceptual_noise_volume_db > MAXIMUM_NOISE_VOLUME_DB:
             reasons.append(f'noise volume {analysis.perceptual_noise_volume_db:.1f} > {MAXIMUM_NOISE_VOLUME_DB:.1f}')
         return reasons
-
-    def suitable_recordings(self):
-        '''
-        Generator that returns tuples of `(Recording, Analysis)` objects for
-        recordings that are suitable for inclusion.
-        '''
-        for analysis in self.analyze_recordings():
-            rejection_reasons = self.rejection_reasons(analysis)
-            if rejection_reasons:
-                logging.debug(f'Rejecting {analysis.recording.recording_id}: {", ".join(rejection_reasons)}')
-            else:
-                yield analysis
 
 
 def load_recording(recording, recordings_fetcher):

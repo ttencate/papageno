@@ -1,31 +1,44 @@
 '''
 Fancy analysis algorithms.
+
+References:
+
+[1] 2018 Bird Audio Detection Challenge
+    http://c4dm.eecs.qmul.ac.uk/events/badchallenge_results/
+
+[2] Kahl, S. (2020). "Identifying Birds by Sound: Large-scale Acoustic Event
+    Recognition for Avian Activity Monitoring." Dissertation. Chemnitz
+    University of Technology, Chemnitz, Germany.
+    https://monarch.qucosa.de/api/qucosa%3A36986/attachment/ATT-0/
+
+[3] "Automatic identification of bird species based on sinusoidal modeling of
+    syllables". Härmä, 2003.
+    ../literature/harma_2003.pdf
+
+[4] "Analyzing bird song syllables on the Self-Organizing Map". Somervuo and
+    Härmä, 2003.
+    ../literature/somervuo_2003.pdf
+
+[5] "Bird song recognition based on syllable pair histograms". Somervuo and
+    Härmä, 2004.
+    ../literature/somervuo_2004.pdf
+
+[6] "Automatic recognition of Bird Species by Their Sound". Fagerlund, Master's
+    thesis, 2004.
+    ../literature/fagerlund_2004.pdf
 '''
 
 import hashlib
 import logging
 
-import imageio # TODO port to pillow
 import librosa
 import librosa.feature
 import numpy as np
 import pydub
+import scipy.signal
 
 import lazy
 
-
-# False positive lint. pylint: disable=pointless-string-statement
-# TODO remove here
-'''
-Types of recordings that we allow. Any other type tag will cause the recording
-to be rejected.
-'''
-ALLOWED_TYPES = set([
-    'song', 'dawn song', 'subsong', 'canto',
-    'call', 'calls', 'flight call', 'flight calls', 'nocturnal flight call', 'alarm call',
-    # 'begging call', 'drumming'
-    'male', 'female', 'sex uncertain', 'adult',
-])
 
 '''
 Sample rate used for analysis.
@@ -33,51 +46,80 @@ Sample rate used for analysis.
 SAMPLE_RATE = 44100
 
 '''
-Bits per sample used for analysis. Must be a multiple of 8.
-'''
-BITS_PER_SAMPLE = 16
-
-'''
 Window size for FFTs, in samples.
 
-In section 2.4.3. "Adaption to avian acoustic monitoring", page 58, Kahl [1]
-recommends a window size of 512 samples at 48 kHz with an overlap of 50% (256
-samples) using a Hann window function. That is for a neural network, but we can
-reasonably expect it to work here as well.
-
-[1] Kahl, S. (2020). "Identifying Birds by Sound: Large-scale Acoustic Event
-Recognition for Avian Activity Monitoring." Dissertation. Chemnitz University
-of Technology, Chemnitz, Germany.
-https://monarch.qucosa.de/api/qucosa%3A36986/attachment/ATT-0/
+Härmä [3] uses a size of 256 without arguing why. In section 2.4.3. "Adaption
+to avian acoustic monitoring", page 58, Kahl [2] recommends a window size of
+512 samples at 48 kHz with an overlap of 50% (256 samples) using a Hann window
+function.
 '''
 FFT_WINDOW_SIZE = 512
 
 '''
+Length of the windowed signal for the FFT after padding with zeros.
+
+Härmä [3] uses a size of 1024, which would result in twice as many frequency
+bins as Kahl [2] for no obvious advantage.
+'''
+# N_FFT = 1024 # Härmä
+N_FFT = 512
+
+'''
 Hop length for spectrogram FFTs. See above.
+
+Härmä [3] uses a step of 64 samples (75% overlap on 256); Kahl [2] uses 256
+(50% overlap on 512).
 '''
-FFT_HOP_LENGTH = FFT_WINDOW_SIZE // 2
+# FFT_HOP_LENGTH = 64 # Härmä
+FFT_HOP_LENGTH = 256
 
 '''
-Number of mel frequency buckets used when creating spectrogram.
+Shape of the windowing function for FFT.
+
+Kahl[2] uses a Hann window. Härmä [3] uses a Kaiser window with alpha = 8.
+Scipy requires a parameter named `beta`, but according to the scipy docs, "some
+authors use `alpha = beta / pi`"; hence, `beta = alpha * pi`.
 '''
-NUM_MELS = 64
+# FFT_WINDOW_SPEC = ('kaiser', 8 * np.pi) # Härmä
+FFT_WINDOW_SHAPE = 'hann'
 
 '''
-Quantile of volume used to detect background noise.
+RMS of the window shape. Used to correct RMS calculations from spectrograms, to
+make the result independent of the window shape.
 '''
-NOISE_QUANTILE = 0.2
+WINDOW_RMS = np.sqrt(np.mean(scipy.signal.get_window(FFT_WINDOW_SHAPE, N_FFT)**2))
+
+'''
+Quantile of volume used to detect background noise. We assume that the bird
+does not vocalize on any frequency for more than this fraction of time. If it
+does: too bad, the recording will be discarded as being too noisy.
+'''
+NOISE_QUANTILE = 0.5
+
+'''
+Sigma (expressed in frames) of the Gaussian kernel used to smooth the
+spectrogram along the time axis before noise subtraction.
+'''
+SPECTROGRAM_SMOOTHING_SIGMA = 10.0
+
+'''
+Weighting to use for perceptual loudness:
+https://en.wikipedia.org/wiki/A-weighting. This weighting was empirically
+determined (out of A, B, C, D, Z) to give the best ranking of perceived volume.
+'''
+PERCEPTUAL_WEIGHTING_KIND = 'A'
 
 '''
 Volume above which a consecutive audio segment must remain to be considered a
-potential vocalization. In decibels relative to the background noise level.
+potential vocalization. In decibels relative to the peak level.
 '''
-VOCALIZATION_TRIGGER_THRESHOLD_DB = 10
+VOCALIZATION_TRIGGER_THRESHOLD_DB = -30
 
 '''
 Volume above which a consecutive audio segment must peak at least once to be
-considered a vocalization. In decibels relative to the background noise level.
+considered a vocalization. In decibels relative to the peak level.
 '''
-VOCALIZATION_KEEP_THRESHOLD_DB = 20
+VOCALIZATION_KEEP_THRESHOLD_DB = -15
 
 '''
 Vocalizations closer together than this amount will be merged into one.
@@ -90,132 +132,51 @@ Vocalizations shorter than this will be discarded.
 MIN_VOCALIZATION_DURATION_SECONDS = 0.05
 
 
-# TODO remove
-def recording_quality(recording):
-    '''
-    The main quality metric used to select which recordings will go into the app.
-    Returns a tuple that compares larger if the quality is better.
-    '''
-    quality_score = 'EDCBA'.find(recording.quality or 'E')
-    allowed_types_score = -len(set(recording.types).difference(ALLOWED_TYPES))
-    background_species_score = -len(recording.background_species)
-    sonogram_quality_score = recording.sonogram_analysis.sonogram_quality
-    length_score = min(0, recording.length_seconds - 2)
-    # Hash the recording_id for a stable pseudo-random tie breaker.
-    hasher = hashlib.sha1()
-    hasher.update(str(recording.recording_id).encode('utf-8'))
-    recording_id_hash = hasher.digest()
-    return (
-        quality_score,
-        allowed_types_score,
-        background_species_score,
-        sonogram_quality_score,
-        length_score,
-        recording_id_hash,
-    )
-
-
-# TODO remove
-def sonogram_quality(recording_id, sonogram):
-    '''
-    Determines sound quality on the basis of a small sonogram image. Higher is better.
-    '''
-    try:
-        full_img = imageio.imread(sonogram, pilmode='L')
-    except Exception as ex: # pylint: disable=broad-except
-        logging.error(f'Error decoding sonogram of {len(sonogram)} bytes '
-                      f'of recording {recording_id}: {ex}')
-        return -999999
-    img = _crop_white(full_img)
-    inverted_img = 255 - img
-    # For each row (frequency band), find the 30%ile level. So we assume that
-    # the bird produces sound at this frequency no more than 70% of the time.
-    # This gives an indication of the level of background noise on that
-    # frequency band.
-    row_level = np.percentile(inverted_img, 30, axis=1)
-    # Find the maximum noise level across all frequency bands.
-    noise_level = np.amax(row_level)
-    noise_score = (255 - noise_level)**2
-    # We want some signal too, not just absence of noise. Ideally we have some
-    # loud and some quiet periods, so we take the average over columns, then
-    # the standard deviation of those averages.
-    signal_strength = np.amax(inverted_img, axis=0)
-    signal_score = np.std(signal_strength)
-    # Both scores need to be as high as possible, but they are not within the
-    # same range, so we cannot use the maximum. Take the product instead.
-    return signal_score * noise_score
-
-
-# TODO remove
-def _crop_white(img):
-    '''
-    Sonograms shorter than 10 seconds are full white on the right side.
-    '''
-    last_nonwhite_col = 0
-    for col in range(img.shape[1]):
-        # Iterate backwards because usually non-white pixels are encountered at the bottom.
-        col_is_white = all(
-            img[row, col] == 255
-            for row in range(img.shape[0] - 1, -1, -1)
-        )
-        if not col_is_white:
-            last_nonwhite_col = col
-    return img[:, :last_nonwhite_col + 1]
-
-
 class Analysis:
     '''
     Contains analysis functions for a single recording. Cheap to create,
     because every field is lazily evaluated.
     '''
 
-    def __init__(self, recording, sound):
+    def __init__(self, sound):
         '''
         Creates a new `Analysis` from an array of samples, as returned by the
         `load_sound` function.
         '''
-        self.recording = recording
         self.sound = sound
 
     @property
     @lazy.cached
-    def mel_spectrogram(self):
+    def spectrogram(self):
         '''
-        Computes the spectrogram of the sound using a mel frequency scale. The
-        resulting spectrogram is normalized so that its maximum value is 1
-        (unless it's all zero).
+        Computes the amplitude spectrogram of the sound on a linear frequency scale
+        (straight STFT). The result is an _amplitude_ spectrogram; to get a
+        _power_ spectrogram the values need to be squared.
 
-        We use a mel spectrogram because the winners of the 2018 Bird Audio
-        Detection Challege [1] did so too. They got a lot fancier of course, with
-        deep learning and such, but it shows that the necessary information is
-        somehow contained in the mel spectrogram.
-
-        [1] http://c4dm.eecs.qmul.ac.uk/events/badchallenge_results/
+        The winners of the 2018 Bird Audio Detection Challenge [1] used a mel
+        frequency scale, but Härmä et al [3, 4, 5] use a linear scale. We
+        return a linear spectrogram here and convert as needed (but to a log
+        scale, not a mel scale).
         '''
-        power = librosa.feature.melspectrogram(
+        return np.abs(librosa.stft(
             self.sound,
-            sr=SAMPLE_RATE,
-            n_fft=FFT_WINDOW_SIZE,
+            n_fft=N_FFT,
+            win_length=FFT_WINDOW_SIZE,
             hop_length=FFT_HOP_LENGTH,
-            n_mels=NUM_MELS,
-            fmin=0.0,
-            fmax=SAMPLE_RATE / 2)
-        max_power = np.amax(power)
-        return power / max_power if max_power > 0 else power
+            window=FFT_WINDOW_SHAPE))
 
+    # TODO remove if unused
     @property
     @lazy.cached
-    def mel_frequencies(self):
+    def frequency_bins(self):
         '''
-        Center (?) frequencies corresponding to the rows (frequency bins) in the
-        `mel_spectrogram`.
+        Center frequencies corresponding to the rows (frequency bins) in the
+        `spectrogram`. Contrast this with `librosa.fft_frequencies`, which
+        returns the bottom of each bin (giving 0 for the first bin, which can
+        be problematic in functions like `librosa.perceptual_weighting`).
         '''
-        # Exclude top and bottom frequency to find bin centers, because this is
-        # what `librosa.feature.melspectrogram` does as well. Without this, 0
-        # Hz is included which gives division by zero errors in the A-weighting
-        # formula.
-        return librosa.mel_frequencies(
-            n_mels=NUM_MELS + 2, fmin=0.0, fmax=SAMPLE_RATE / 2)[1:-1]
+        num_bins = 1 + N_FFT // 2
+        return (np.arange(0, num_bins) + 0.5) / (num_bins - 1) * SAMPLE_RATE / 2
 
     @property
     @lazy.cached
@@ -226,23 +187,11 @@ class Analysis:
         time)`, this returns an array of shape `(freq, 1)` so that it can easily be
         plotted and/or broadcast across the same spectrogram later.
         '''
-        # TODO Account for fades. These often occur at the start and end of the recording,
+        # TODO Account for fades? These often occur at the start and end of the recording,
         # but e.g. xc:130997 has fades in the middle! This makes the computed noise
         # level a bit lower than it should be.
-        noise_profile = np.quantile(self.mel_spectrogram, q=NOISE_QUANTILE, axis=1)
-        return np.reshape(noise_profile, (self.mel_spectrogram.shape[0], 1))
-
-    @property
-    @lazy.cached
-    def noise_volume_db(self):
-        '''
-        Returns the noise volume in decibels. The reference (maximum) volume is
-        assumed to be 1.0, which is mapped to 0 dB.
-
-        This is used to determine the volume thresholds between vocalization
-        and background noise.
-        '''
-        return librosa.power_to_db(np.sum(self.noise_profile))
+        noise_profile = np.quantile(self.spectrogram, q=NOISE_QUANTILE, axis=1)
+        return np.reshape(noise_profile, (self.spectrogram.shape[0], 1))
 
     @property
     @lazy.cached
@@ -253,44 +202,74 @@ class Analysis:
 
         This is used to determine the suitability of the recording for
         inclusion in the app.
-
-        The implementation uses A-weighting to determine the perceptual
-        loudness: https://en.wikipedia.org/wiki/A-weighting
         '''
-        factors = librosa.db_to_power(librosa.A_weighting(self.mel_frequencies))
-        return librosa.power_to_db(np.sum(self.noise_profile * factors))
+        # We need to square the noise profile because `perceptual_weighting`
+        # expects a power spectrum, not an amplitude spectrum.
+        weighted_noise_profile_db = librosa.perceptual_weighting(
+            self.noise_profile**2, self.frequency_bins, kind=PERCEPTUAL_WEIGHTING_KIND)
+        weighted_noise_profile = librosa.db_to_amplitude(weighted_noise_profile_db)
+        amplitude = rms_amplitude(weighted_noise_profile)
+        return np.asscalar(librosa.amplitude_to_db(amplitude))
 
     @property
     @lazy.cached
-    def filtered_volume_db(self):
+    def volume_db(self):
         '''
-        Subtracts the given noise profile from the spectrogram, then computes and
-        returns the remaining volume (as power, not dB) for each time slice.
+        Returns the volume in dB for each frame.
         '''
-        filtered_spectrogram = self.mel_spectrogram - self.noise_profile
-        filtered_volume = np.sum(filtered_spectrogram, axis=0)
-        filtered_volume_db = librosa.power_to_db(filtered_volume)
-        return filtered_volume_db
+        amplitude = rms_amplitude(self.spectrogram)
+        return librosa.amplitude_to_db(amplitude)
+
+    @property
+    @lazy.cached
+    def filtered_spectrogram(self):
+        '''
+        Returns the spectrogram smoothed over the time axis, with the noise
+        profile subtracted. The smoothing is useful because the noise itself
+        tends to be noisy, so some frames will peak above the noise profile
+        while some are below.
+        '''
+        smoothed_spectrogram = self.spectrogram
+        for i in range(smoothed_spectrogram.shape[0]):
+            smoothed_spectrogram[i] = scipy.ndimage.gaussian_filter(
+                smoothed_spectrogram[i], SPECTROGRAM_SMOOTHING_SIGMA)
+        # Not sure if we need to square and then sqrt here, but it intuitively
+        # makes more sense to subtract powers than amplitudes.
+        return np.sqrt(np.maximum(0, smoothed_spectrogram**2 - self.noise_profile**2))
+
+    @property
+    @lazy.cached
+    def perceptual_filtered_volume_db(self):
+        '''
+        Returns the perceptual volume in dB for each frame, normalized so that
+        the peak is at 0 dB.
+        '''
+        weighted_spectrogram_db = librosa.perceptual_weighting(
+            self.filtered_spectrogram**2, self.frequency_bins, kind=PERCEPTUAL_WEIGHTING_KIND)
+        weighted_spectrogram = librosa.db_to_amplitude(weighted_spectrogram_db)
+        weighted_amplitude = rms_amplitude(weighted_spectrogram)
+        weighted_amplitude_db = librosa.amplitude_to_db(weighted_amplitude)
+        return weighted_amplitude_db - np.amax(weighted_amplitude_db)
 
     @property
     @lazy.cached
     def raw_vocalizations(self):
         '''
-        Detects vocalizations in the given volume curve. A vocalization is a
-        consecutive range of time slices in which the volume remains some minimum
-        "trigger" threshold above the `perceptual_noise_volume_db`, and exceeds
-        some maximum "keep" threshold at least once.
+        Detects vocalizations in the volume curve. A vocalization is a
+        consecutive range of time slices in which the volume remains some
+        minimum "trigger" threshold above the `perceptual_noise_volume_db`, and
+        exceeds some maximum "keep" threshold at least once.
 
         Vocalization are returned as a list of tuples `(start, end)` where `start`
         and `end` are in seconds.
         '''
-        trigger_threshold_db = self.noise_volume_db + VOCALIZATION_TRIGGER_THRESHOLD_DB
-        keep_threshold_db = self.noise_volume_db + VOCALIZATION_KEEP_THRESHOLD_DB
+        trigger_threshold_db = VOCALIZATION_TRIGGER_THRESHOLD_DB
+        keep_threshold_db = VOCALIZATION_KEEP_THRESHOLD_DB
 
         vocalizations = []
         start = None
         keep = False
-        volumes_db = self.filtered_volume_db
+        volumes_db = self.perceptual_filtered_volume_db
         for i, volume_db in enumerate(volumes_db):
             if volume_db >= trigger_threshold_db:
                 if start is None:
@@ -340,110 +319,52 @@ class Vocalization:
 
     def __init__(self, analysis, start, end):
         self.analysis = analysis
-        self.recording = analysis.recording
         start_sample, end_sample = librosa.time_to_samples([start, end], sr=SAMPLE_RATE)
         self.sound = analysis.sound[start_sample:end_sample]
         self.start = start
         self.end = end
+        self.duration = end - start
 
     @property
     @lazy.cached
-    def mel_spectrogram(self):
+    def spectrogram(self):
         '''
-        Extract of `Analysis.mel_spectrogram`.
+        Extract of `Analysis.spectrogram`.
         '''
         start_frame, end_frame = time_to_frames([self.start, self.end])
-        return self.analysis.mel_spectrogram[:, start_frame:end_frame]
-
-    @property
-    # @lazy.cached
-    def filtered_mel_spectrogram(self):
-        '''
-        The mel spectrogram after subtracting the noise profile and normalizing
-        it back to a maximum power of 1.0.
-        '''
-        power = np.maximum(0, self.mel_spectrogram - self.analysis.noise_profile)
-        max_power = np.amax(power)
-        return power / max_power if max_power > 0 else power
-
-    @property
-    # @lazy.cached
-    def mfccs(self):
-        '''
-        Mel frequency cepstral coefficients. Useful intro:
-        https://medium.com/prathena/the-dummys-guide-to-mfcc-aceab2450fd
-        '''
-        NUM_MFCCS = 16 # TODO move outside
-        mfccs = librosa.feature.mfcc(
-            S=librosa.power_to_db(self.filtered_mel_spectrogram),
-            sr=SAMPLE_RATE, n_mfcc=NUM_MFCCS)
-        return mfccs
-
-    @property
-    # @lazy.cached
-    def quantized_spectrogram(self):
-        '''
-        The mel spectrogram after subtracting the noise profile, downsampling
-        the frequency axis, normalizing it, converting it to decibels and
-        quantizing each bucket. Used as the basis for feature extraction.
-        '''
-        FEATURE_NUM_MELS = 8 # Must be a divisor of NUM_MELS.
-        power = np.maximum(0, self.mel_spectrogram - self.analysis.noise_profile)
-        power = np.mean(
-            power.reshape((FEATURE_NUM_MELS, NUM_MELS // FEATURE_NUM_MELS, power.shape[1])),
-            axis=1)
-        max_power = np.amax(power)
-        power = power / max_power if max_power > 0 else power
-        db = librosa.power_to_db(power)
-        quantized = quantize(db, (-30, -15))
-        return quantized
-
-    @property
-    # @lazy.cached
-    def features(self):
-        '''
-        Returns a list of relatively low-dimensional, hashable features that
-        represent this vocalization.
-        '''
-        #return list(map(tuple, self.quantized_spectrogram.T))
-        # Find the locations of the 3 strongest peaks in the MFCC.
-        features = []
-        for spectrum in self.mfccs.T:
-            spectrum = spectrum[:]
-            feature = np.zeros(spectrum.size, dtype='int')
-            for i in range(3):
-                peak = np.argmax(spectrum)
-                feature[peak] = 3 - i
-                spectrum[peak] = -np.inf
-            features.append(tuple(feature))
-        return features
-
-
-def quantize(array, thresholds):
-    '''
-    Quantizes values in a numpy array. Returns an array of the same shape,
-    containing for each element the number of thresholds that are smaller than
-    the element. Assumes that `thresholds` is sorted and small.
-    '''
-    out = np.zeros_like(array)
-    for threshold in thresholds:
-        out += threshold < array
-    return out
+        return self.analysis.spectrogram[:, start_frame:end_frame]
 
 
 def load_sound(file_obj):
     '''
-    Loads a sound from a file-like object representing MP3 data, and transforms
-    it to a common format for further processing. Returns a numpy array of
-    floating point samples with a rate of `SAMPLE_RATE`.
+    Loads a sound from a file-like object representing MP3 data, transforms it
+    to a common format for further processing, and normalizes it. Returns a
+    numpy array of floating point samples in the range [-1, 1] with a rate of
+    `SAMPLE_RATE`.
+
+    Note that we assume that the DC component is zero.
     '''
     # librosa knows how to load MP3 files too, but somehow it gives wrong
     # results! For example, loading https://www.xeno-canto.org/82572 gives a
     # clip that is indeed ~1 minute long, but has higher pitch than the
     # original.
     sound = pydub.AudioSegment.from_file(file_obj, format='mp3')
-    sound = sound.set_channels(1).set_frame_rate(SAMPLE_RATE).set_sample_width(BITS_PER_SAMPLE // 8)
-    return np.array(sound.get_array_of_samples()) / (2**(BITS_PER_SAMPLE - 1))
+    sound = sound.set_channels(1).set_frame_rate(SAMPLE_RATE)
+    samples = np.array(sound.get_array_of_samples())
+    return samples / np.amax(np.abs(samples))
+
+
+def rms_amplitude(spectrogram):
+    '''
+    Computes the RMS amplitude from an amplitude spectrogram. This function
+    (unlike `librosa.feature.rms`) compensates for the window shape that was
+    used when creating the STFT, so the result does not depend on the choice of
+    window shape.
+
+    To get _power_, the returned value needs to be squared.
+    '''
+    spectrogram_rms = librosa.feature.rms(S=spectrogram, frame_length=N_FFT, hop_length=FFT_HOP_LENGTH)
+    return spectrogram_rms[0] / WINDOW_RMS
 
 
 def time_to_frames(time):
@@ -452,3 +373,11 @@ def time_to_frames(time):
 
 def frames_to_time(frames):
     return librosa.frames_to_time(frames, sr=SAMPLE_RATE, hop_length=FFT_HOP_LENGTH)
+
+
+def time_to_samples(time):
+    return librosa.time_to_samples(time, sr=SAMPLE_RATE)
+
+
+def samples_to_time(samples):
+    return librosa.samples_to_time(samples, sr=SAMPLE_RATE)
