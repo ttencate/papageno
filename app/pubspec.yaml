@@ -67,6 +67,7 @@ flutter:
     - assets/images/
     - assets/sounds/
     - assets/licenses/
+    - assets/map/
 
 # To update the icons, run ./artwork/export.sh
 flutter_icons:

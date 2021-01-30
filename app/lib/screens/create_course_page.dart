@@ -220,9 +220,20 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
           ),
           layers: <LayerOptions>[
             TileLayerOptions(
+              tileProvider: AssetTileProvider(),
+              // We put all files into a single, flat directory, because pubspec.yaml doesn't allow for recursive
+              // inclusion of asset directories.
+              urlTemplate: 'assets/map/{z}_{x}_{y}.png',
+              // Rather than trying to get tiles at a zoom level that doesn't exist in this layer,
+              // just show upscaled tiles from the maximum zoom level until online tiles come in.
+              // This must match what is specified in store_map_tiles.py.
+              maxNativeZoom: 4.0,
+            ),
+            TileLayerOptions(
               urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
               subdomains: ['a', 'b', 'c'],
               tileProvider: NonCachingNetworkTileProvider(),
+              backgroundColor: Colors.transparent,
             ),
             if (rankedSpecies != null) CircleLayerOptions(
               circles: [

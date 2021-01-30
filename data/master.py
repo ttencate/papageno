@@ -43,6 +43,7 @@ _STAGES = [
     'store_recordings',
     'store_images',
     'store_database',
+    'store_map_tiles',
 ]
 _STAGE_MODULES = {stage: importlib.import_module(stage) for stage in _STAGES}
 
