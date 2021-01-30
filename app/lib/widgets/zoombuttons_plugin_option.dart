@@ -13,7 +13,8 @@ class ZoomButtonsPluginOption extends LayerOptions {
   ZoomButtonsPluginOption({
       this.margin = 2.0,
       this.alignment = Alignment.topRight,
-  });
+      Stream<Null> rebuild,
+  }) : super(rebuild: rebuild);
 }
 
 class ZoomButtonsPlugin implements MapPlugin {
@@ -41,41 +42,46 @@ class ZoomButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ButtonTheme(
-      minWidth: 0.0,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      padding: EdgeInsets.all(8.0),
-      child: Align(
-        alignment: zoomButtonsOpts.alignment,
-        // For some reason, disabled zoom buttons pass the tap through to the underlying map.
-        // Not a great user experience, so we catch it here.
-        child: GestureDetector(
-          onTap: () {},
-          child: Padding(
-            padding: EdgeInsets.all(zoomButtonsOpts.margin),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                FlatButton(
-                  color: Colors.grey.shade100,
-                  disabledColor: Colors.grey.shade300,
-                  onPressed: _zoomFunc(1.0),
-                  child: Icon(Icons.zoom_in),
+    return StreamBuilder<Null>(
+      stream: stream,
+      builder: (context, snapshot) {
+        return ButtonTheme(
+          minWidth: 0.0,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: EdgeInsets.all(8.0),
+          child: Align(
+            alignment: zoomButtonsOpts.alignment,
+            // For some reason, disabled zoom buttons pass the tap through to the underlying map.
+            // Not a great user experience, so we catch it here.
+            child: GestureDetector(
+              onTap: () {},
+              child: Padding(
+                padding: EdgeInsets.all(zoomButtonsOpts.margin),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    FlatButton(
+                      color: Colors.grey.shade100,
+                      disabledColor: Colors.grey.shade300,
+                      onPressed: _zoomFunc(1.0),
+                      child: Icon(Icons.zoom_in),
+                    ),
+                    SizedBox(
+                      height: 4.0,
+                    ),
+                    FlatButton(
+                      color: Colors.grey.shade100,
+                      disabledColor: Colors.grey.shade300,
+                      onPressed: _zoomFunc(-1.0),
+                      child: Icon(Icons.zoom_out),
+                    ),
+                  ],
                 ),
-                SizedBox(
-                  height: 4.0,
-                ),
-                FlatButton(
-                  color: Colors.grey.shade100,
-                  disabledColor: Colors.grey.shade300,
-                  onPressed: _zoomFunc(-1.0),
-                  child: Icon(Icons.zoom_out),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
