@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info/package_info.dart';
 import 'package:papageno/common/strings.g.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 
@@ -87,7 +88,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
                     ),
                   ),
                   SizedBox(height: 8.0),
-                  CircularProgressIndicator(),
+                  EggProgressIndicator(),
                 ],
               ),
             ),

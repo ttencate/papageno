@@ -12,6 +12,7 @@ import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/url_utils.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:papageno/widgets/zoombuttons_plugin_option.dart';
 import 'package:provider/provider.dart';
@@ -99,7 +100,7 @@ class _CreateCoursePageState extends State<CreateCoursePage> {
                         alignment: Alignment.center,
                         children: <Widget>[
                           Text(strings.useCurrentLocationButton.toUpperCase()),
-                          if (state.searchingLocation) CircularProgressIndicator(),
+                          if (state.searchingLocation) EggProgressIndicator(),
                         ],
                       ),
                     ),

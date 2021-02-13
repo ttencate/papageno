@@ -20,6 +20,7 @@ import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/iterable_utils.dart';
 import 'package:papageno/utils/random_utils.dart';
 import 'package:papageno/utils/string_utils.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:papageno/widgets/particles.dart';
 import 'package:papageno/widgets/player.dart';
@@ -87,7 +88,7 @@ class _QuizPageState extends State<QuizPage> {
             return Scaffold(
               appBar: AppBar(),
               drawer: drawer,
-              body: Center(child: CircularProgressIndicator()),
+              body: Center(child: EggProgressIndicator()),
             );
           }
           return WillPopScope(
@@ -120,7 +121,7 @@ class _QuizPageState extends State<QuizPage> {
                         if (index >= quiz.availableQuestions.length) {
                           return Container(
                             color: theme.canvasColor,
-                            child: Center(child: CircularProgressIndicator()),
+                            child: Center(child: EggProgressIndicator()),
                           );
                         } else {
                           final question = quiz.availableQuestions[index];

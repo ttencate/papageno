@@ -13,6 +13,7 @@ import 'package:papageno/services/app_db.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/utils/string_utils.dart';
 import 'package:papageno/widgets/chain_item_builder.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:provider/provider.dart';
@@ -70,7 +71,7 @@ class _CoursePageState extends State<CoursePage> {
               initialData: _knowledgeController.knowledge,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child: EggProgressIndicator());
                 }
                 final knowledge = snapshot.data;
                 return Column(

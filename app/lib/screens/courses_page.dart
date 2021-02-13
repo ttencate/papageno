@@ -7,6 +7,7 @@ import 'package:papageno/common/strings_extensions.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/widgets/confirmation_dialog.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:provider/provider.dart';
 
@@ -80,7 +81,7 @@ class _CoursesPageState extends State<CoursesPage> {
                     ),
                   ]).toList(),
                 ) :
-                Center(child: CircularProgressIndicator())
+                Center(child: EggProgressIndicator())
             ),
           ),
           Padding(

@@ -5,6 +5,7 @@ import 'package:papageno/common/strings.g.dart';
 import 'package:papageno/model/app_model.dart' hide Image;
 import 'package:papageno/services/app_db.dart';
 import 'package:papageno/utils/url_utils.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:provider/provider.dart';
 
 class AboutPage extends StatelessWidget {
@@ -291,7 +292,7 @@ class _AttributablesDialog extends StatelessWidget {
         future: attributables,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: EggProgressIndicator());
           }
           final attributables = snapshot.data;
           return ListView.builder(

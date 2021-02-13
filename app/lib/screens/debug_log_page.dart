@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papageno/common/log_writer.dart';
 import 'package:papageno/common/strings.g.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:provider/provider.dart';
 
 class DebugLogPage extends StatefulWidget {
@@ -42,7 +43,7 @@ class _DebugLogPageState extends State<DebugLogPage> {
               ),
             ),
           ) :
-          Center(child: CircularProgressIndicator()),
+          Center(child: EggProgressIndicator()),
       ),
     );
   }

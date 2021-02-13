@@ -8,6 +8,7 @@ import 'package:papageno/model/settings.dart';
 import 'package:papageno/model/user_model.dart';
 import 'package:papageno/services/user_db.dart';
 import 'package:papageno/widgets/confirmation_dialog.dart';
+import 'package:papageno/widgets/egg_progress_indicator.dart';
 import 'package:papageno/widgets/menu_drawer.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:provider/provider.dart';
@@ -92,7 +93,7 @@ class _ProfilesPageState extends State<ProfilesPage> {
                   ),
                 ]).toList(),
               ) :
-              Center(child: CircularProgressIndicator())
+              Center(child: EggProgressIndicator())
             ),
           ),
           Padding(
