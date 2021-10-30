@@ -639,3 +639,12 @@ Code is linted with `pylint`, which is configured through the supplied
 `pylintrc`. Run like this to do the linting:
 
     pylint *.py
+
+References
+----------
+
+Stuff that might be useful, not necessarily used right now.
+
+* <https://www.semanticscholar.org/paper/Automatic-recognition-of-Bird-Species-by-Their-Fagerlund-Masters/dc5c7a318cb77be48ae3c0211edf8461c57c47b2?p2df>
+* <https://www.semanticscholar.org/paper/Bird-song-recognition-based-on-syllable-pair-Somervuo-H%C3%A4rm%C3%A4/e43cde67eb33b58a13bd787ca5c93532bf418350>
+* <http://legacy.spa.aalto.fi/research/avesound/pubs/icassp03.pdf>
