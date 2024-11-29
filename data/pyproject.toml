@@ -15,7 +15,7 @@ gdal = "==3.0.4" # Arch Linux package has been out of date for a long time...
 flask = "^1.1.2"
 imageio = "^2.8.0"
 beautifulsoup4 = "^4.9.0"
-pillow = "^7.1.1"
+pillow = "^8.3.2"
 lxml = "^4.5.0"
 pydub = "^0.23.1"
 matplotlib = "^3.2.1"
